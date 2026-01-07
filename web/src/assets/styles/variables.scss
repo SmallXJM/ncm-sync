@@ -31,9 +31,11 @@ $space-xl: 2rem;
 $space-2xl: 3rem;
 
 /* 尺寸 */
-$nav-width-desktop: 260px;
+$nav-width-desktop: 220px;
 $nav-width-md: 200px;
 $nav-width-sm: 180px;
+$nav-width-sidebar-narrow: 64px;
+$nav-width-sidebar-widen: 200px;
 
 /* 圆角 */
 $radius-sm: 4px;
@@ -48,20 +50,21 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 /* 定义深色模式变量集合 */
 @mixin dark-mode-vars {
   --bg-body: #{$color-gray-1000};
-  --bg-base: #{$color-gray-1100}; /* Dark Mode 底座色 */
+  --bg-base: #{$color-gray-1100};
+  /* Dark Mode 底座色 */
   --bg-surface: #{$color-gray-900};
   --bg-surface-hover: #{$color-gray-800};
-  
-  --text-primary: #{$color-white};
+
+  --text-primary: #{$color-gray-200};
   --text-secondary: #{$color-gray-400};
   --text-tertiary: #{$color-gray-600};
-  
+
   --border-color: #{$color-gray-700};
   --border-hover: #{$color-gray-600};
-  
+
   --accent-color: #{$color-gray-100};
   --accent-fg: #{$color-black};
-  
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
@@ -80,21 +83,24 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 /* 定义浅色模式变量集合 */
 @mixin light-mode-vars {
   /* 浅色模式 (Light Mode) - 默认 */
-  --bg-body: #{$color-gray-50}; /* Body 整体背景 */
-  --bg-base: #{$color-gray-100}; /* 底座色 (Sidebar/Header) */
-  --bg-surface: #{$color-white}; /* 内容区背景 */
-  --bg-surface-hover: #{$color-gray-50};
-  
+  --bg-body: #{$color-gray-50};
+  /* Body 整体背景 */
+  --bg-base: #{$color-gray-100};
+  /* 底座色 (Sidebar/Header) */
+  --bg-surface: #{$color-white};
+  /* 内容区背景 */
+  --bg-surface-hover: #{$color-gray-200};
+
   --text-primary: #{$color-gray-900};
   --text-secondary: #{$color-gray-600};
   --text-tertiary: #{$color-gray-400};
-  
+
   --border-color: #{$color-gray-200};
   --border-hover: #{$color-gray-300};
-  
+
   --accent-color: #{$color-gray-800};
   --accent-fg: #{$color-white};
-  
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -145,6 +151,8 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 :root.light {
   @include light-mode-vars;
 }
+
+
 
 /* 兼容旧的 SCSS 变量名 (如果其他文件还在用) */
 $primary: var(--accent-color);

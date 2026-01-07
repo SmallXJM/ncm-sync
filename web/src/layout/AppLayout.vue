@@ -2,7 +2,7 @@
     <div class="layout">
         <AppSidebar />
 
-        <div class="layout__main">
+        <div class="layout__main" :class="{ 'layout__main--narrow': isNarrow }">
             <AppHeader />
             <div class="layout__content-wrapper">
                 <main class="layout__content">
@@ -18,6 +18,9 @@
 <script setup lang="ts">
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
+import { useSidebar } from '@/composables/useSidebar'
+
+const { isNarrow } = useSidebar()
 </script>
 
 <style lang="scss" scoped>
@@ -32,12 +35,17 @@ import AppHeader from './AppHeader.vue'
 }
 
 .layout__main {
-    margin-left: $nav-width-desktop;
+    margin-left: $nav-width-sidebar-widen;
     height: 100vh;
     /* Changed from min-height to fixed height */
     display: flex;
     flex-direction: column;
     /* overflow: hidden; Removed to allow shadow to cast outside */
+    transition: margin-left 0.3s ease;
+
+    &.layout__main--narrow {
+        margin-left: $nav-width-sidebar-narrow;
+    }
 }
 
 .layout__content-wrapper {
