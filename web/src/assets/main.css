@@ -1,0 +1,41 @@
+@import './base.css';
+@import './styles/common.css';
+@import './styles/components.css';
+
+/* 重置官方样式，使用我们自己的布局 */
+#app {
+  /* 移除官方的限制性样式 */
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  min-height: 100vh;
+}
+
+/* 保留一些有用的链接样式，但调整颜色 */
+a.green {
+  text-decoration: none;
+  color: hsla(160, 100%, 37%, 1);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a.green:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
+/* 移除官方的响应式布局，使用我们自己的 */
+@media (min-width: 1024px) {
+  body {
+    /* 移除 flex 布局 */
+    display: block;
+  }
+
+  #app {
+    /* 移除 grid 布局 */
+    display: block;
+    padding: 0;
+  }
+}

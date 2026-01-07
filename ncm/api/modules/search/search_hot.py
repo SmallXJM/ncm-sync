@@ -1,0 +1,13 @@
+from ncm.core.options import APIResponse, _create_options
+from ncm.core.request import request
+from ncm.infrastructure.http.decorators import ncm_api
+
+
+@ncm_api("/api/search/hot", ["GET", "POST"])
+async def search_hot(
+        **kwargs
+) -> APIResponse:
+    data = {
+        'type': 1111,
+    }
+    return await request("/api/search/hot", data, _create_options(**kwargs))
