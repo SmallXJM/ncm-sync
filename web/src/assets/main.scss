@@ -1,0 +1,57 @@
+@use './styles/variables' as *;
+@import './base.scss';
+@import './styles/common.scss';
+@import './styles/components.scss';
+
+/* 全局 App 调整 */
+body {
+  background: var(--bg-body);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#app {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  min-height: 100vh;
+  /* 确保 app 容器也能透出背景 */
+  background: transparent;
+}
+
+/* 保留链接基准样式 */
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* 兼容旧的 .green 类，但在黑白主题下尽量使用语义色 */
+a.green {
+  text-decoration: none;
+  color: var(--color-success);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a.green:hover {
+    background-color: rgba(16, 185, 129, 0.1); /* var(--color-success) with opacity */
+  }
+}
+
+/* 适配我们的布局，移除官方 grid/flex 限制 */
+@media (min-width: 1024px) {
+  body {
+    display: block;
+  }
+  #app {
+    display: block;
+    padding: 0;
+  }
+}

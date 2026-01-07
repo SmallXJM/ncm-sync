@@ -1,0 +1,153 @@
+/* 变量系统与设计约定 */
+
+/* 核心色板 - 黑白灰 */
+$color-white: #ffffff;
+$color-black: #000000;
+$color-gray-50: #f9fafb;
+$color-gray-100: #f3f4f6;
+$color-gray-200: #e5e7eb;
+$color-gray-300: #d1d5db;
+$color-gray-400: #9ca3af;
+$color-gray-500: #6b7280;
+$color-gray-600: #4b5563;
+$color-gray-700: #374151;
+$color-gray-800: #1f2937;
+$color-gray-900: #111827;
+$color-gray-1000: #0e121e;
+$color-gray-1100: #05070c;
+
+/* 用户指定颜色 - 侧边栏暗色适配 */
+$sidebar-dark-active-bg: #2d3748;
+$sidebar-dark-btn: #4a5568;
+$sidebar-dark-text: #e2e8f0;
+
+/* 间距 */
+$space-xxs: 0.125rem;
+$space-xs: 0.25rem;
+$space-sm: 0.5rem;
+$space-md: 0.75rem;
+$space-lg: 1rem;
+$space-xl: 2rem;
+$space-2xl: 3rem;
+
+/* 尺寸 */
+$nav-width-desktop: 260px;
+$nav-width-md: 200px;
+$nav-width-sm: 180px;
+
+/* 圆角 */
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-full: 9999px;
+
+/* 动画 */
+$ts-quick: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+$ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+/* 定义深色模式变量集合 */
+@mixin dark-mode-vars {
+  --bg-body: #{$color-gray-1000};
+  --bg-base: #{$color-gray-1100}; /* Dark Mode 底座色 */
+  --bg-surface: #{$color-gray-900};
+  --bg-surface-hover: #{$color-gray-800};
+  
+  --text-primary: #{$color-white};
+  --text-secondary: #{$color-gray-400};
+  --text-tertiary: #{$color-gray-600};
+  
+  --border-color: #{$color-gray-800};
+  --border-hover: #{$color-gray-700};
+  
+  --accent-color: #{$color-white};
+  --accent-fg: #{$color-black};
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-ly: 0 10px 15px 0px rgba(113, 111, 111, 0.5);
+
+  --glass-bg: rgba(20, 20, 20, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  /* 侧边栏特定变量 - Dark Mode */
+  --sidebar-active-bg: #{$sidebar-dark-active-bg};
+  --sidebar-btn-bg: #{$sidebar-dark-btn};
+  --sidebar-active-text: #{$sidebar-dark-text};
+}
+
+/* 定义浅色模式变量集合 */
+@mixin light-mode-vars {
+  /* 浅色模式 (Light Mode) - 默认 */
+  --bg-body: #{$color-gray-50}; /* Body 整体背景 */
+  --bg-base: #{$color-gray-100}; /* 底座色 (Sidebar/Header) */
+  --bg-surface: #{$color-white}; /* 内容区背景 */
+  --bg-surface-hover: #{$color-gray-50};
+  
+  --text-primary: #{$color-gray-900};
+  --text-secondary: #{$color-gray-600};
+  --text-tertiary: #{$color-gray-400};
+  
+  --border-color: #{$color-gray-200};
+  --border-hover: #{$color-gray-300};
+  
+  --accent-color: #{$color-black};
+  --accent-fg: #{$color-white};
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-ly: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+
+  /* 侧边栏特定变量 - Light Mode (使用默认黑白风格) */
+  --sidebar-active-bg: #{$color-black};
+  --sidebar-btn-bg: #{$color-gray-200};
+  --sidebar-active-text: #{$color-white};
+}
+
+/* CSS 变量定义 - 支持深浅模式 */
+:root {
+  @include light-mode-vars;
+
+  /* 状态色 - 保持一定的语义颜色，但在黑白主题下可偏灰或保持原色 */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* 导出间距变量 */
+  --spacing-xs: #{$space-xs};
+  --spacing-sm: #{$space-sm};
+  --spacing-md: #{$space-md};
+  --spacing-lg: #{$space-lg};
+  --spacing-xl: #{$space-xl};
+  --spacing-2xl: #{$space-2xl};
+}
+
+/* 1. 系统偏好为深色时自动应用 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include dark-mode-vars;
+  }
+}
+
+/* 2. 手动切换 - 允许通过 class="dark" 强制启用深色模式 */
+:root.dark {
+  @include dark-mode-vars;
+}
+
+/* 3. 手动切换 - 允许通过 class="light" 强制启用浅色模式 (恢复默认) */
+:root.light {
+  @include light-mode-vars;
+}
+
+/* 兼容旧的 SCSS 变量名 (如果其他文件还在用) */
+$primary: var(--accent-color);
+$surface: var(--bg-surface);
+$border: var(--border-color);
+$text-strong: var(--text-primary);

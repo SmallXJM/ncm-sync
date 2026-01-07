@@ -1,13 +1,5 @@
 <template>
   <div class="page">
-    <!-- Header -->
-    <header class="page-header">
-      <div class="container">
-        <h1 class="page-title">账号管理</h1>
-        <p class="page-subtitle">管理您的网易云音乐账号和登录会话</p>
-      </div>
-    </header>
-
     <!-- Main Content -->
     <main>
       <div class="container">
@@ -15,45 +7,34 @@
         <section class="mb-2xl">
           <div class="glass-card">
             <h2 class="section-title mb-lg">当前账号</h2>
-            
+
             <div v-if="currentAccount" class="current-account-info">
               <div class="account-header">
                 <div class="avatar-container">
                   <div class="avatar avatar-xl">
-                    <img 
-                      :src="currentAccount.avatar_url || '/default-avatar.png'" 
-                      :alt="currentAccount.nickname || '用户头像'"
-                      @error="handleAvatarError"
-                    />
+                    <img :src="currentAccount.avatar_url || '/default-avatar.png'"
+                      :alt="currentAccount.nickname || '用户头像'" @error="handleAvatarError" />
                   </div>
                   <div class="status-badge">
                     <div class="status-dot" :class="getStatusClass(currentAccount.status)"></div>
                     <span>{{ getStatusText(currentAccount.status) }}</span>
                   </div>
                 </div>
-                
+
                 <div class="account-details">
                   <h3 class="account-name">{{ currentAccount.nickname || '未知用户' }}</h3>
                   <p class="account-id text-secondary">ID: {{ currentAccount.account_id }}</p>
                   <p class="login-type text-tertiary">
                     登录方式: {{ getLoginTypeText(currentSession?.login_type) }}
                   </p>
-                  
+
                   <div class="account-actions mt-md">
-                    <button 
-                      class="btn btn-secondary btn-sm"
-                      @click="refreshAccountStatus"
-                      :disabled="isRefreshing"
-                    >
+                    <button class="btn btn-secondary btn-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
                       <div v-if="isRefreshing" class="loading-spinner"></div>
                       <span v-else>刷新状态</span>
                     </button>
-                    
-                    <button 
-                      class="btn btn-danger btn-sm"
-                      @click="logout"
-                      :disabled="isLoggingOut"
-                    >
+
+                    <button class="btn btn-danger btn-sm" @click="logout" :disabled="isLoggingOut">
                       <div v-if="isLoggingOut" class="loading-spinner"></div>
                       <span v-else>退出登录</span>
                     </button>
@@ -61,7 +42,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div v-else class="empty-state">
               <div class="empty-icon">👤</div>
               <h3>暂无登录账号</h3>
@@ -74,7 +55,7 @@
         <section class="mb-2xl">
           <div class="glass-card">
             <h2 class="section-title mb-lg">登录方式</h2>
-            
+
             <div class="login-methods">
               <!-- QR Code Login -->
               <div class="login-method">
@@ -82,26 +63,18 @@
                   <h3>二维码登录</h3>
                   <p class="text-secondary">使用网易云音乐 App 扫码登录</p>
                 </div>
-                
+
                 <div class="qr-login-container">
                   <div v-if="!qrCode.key" class="qr-actions">
-                    <button 
-                      class="btn btn-primary"
-                      @click="startQRLogin"
-                      :disabled="isStartingQR"
-                    >
+                    <button class="btn btn-primary" @click="startQRLogin" :disabled="isStartingQR">
                       <div v-if="isStartingQR" class="loading-spinner"></div>
                       <span v-else>生成二维码</span>
                     </button>
                   </div>
-                  
+
                   <div v-else class="qr-display">
                     <div class="qr-code-wrapper">
-                      <img 
-                        :src="qrCode.qr_img" 
-                        alt="登录二维码"
-                        class="qr-code-image"
-                      />
+                      <img :src="qrCode.qr_img" alt="登录二维码" class="qr-code-image" />
                       <div v-if="qrCode.status === 'waiting_confirm'" class="qr-overlay">
                         <div class="qr-expired">
                           <!-- <p>已扫码</p> -->
@@ -117,18 +90,15 @@
                         </div>
                       </div>
                     </div>
-                    
+
                     <div class="qr-status">
                       <div class="status-indicator" :class="getQRStatusClass(qrCode.status)">
                         <div v-if="qrCode.status === 'waiting_scan'" class="loading-spinner"></div>
                         <span>{{ getQRStatusText(qrCode.status) }}</span>
                       </div>
-                      
-                      <button 
-                        v-if="qrCode.status !== 'success'"
-                        class="btn btn-secondary btn-sm mt-sm"
-                        @click="cancelQRLogin"
-                      >
+
+                      <button v-if="qrCode.status !== 'success'" class="btn btn-secondary btn-sm mt-sm"
+                        @click="cancelQRLogin">
                         取消
                       </button>
                     </div>
@@ -142,35 +112,25 @@
                   <h3>Cookie 登录</h3>
                   <p class="text-secondary">手动输入 Cookie 进行登录</p>
                 </div>
-                
+
                 <div class="cookie-login-container">
                   <div class="cookie-input-group">
-                    <textarea
-                      v-model="cookieInput"
-                      class="input cookie-textarea"
-                      placeholder="请粘贴完整的 Cookie 字符串..."
-                      rows="4"
-                    ></textarea>
-                    
+                    <textarea v-model="cookieInput" class="input cookie-textarea" placeholder="请粘贴完整的 Cookie 字符串..."
+                      rows="4"></textarea>
+
                     <div class="cookie-actions mt-sm">
-                      <button 
-                        class="btn btn-primary"
-                        @click="loginWithCookie"
-                        :disabled="!cookieInput.trim() || isLoggingInWithCookie"
-                      >
+                      <button class="btn btn-primary" @click="loginWithCookie"
+                        :disabled="!cookieInput.trim() || isLoggingInWithCookie">
                         <div v-if="isLoggingInWithCookie" class="loading-spinner"></div>
                         <span v-else>使用 Cookie 登录</span>
                       </button>
-                      
-                      <button 
-                        class="btn btn-secondary"
-                        @click="clearCookieInput"
-                      >
+
+                      <button class="btn btn-secondary" @click="clearCookieInput">
                         清空
                       </button>
                     </div>
                   </div>
-                  
+
                   <div class="cookie-help mt-sm">
                     <details class="help-details">
                       <summary class="help-summary">如何获取 Cookie？</summary>
@@ -196,34 +156,23 @@
           <div class="glass-card">
             <div class="section-header">
               <h2 class="section-title">会话列表</h2>
-              <button 
-                class="btn btn-secondary btn-sm"
-                @click="refreshSessions"
-                :disabled="isRefreshingSessions"
-              >
+              <button class="btn btn-secondary btn-sm" @click="refreshSessions" :disabled="isRefreshingSessions">
                 <div v-if="isRefreshingSessions" class="loading-spinner"></div>
                 <span v-else>刷新</span>
               </button>
             </div>
-            
+
             <div v-if="sessions.length > 0" class="sessions-list">
-              <div 
-                v-for="session in sessions"
-                :key="session.session_id"
-                class="session-item"
-                :class="{ 'session-current': session.is_current }"
-              >
+              <div v-for="session in sessions" :key="session.session_id" class="session-item"
+                :class="{ 'session-current': session.is_current }">
                 <div class="session-info">
                   <div class="session-avatar">
                     <div class="avatar avatar-md">
-                      <img 
-                        :src="session.avatar_url || '/default-avatar.png'" 
-                        :alt="session.nickname || '用户头像'"
-                        @error="handleAvatarError"
-                      />
+                      <img :src="session.avatar_url || '/default-avatar.png'" :alt="session.nickname || '用户头像'"
+                        @error="handleAvatarError" />
                     </div>
                   </div>
-                  
+
                   <div class="session-details">
                     <h4 class="session-name">
                       {{ session.nickname || '未知用户' }}
@@ -235,35 +184,28 @@
                     </p>
                   </div>
                 </div>
-                
+
                 <div class="session-status">
                   <div class="status-indicator" :class="session.is_valid ? 'status-online' : 'status-offline'">
                     <div class="status-dot"></div>
                     <span>{{ session.is_valid ? '有效' : '已失效' }}</span>
                   </div>
                 </div>
-                
+
                 <div class="session-actions">
-                  <button 
-                    v-if="!session.is_current && session.is_valid"
-                    class="btn btn-primary btn-sm"
-                    @click="switchToSession(session.session_id)"
-                    :disabled="isSwitchingSession"
-                  >
+                  <button v-if="!session.is_current && session.is_valid" class="btn btn-primary btn-sm"
+                    @click="switchToSession(session.session_id)" :disabled="isSwitchingSession">
                     切换
                   </button>
-                  
-                  <button 
-                    class="btn btn-danger btn-sm"
-                    @click="invalidateSession(session.session_id)"
-                    :disabled="isInvalidatingSession"
-                  >
+
+                  <button class="btn btn-danger btn-sm" @click="invalidateSession(session.session_id)"
+                    :disabled="isInvalidatingSession">
                     失效
                   </button>
                 </div>
               </div>
             </div>
-            
+
             <div v-else class="empty-state">
               <div class="empty-icon">🔐</div>
               <h3>暂无会话</h3>
@@ -300,7 +242,7 @@ const qrCode = reactive({
   key: '',
   qr_img: '',
   status: 'idle', // idle, waiting_scan, waiting_confirm, success, expired
-  message: '' 
+  message: ''
 })
 
 // Loading states
@@ -338,7 +280,7 @@ onUnmounted(() => {
 async function loadCurrentAccount() {
   try {
     const result = await api.user.getCurrentUser()
-    
+
     if (result.success && result.data.code === 200 && result.data.data) {
       currentAccount.value = result.data.data.account
       currentSession.value = result.data.data.session
@@ -356,7 +298,7 @@ async function loadSessions() {
   try {
     isRefreshingSessions.value = true
     const result = await api.user.getSessionsList()
-    
+
     if (result.success && result.data.code === 200) {
       sessions.value = result.data.data.sessions.map(session => ({
         ...session,
@@ -375,7 +317,7 @@ async function refreshAccountStatus() {
   try {
     isRefreshing.value = true
     const result = await api.auth.checkStatus()
-    
+
     if (result.success && result.data.code === 200) {
       await loadCurrentAccount()
       showToast('状态刷新成功', 'success')
@@ -392,7 +334,7 @@ async function refreshAccountStatus() {
 
 async function logout() {
   if (!confirm('确定要退出当前账号吗？')) return
-  
+
   try {
     isLoggingOut.value = true
     // Invalidate current session
@@ -400,7 +342,7 @@ async function logout() {
     if (currentSession) {
       await invalidateSession(currentSession.session_id)
     }
-    
+
     currentAccount.value = null
     currentSession.value = null
     showToast('已退出登录', 'success')
@@ -416,13 +358,13 @@ async function startQRLogin() {
   try {
     isStartingQR.value = true
     const result = await api.auth.startQRLogin()
-    
+
     if (result.success && result.data.code === 200) {
       qrCode.key = result.data.data.qr_key
       qrCode.qr_img = result.data.data.qr_img
       qrCode.status = 'waiting_scan'
       qrCode.message = '等待扫码'
-      
+
       // Start polling
       startQRPolling()
       showToast('二维码生成成功，请使用网易云音乐 App 扫码', 'success')
@@ -441,23 +383,23 @@ function startQRPolling() {
   if (qrPollingTimer) {
     clearInterval(qrPollingTimer)
   }
-  
+
   qrPollingTimer = setInterval(async () => {
     try {
       const result = await api.auth.checkQRLogin(qrCode.key)
-      
+
       if (result.success) {
         const status = result.data.data.status
         qrCode.status = status
-        
+
         if (status === 'success') {
           clearInterval(qrPollingTimer)
           qrPollingTimer = null
-          
+
           showToast('登录成功！', 'success')
           await loadCurrentAccount()
           await loadSessions()
-          
+
           // Reset QR code
           setTimeout(() => {
             qrCode.key = ''
@@ -481,11 +423,11 @@ function cancelQRLogin() {
     clearInterval(qrPollingTimer)
     qrPollingTimer = null
   }
-  
+
   qrCode.key = ''
   qrCode.qr_img = ''
   qrCode.status = 'idle'
-  
+
   showToast('已取消二维码登录', 'info')
 }
 
@@ -494,11 +436,11 @@ async function loginWithCookie() {
     showToast('请输入 Cookie', 'warning')
     return
   }
-  
+
   try {
     isLoggingInWithCookie.value = true
     const result = await api.auth.loginWithCookie(cookieInput.value.trim())
-    
+
     if (result.success && result.data.code === 200) {
       showToast('Cookie 登录成功！', 'success')
       cookieInput.value = ''
@@ -523,7 +465,7 @@ async function switchToSession(sessionId) {
   try {
     isSwitchingSession.value = true
     const result = await api.user.switchSession(sessionId)
-    
+
     if (result.success && result.data.code === 200) {
       showToast('切换账号成功', 'success')
       await loadCurrentAccount()
@@ -541,15 +483,15 @@ async function switchToSession(sessionId) {
 
 async function invalidateSession(sessionId) {
   if (!confirm('确定要使此会话失效吗？')) return
-  
+
   try {
     isInvalidatingSession.value = true
     const result = await api.user.invalidateSession(sessionId)
-    
+
     if (result.success && result.data.code === 200) {
       showToast('会话已失效', 'success')
       await loadSessions()
-      
+
       // If current session was invalidated, reload current account
       const currentSession = sessions.value.find(s => s.is_current && s.session_id === sessionId)
       if (currentSession) {
@@ -626,16 +568,16 @@ function getQRStatusText(status) {
 
 function formatTime(timeString) {
   if (!timeString) return '从未'
-  
+
   const time = new Date(timeString)
   const now = new Date()
   const diff = now - time
-  
+
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`
   if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`
   if (diff < 604800000) return `${Math.floor(diff / 86400000)} 天前`
-  
+
   return time.toLocaleDateString()
 }
 
@@ -643,7 +585,7 @@ function showToast(message, type = 'info') {
   toast.message = message
   toast.type = type
   toast.show = true
-  
+
   setTimeout(() => {
     hideToast()
   }, 5000)
@@ -653,4 +595,3 @@ function hideToast() {
   toast.show = false
 }
 </script>
-

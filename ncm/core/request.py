@@ -74,7 +74,8 @@ async def request(
         api_header = build_eapi_header(cookie_dict)
         headers["Cookie"] = cookie_dict_to_string(api_header)
         if options.crypto == CryptoType.EAPI:
-            api_header.pop("MUSIC_U") # 真实客户端中 header 中没有 MUSIC_U
+            if api_header.get("MUSIC_U"):
+                api_header.pop("MUSIC_U") # 真实客户端中 header 中没有 MUSIC_U
             request_data["header"] = json.dumps(api_header)
             request_data["e_r"] = options.encrypt_response
 
