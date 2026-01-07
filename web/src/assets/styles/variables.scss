@@ -56,10 +56,10 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --text-secondary: #{$color-gray-400};
   --text-tertiary: #{$color-gray-600};
   
-  --border-color: #{$color-gray-800};
-  --border-hover: #{$color-gray-700};
+  --border-color: #{$color-gray-700};
+  --border-hover: #{$color-gray-600};
   
-  --accent-color: #{$color-white};
+  --accent-color: #{$color-gray-100};
   --accent-fg: #{$color-black};
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -92,7 +92,7 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --border-color: #{$color-gray-200};
   --border-hover: #{$color-gray-300};
   
-  --accent-color: #{$color-black};
+  --accent-color: #{$color-gray-800};
   --accent-fg: #{$color-white};
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -105,7 +105,7 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 
   /* 侧边栏特定变量 - Light Mode (使用默认黑白风格) */
-  --sidebar-active-bg: #{$color-black};
+  --sidebar-active-bg: #{$color-gray-800};
   --sidebar-btn-bg: #{$color-gray-200};
   --sidebar-active-text: #{$color-white};
 }

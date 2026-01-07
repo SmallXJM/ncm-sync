@@ -64,8 +64,33 @@ import AppHeader from './AppHeader.vue'
     overflow-y: auto;
     /* Internal scroll */
     background: var(--bg-base);
+    transition: background-color 0.3s ease;
 
     /* 可选，让内容内部圆角跟随父元素 */
     // box-shadow: -8px -8px 56px rgba(0, 0, 0, 0.6);
+
+    /* 滚动条样式适配 */
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: $radius-full;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--text-secondary);
+        border-radius: $radius-full;
+        border: 2px solid transparent;
+        background-clip: content-box;
+        transition: background-color 0.3s ease;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: var(--text-primary);
+    }
 }
+
 </style>

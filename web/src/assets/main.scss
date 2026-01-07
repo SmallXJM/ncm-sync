@@ -1,7 +1,7 @@
 @use './styles/variables' as *;
-@import './base.scss';
-@import './styles/common.scss';
-@import './styles/components.scss';
+@use './base';
+@use './styles/common';
+@use './styles/components';
 
 /* 全局 App 调整 */
 body {

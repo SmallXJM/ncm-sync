@@ -135,12 +135,15 @@
 }
 .cookie-help {
   max-width: 600px;
+
 }
 .help-details {
   background: var(--bg-surface-hover);
   border-radius: 0.5rem;
   padding: var(--spacing-md);
   border: 1px solid var(--border-color);
+  transition: 0.3s ease;
+
 }
 .help-summary {
   font-weight: 600;
