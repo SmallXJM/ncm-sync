@@ -40,17 +40,17 @@ def build_eapi_header(cookie_dict: Dict[str, str]) -> Dict[str, str]:
     Build header-like cookie map used by API/EAPI flows.
     """
     header = {
-        "osver": cookie_dict.get("osver", ""),
-        "deviceId": cookie_dict.get("deviceId", ""),
         "os": cookie_dict.get("os", ""),
         "appver": cookie_dict.get("appver", ""),
+        "deviceId": cookie_dict.get("deviceId", ""),
+        "requestId": f"{int(__import__('time').time() * 1000)}_{__import__('random').randint(0,9999):04d}",
+        "osver": cookie_dict.get("osver", ""),
         "versioncode": "140",
         "mobilename": "",
         "buildver": str(int(__import__("time").time())),
         "resolution": "1920x1080",
         "__csrf": cookie_dict.get("__csrf", ""),
         "channel": cookie_dict.get("channel", "netease"),
-        "requestId": f"{int(__import__('time').time() * 1000)}_{__import__('random').randint(0,9999):04d}"
     }
     if cookie_dict.get("MUSIC_U"):
         header["MUSIC_U"] = cookie_dict["MUSIC_U"]
