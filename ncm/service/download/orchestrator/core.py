@@ -399,24 +399,6 @@ class DownloadOrchestrator:
                     return task
             await asyncio.sleep(0.1)
 
-    async def wait_for_task_dict(self, task_id: int) -> Optional[dict]:
-        """
-        等待任务完成并返回字典数据 (避免detached instance问题)
-        
-        Args:
-            task_id: 任务ID
-            
-        Returns:
-            完成的任务字典数据，如果任务不存在则返回None
-        """
-        while True:
-            async with self.uow_factory() as uow:
-                task = await self.task_repo.get_by_id(uow.session, task_id)
-                if not task:
-                    return None
-                if task.status in ["completed", "failed", "cancelled"]:
-                    return task.to_dict()
-            await asyncio.sleep(0.1)
 
     async def _execute_download_workflow(self, task_id: int, target_quality: str):
         """执行下载工作流"""
@@ -556,3 +538,15 @@ class DownloadOrchestrator:
         """关闭编排器并清理资源"""
         await self.downloader.close()
         logger.info("Download orchestrator closed")
+
+    def update_concurrency_settings(self, max_concurrent: int, max_threads: int):
+        """线程安全的更新并发设置"""
+        # 这里可以是简单的赋值，也可以包含更复杂的锁逻辑
+        if self.downloader:
+            if self.downloader.max_concurrent != max_concurrent:
+                logger.info(f"Updating max_concurrent: {self.downloader.max_concurrent} -> {max_concurrent}")
+                self.downloader.set_max_concurrent(max_concurrent)
+
+            if self.downloader.max_threads != max_threads:
+                logger.info(f"Updating max_threads: {self.downloader.max_threads} -> {max_threads}")
+                self.downloader.set_max_threads(max_threads)
