@@ -59,6 +59,17 @@ def main():
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     
+    # Ensure default config exists
+    from ncm.infrastructure.config import get_config_manager
+    cfgm = get_config_manager()
+    cfgm.ensure_loaded_sync()
+    import os as _os
+    cfg_path = cfgm.path()
+    if not _os.path.exists(cfg_path):
+        ok = cfgm.save_sync()
+        if ok:
+            print(f"已生成默认配置: {cfg_path}")
+    
     # Initialize database session manager
     from ncm.infrastructure.db.session import initialize_session_manager
     initialize_session_manager()

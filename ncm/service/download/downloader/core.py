@@ -41,6 +41,19 @@ class AudioDownloader:
             follow_redirects=True
         )
     
+    def set_max_concurrent(self, n: int):
+        """Update maximum concurrent downloads at runtime."""
+        n = max(1, int(n))
+        self.max_concurrent = n
+        self._download_semaphore = asyncio.Semaphore(n)
+    
+    def set_max_threads(self, n: int):
+        """Update default max threads per download at runtime."""
+        n = max(1, int(n))
+        self.max_threads = n
+    
+
+
     async def download(self, task_id: int) -> bool:
         """
         下载文件 - 使用任务ID

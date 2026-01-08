@@ -15,11 +15,17 @@ async def parse_request_params(request: Request) -> Dict[str, Any]:
     # Get JSON body (for POST requests)
     if request.method in ["POST", "PUT", "PATCH"]:
         try:
-            content_type = request.headers.get("content-type", "")
-            if "application/json" in content_type:
-                json_data = await request.json()
-                if isinstance(json_data, dict):
-                    params.update(json_data)
+            content_type = request.headers.get("content-type", "").lower()
+            # Try to parse as JSON if content-type is json or empty (fallback)
+            if "application/json" in content_type or not content_type:
+                try:
+                    json_data = await request.json()
+                    if isinstance(json_data, dict):
+                        params.update(json_data)
+                except Exception:
+                    # Ignore JSON parse errors if content type is empty
+                    if "application/json" in content_type:
+                        raise
             elif "application/x-www-form-urlencoded" in content_type:
                 form_data = await request.form()
                 params.update(dict(form_data))
