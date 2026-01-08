@@ -78,9 +78,11 @@ const { isNarrow } = useSidebar()
     // box-shadow: -8px -8px 56px rgba(0, 0, 0, 0.6);
 
     /* 滚动条样式适配 */
+    scrollbar-color: var(--text-secondary) transparent;
+
     &::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 12px;
+        height: 12px;
     }
 
     &::-webkit-scrollbar-track {
