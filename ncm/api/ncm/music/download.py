@@ -26,6 +26,10 @@ class DownloadController:
         )
         self.process = DownloadProcess(self.orchestrator)
 
+        from ncm.service.download.orchestrator.scheduler import ProcessScheduler
+        self._scheduler = ProcessScheduler(self.process)
+        self._scheduler.start_scheduler()
+
     # ===== JOB MANAGEMENT =====
 
     @ncm_service("/ncm/download/job/create", ["GET", "POST"])
@@ -120,7 +124,7 @@ class DownloadController:
                 }
             )
 
-    @ncm_service("/ncm/download/job/process", ["GET", "POST"])
+    @ncm_service("/ncm/download/job/process/run", ["GET", "POST"])
     async def job_process(self, **kwargs) -> APIResponse:
         """start process for a job."""
         try:
@@ -146,6 +150,156 @@ class DownloadController:
                     "message": f"Failed to run for job process: {str(e)}"
                 }
             )
+
+    @ncm_service("/ncm/download/job/process/start", ["GET", "POST"])
+    async def job_process_start(self, batch_size: int = 10, **kwargs) -> APIResponse:
+        try:
+            started = await self.process.start(batch_size=batch_size)
+            status = self.process.get_status()
+            return APIResponse(
+                status=202 if started else 200,
+                body={
+                    "code": 202 if started else 200,
+                    "message": "Process started" if started else "Process already running",
+                    "data": status
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to start job process")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to start: {str(e)}"
+                }
+            )
+
+    @ncm_service("/ncm/download/job/process/status", ["GET"])
+    async def job_process_status(self, **kwargs) -> APIResponse:
+        try:
+            status = self.process.get_status()
+            return APIResponse(
+                status=200,
+                body={
+                    "code": 200,
+                    "message": "Process status",
+                    "data": status
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to get process status")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to get status: {str(e)}"
+                }
+            )
+
+    @ncm_service("/ncm/download/scheduler/set_cron", ["POST"])
+    async def scheduler_set_cron(self, cron_expr: str, batch_size: int = 10, **kwargs) -> APIResponse:
+        try:
+            ok = self._scheduler.set_cron(cron_expr, batch_size=batch_size)
+            return APIResponse(
+                status=200,
+                body={
+                    "code": 200,
+                    "message": "Cron set" if ok else "Failed to set cron",
+                    "data": {
+                        "cron": cron_expr,
+                        "batch_size": batch_size,
+                        "next_run_time": self._scheduler.next_run_time()
+                    }
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to set scheduler cron")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to set cron: {str(e)}"
+                }
+            )
+
+    @ncm_service("/ncm/download/scheduler/start", ["GET", "POST"])
+    async def scheduler_start(self, **kwargs) -> APIResponse:
+        try:
+            ok = self._scheduler.enable()
+            return APIResponse(
+                status=200 if ok else 400,
+                body={
+                    "code": 200 if ok else 400,
+                    "message": "Schedule enabled" if ok else "Cron not set",
+                    "data": {
+                        "next_run_time": self._scheduler.next_run_time()
+                    }
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to start scheduler")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to start scheduler: {str(e)}"
+                }
+            )
+
+    @ncm_service("/ncm/download/scheduler/stop", ["GET", "POST"])
+    async def scheduler_stop(self, **kwargs) -> APIResponse:
+        try:
+            ok = self._scheduler.disable()
+            return APIResponse(
+                status=200,
+                body={
+                    "code": 200,
+                    "message": "Schedule disabled" if ok else "No schedule",
+                    "data": {
+                        "next_run_time": self._scheduler.next_run_time()
+                    }
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to stop scheduler")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to stop scheduler: {str(e)}"
+                }
+            )
+
+    @ncm_service("/ncm/download/scheduler/next_run", ["GET"])
+    async def scheduler_next_run(self, **kwargs) -> APIResponse:
+        try:
+            next_run = self._scheduler.next_run_time()
+            return APIResponse(
+                status=200,
+                body={
+                    "code": 200,
+                    "message": "Next run time",
+                    "data": {
+                        "next_run_time": next_run
+                    }
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to get next run time")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to get next run time: {str(e)}"
+                }
+            )
+    async def cleanup(self):
+        try:
+            if hasattr(self, "_scheduler") and self._scheduler:
+                await self._scheduler.cleanup()
+        except Exception:
+            pass
+        await self.orchestrator.close()
 
     @ncm_service("/ncm/download/job/submit_batch", ["POST"])
     async def submit_job_batch(self, job_id: int, music_ids: List[str], **kwargs) -> APIResponse:
@@ -616,6 +770,4 @@ class DownloadController:
                 }
             )
 
-    async def cleanup(self):
-        """Cleanup orchestrator resources."""
-        await self.orchestrator.close()
+    # removed duplicate cleanup at end of class; unified earlier cleanup handles scheduler and orchestrator

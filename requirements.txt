@@ -16,6 +16,9 @@ qrcode[pil]
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 
+# Scheduler for cron-based process triggering
+APScheduler>=3.10.4
+
 # Database ORM
 sqlalchemy>=2.0.0
 aiosqlite>=0.19.0
