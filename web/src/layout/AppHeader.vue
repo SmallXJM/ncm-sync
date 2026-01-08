@@ -100,9 +100,9 @@ const toggleSidebar = () => {
 }
 
 .sidebar-toggle {
-    width: 40px;
-    height: 40px;
-    border-radius: $radius-sm;
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-lg;
     border: 1px solid var(--border-color);
     background: var(--bg-surface);
     color: var(--text-secondary);

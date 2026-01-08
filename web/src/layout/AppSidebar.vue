@@ -272,7 +272,7 @@ onMounted(() => {
 .theme-toggle {
     width: 40px;
     height: 40px;
-    border-radius: $radius-sm;
+    border-radius: $radius-lg;
     border: 1px solid var(--border-color);
     background: var(--bg-surface);
     color: var(--text-secondary);
