@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 from ncm.infrastructure.db.async_session import get_uow_factory
+from ncm.infrastructure.db.models import DownloadJob
 from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
 from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDownloadJobRepository
 from ncm.infrastructure.db.models.download_task import TaskProgress
@@ -35,7 +36,7 @@ class AsyncJobService:
     async def set_job_status_completed(self, job_id: int):
         await self.update_job_status(job_id, "completed")
 
-    async def get_job_all_enabled(self) -> list[AsyncDownloadJob]:
+    async def get_job_all_enabled(self) -> list[DownloadJob]:
         async with self.uow_factory() as uow:
             jobs = await self.job_repo.get_all_enabled(uow.session)
             return jobs

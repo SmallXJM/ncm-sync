@@ -20,7 +20,21 @@ const router = createRouter({
         title: '账号管理',
       },
     },
+    {
+      path: '/config',
+      name: 'config',
+      component: () => import('../views/ConfigView.vue'),
+      meta: {
+        title: '设置',
+      },
+    },
   ],
+})
+
+// 设置浏览器标签页标题
+router.afterEach((to) => {
+  const title = to.meta.title ?? 'ncm-sync'
+  document.title = `${title} - ncm sync`
 })
 
 export default router

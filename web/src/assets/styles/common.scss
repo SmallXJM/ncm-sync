@@ -3,11 +3,13 @@
 
 /* 页面基础布局 */
 .page {
-  min-height: 100vh;
+  height: auto;
   background: var(--bg-body);
-  color: var(--text-primary);
   padding: var(--spacing-xl) 0;
+  color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .page-header {

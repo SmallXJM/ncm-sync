@@ -50,28 +50,38 @@ const { isNarrow } = useSidebar()
 
 .layout__content-wrapper {
     flex: 1;
-    overflow: hidden;
+    /* 占满剩余高度 */
     position: relative;
     z-index: 850;
-    /* Higher than Sidebar (800), Lower than Header (900) */
-    /* This shadow is now fixed and won't move with scroll */
-    // box-shadow: -8px -8px 56px rgba(0, 0, 0, 0.6);
-    // background: var(--bg-base);
-    // border-top-left-radius: 56px;
-    /* White content area */
-    /* 12px or use 8px as requested */
+    min-height: 0;
+    // --- 核心修改开始 ---
+
+    // 2. 制造悬浮感：通过 margin 设置左、右、底部的间距
+    // 这里的 16px 是间距大小，你可以根据需要调整
+    // margin-top: 0 意味着紧贴 Header
+    margin: 0 8px 8px 0;
+
+    // 3. 模块化外观：必须给 Wrapper 一个背景色，否则它是透明的
+    background: var(--bg-surface, #ffffff); // 假设你有一个亮色的背景变量，否则默认白色
+
+    // 4. 圆角与阴影
+    border-radius: $radius-lg; // 设置四周圆角
     box-shadow: var(--shadow-ly);
 
-    border-top-left-radius: $radius-md;
-    border-bottom-left-radius: $radius-md;
-    /* 让阴影圆角生效 */
+    // 5. 溢出处理：确保圆角不被内部内容遮挡，且限制滚动区域在卡片内
+    overflow: hidden;
+    display: flex; // 让内部的 content 能够继承高度
+    flex-direction: column;
+
+    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+
 }
 
 .layout__content {
-    height: 100%;
+    flex: 1;
     overflow-y: auto;
     /* Internal scroll */
-    background: var(--bg-base);
+    background: var(--bg-body);
     transition: background-color 0.3s ease;
 
     /* 可选，让内容内部圆角跟随父元素 */
@@ -102,5 +112,4 @@ const { isNarrow } = useSidebar()
         background-color: var(--text-primary);
     }
 }
-
 </style>

@@ -14,6 +14,13 @@
             </router-link>
         </nav>
 
+        <div class="sidebar__setting">
+            <router-link to="/config" class="menu-item" title="设置">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" fill-rule="evenodd"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M16 15c1.306 0 2.418.835 2.83 2H20a1 1 0 1 1 0 2h-1.17a3.001 3.001 0 0 1-5.66 0H4a1 1 0 1 1 0-2h9.17A3 3 0 0 1 16 15m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2M8 9a3 3 0 0 1 2.762 1.828l.067.172H20a1 1 0 0 1 .117 1.993L20 13h-9.17a3.001 3.001 0 0 1-5.592.172L5.17 13H4a1 1 0 0 1-.117-1.993L4 11h1.17A3 3 0 0 1 8 9m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2m8-8c1.306 0 2.418.835 2.83 2H20a1 1 0 1 1 0 2h-1.17a3.001 3.001 0 0 1-5.66 0H4a1 1 0 0 1 0-2h9.17A3 3 0 0 1 16 3m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2"/></g></svg>
+                <span class="menu-text">设置</span>
+            </router-link>
+        </div>
+
         <div class="sidebar__footer">
             <button class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到浅色模式' : '切换到深色模式'">
                 <!-- Sun Icon -->
@@ -76,6 +83,38 @@ const UserIcon = h('svg', {
     h('circle', { cx: '12', cy: '7', r: '4' })
 ])
 
+const SettingsIcon = h('svg', {
+    xmlns: 'http://www.w3.org/2000/svg',
+    width: '20',
+    height: '20',
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round'
+}, [
+    h('circle', { cx: '12', cy: '12', r: '3' }),
+    h('path', {
+        d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83' +
+            ' 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33' +
+            ' 1.65 1.65 0 0 0-1 1.51V22a2 2 0 0 1-2 2' +
+            ' 2 2 0 0 1-2-2v-.09a1.65 1.65 0 0 0-1-1.51' +
+            ' 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0' +
+            ' 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15' +
+            ' 1.65 1.65 0 0 0 3.09 14H3a2 2 0 0 1-2-2' +
+            ' 2 2 0 0 1 2-2h.09a1.65 1.65 0 0 0 1.51-1' +
+            ' 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83' +
+            ' 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6' +
+            ' 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 2-2' +
+            ' 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51' +
+            ' 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0' +
+            ' 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82' +
+            ' 1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 2 2' +
+            ' 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'
+    })
+])
+
 interface MenuItem {
     title: string
     path: string
@@ -84,7 +123,8 @@ interface MenuItem {
 
 const menus: MenuItem[] = [
     { title: '首页', path: '/', icon: HomeIcon },
-    { title: '账号管理', path: '/account', icon: UserIcon }
+    { title: '账号管理', path: '/account', icon: UserIcon },
+    // { title: '设置', path: '/config', icon: SettingsIcon }
 ]
 
 const isDark = ref(false)
@@ -217,6 +257,12 @@ onMounted(() => {
     /* 占据剩余空间，将 footer 推到底部 */
 }
 
+.sidebar__setting {
+    width: 100%;
+
+    // 这样它就会完全继承 .menu-item 的所有样式（高度、悬浮效果、圆角等）
+}
+
 .menu-item {
     padding: $space-sm $space-md;
     border-radius: $radius-sm;
@@ -263,16 +309,16 @@ onMounted(() => {
     padding-top: $space-sm;
     border-top: 1px solid var(--border-color);
     display: flex;
-    justify-content: flex-end;
+    // justify-content: flex-end;
     transition: border-color 0.3s ease, gap 0.3s ease, padding 0.3s ease;
     width: 100%;
 
 }
 
 .theme-toggle {
-    width: 40px;
+    width: 100%;
     height: 40px;
-    border-radius: $radius-sm;
+    border-radius: $radius-lg;
     border: 1px solid var(--border-color);
     background: var(--bg-surface);
     color: var(--text-secondary);
