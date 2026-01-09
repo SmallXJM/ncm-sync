@@ -3,7 +3,7 @@ import json
 import os
 import asyncio
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, validator, root_validator, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class DownloadSettings(BaseModel):

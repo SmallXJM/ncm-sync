@@ -4,6 +4,7 @@ import asyncio
 from typing import Dict, Any, Optional
 
 from ncm.service.auth import AuthenticationService
+from ncm.service.auth.authentication import upload_and_validate_cookie, validate_cookie_only
 from ncm.service.cookie import get_cookie_manager, with_cookie
 from ncm.infrastructure.db import AccountRepository
 from ncm.infrastructure.db.session import get_session
@@ -81,57 +82,7 @@ class AuthController:
                 }
             )
 
-    @ncm_service("/ncm/user/cookie/batch-upload", ["POST"])
-    async def batch_upload_cookies(self, cookies: list, **kwargs) -> APIResponse:
-        """Batch upload and validate multiple cookies."""
-        try:
-            result = await batch_upload_cookies(
-                cookies, self, **kwargs
-            )
-            
-            return APIResponse(
-                status=200,
-                body={
-                    "code": result["code"],
-                    "message": result["message"],
-                    "data": result.get("data")
-                }
-            )
 
-        except Exception as e:
-            logger.error(f"批量上传 Cookie 失败: {str(e)}")
-            return APIResponse(
-                status=500,
-                body={
-                    "code": 500,
-                    "message": f"批量上传失败: {str(e)}"
-                }
-            )
-
-    @ncm_service("/ncm/user/cookies/list", ["GET"])
-    def list_available_cookies(self) -> APIResponse:
-        """List all available cookies with their account information."""
-        try:
-            result = self.auth_service.list_available_cookies()
-            
-            return APIResponse(
-                status=200,
-                body={
-                    "code": result["code"],
-                    "message": result["message"],
-                    "data": result.get("data")
-                }
-            )
-
-        except Exception as e:
-            logger.error(f"获取 Cookie 列表失败: {str(e)}")
-            return APIResponse(
-                status=500,
-                body={
-                    "code": 500,
-                    "message": f"获取 Cookie 列表失败: {str(e)}"
-                }
-            )
 
     # ==================== QR Login ====================
     

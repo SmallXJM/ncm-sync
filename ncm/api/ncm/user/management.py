@@ -89,7 +89,7 @@ class ManagementController:
                         }
                     )
                 
-                if not session_obj['is_valid']:
+                if not session_obj.is_valid:
                     return APIResponse(
                         status=400,
                         body={
@@ -98,55 +98,55 @@ class ManagementController:
                         }
                     )
             
-            # Verify the session is still valid with API
-            from .auth import AuthController
-            auth_controller = AuthController()
-            kwargs_with_cookie = {"cookie": session_obj['cookie']}
-            login_status_response = await auth_controller.get_login_status(**kwargs_with_cookie)
-            
-            login_status = None
-            if login_status_response.success:
-                login_status = login_status_response.body.get("data", {})
-            
-            if not login_status or not login_status.get("logged_in", False):
-                # Mark session as invalid
-                self.cookie_service.invalidate_session(session_id)
-                return APIResponse(
-                    status=400,
-                    body={
-                        "code": 400,
-                        "message": "会话已过期"
-                    }
-                )
-            
-            # Use service service to switch
-            result = self.user_service.switch_to_session(session_id)
-            
-            if result["success"]:
-                # Get account info
-                with get_session() as db_session:
-                    account = self.account_repo.get_account_by_id(db_session, session_obj['account_id'])
+                # Verify the session is still valid with API
+                from .auth import AuthController
+                auth_controller = AuthController()
+                kwargs_with_cookie = {"cookie": session_obj.cookie}
+                login_status_response = await auth_controller.get_login_status(**kwargs_with_cookie)
                 
-                return APIResponse(
-                    status=200,
-                    body={
-                        "code": 200,
-                        "message": f"已切换到用户 {account['nickname'] or account['account_id']}",
-                        "data": {
-                            "account": account,
-                            "session_info": self.cookie_service.get_current_session_info(),
-                            "login_status": login_status
+                login_status = None
+                if login_status_response.success:
+                    login_status = login_status_response.body.get("data", {})
+                
+                if not login_status or not login_status.get("logged_in", False):
+                    # Mark session as invalid
+                    self.cookie_service.invalidate_session(session_id)
+                    return APIResponse(
+                        status=400,
+                        body={
+                            "code": 400,
+                            "message": "会话已过期"
                         }
-                    }
-                )
-            else:
-                return APIResponse(
-                    status=result.get("code", 500),
-                    body={
-                        "code": result["code"],
-                        "message": result["message"]
-                    }
-                )
+                    )
+                
+                # Use service service to switch
+                result = self.user_service.switch_to_session(session_id)
+                
+                if result["success"]:
+                    # Get account info
+                    with get_session() as db_session:
+                        account = self.account_repo.get_account_by_id(db_session, session_obj.account_id)
+                    
+                        return APIResponse(
+                            status=200,
+                            body={
+                                "code": 200,
+                                "message": f"已切换到用户 {account.nickname or account.account_id}",
+                                "data": {
+                                    "account": account.to_dict(),
+                                    "session_info": self.cookie_service.get_current_session_info().to_dict(),
+                                    "login_status": login_status
+                                }
+                            }
+                        )
+                else:
+                    return APIResponse(
+                        status=result.get("code", 500),
+                        body={
+                            "code": result["code"],
+                            "message": result["message"]
+                        }
+                    )
             
         except Exception as e:
             logger.exception(f"切换会话失败: {str(e)}")
@@ -184,7 +184,7 @@ class ManagementController:
                         "account": account,
                         "sessions": sessions,
                         "session_count": len(sessions),
-                        "valid_sessions": len([s for s in sessions if s['is_valid']])
+                        "valid_sessions": len([s for s in sessions if s.is_valid])
                     }
                 }
             )

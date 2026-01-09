@@ -194,15 +194,15 @@ class UserManagementService:
                 "code": 200,
                 "message": f"获取会话列表成功，共 {len(sessions)} 个会话",
                 "data": {
-                    "sessions": sessions,
+                    "sessions": [s.to_dict() for s in sessions if s.is_valid],
                     "current_session_id": current_session_id,
                     "total_sessions": len(sessions),
-                    "valid_sessions": len([s for s in sessions if s["is_valid"]])
+                    "valid_sessions": len([s for s in sessions if s.is_valid])
                 }
             }
 
         except Exception as e:
-            logger.error(f"获取会话列表失败: {str(e)}")
+            logger.exception(f"获取会话列表失败: {str(e)}")
             return {
                 "success": False,
                 "code": 500,

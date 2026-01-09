@@ -3,27 +3,16 @@
     <main>
       <div class="container">
 
-        <!-- 加载中状态 -->
         <div v-if="isLoading && !originalConfig" class="text-center py-2xl">
           <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
           <p class="text-secondary">正在加载配置...</p>
         </div>
 
-        <!-- 配置表单区域 -->
         <div v-else-if="draftConfig && originalConfig" class="config-layout">
           <aside class="glass-card config-sidebar">
-            <div class="config-sidebar-header">
-              <div class="config-sidebar-title">配置分组</div>
-            </div>
             <nav class="config-nav">
-              <button
-                v-for="group in configGroups"
-                :key="group.id"
-                class="config-nav-item"
-                :class="{ active: activeGroupId === group.id }"
-                @click="activeGroupId = group.id"
-                type="button"
-              >
+              <button v-for="group in configGroups" :key="group.id" class="config-nav-item"
+                :class="{ active: activeGroupId === group.id }" @click="activeGroupId = group.id" type="button">
                 <span class="config-nav-item-text">{{ group.title }}</span>
               </button>
             </nav>
@@ -45,23 +34,18 @@
                 <div class="item-control">
                   <template v-if="field.control.type === 'cronToggle'">
                     <label class="switch">
-                      <input
-                        type="checkbox"
-                        :checked="getDraftValue(field.path) !== null"
-                        @change="toggleCron"
-                      />
-                      <span class="switch-slider"></span>
+                      <input type="checkbox" :checked="getDraftValue(field.path) !== null" @change="toggleCron" />
+                      <span class="switch-track"></span>
+                      <span class="switch-handle"></span>
                     </label>
                   </template>
 
                   <template v-else-if="field.control.type === 'text'">
                     <div class="w-full">
-                      <input
-                        :value="String(getDraftValue(field.path) ?? '')"
+                      <input :value="String(getDraftValue(field.path) ?? '')"
                         :class="['input', 'w-full', field.control.mono ? 'mono' : '']"
                         :placeholder="field.control.placeholder"
-                        @input="(e) => setDraftText(field.path, (e.target as HTMLInputElement).value)"
-                      />
+                        @input="(e) => setDraftText(field.path, (e.target as HTMLInputElement).value)" />
                       <div v-if="errors[field.path]" class="field-error">
                         {{ errors[field.path] }}
                       </div>
@@ -70,32 +54,26 @@
 
                   <template v-else-if="field.control.type === 'intRange'">
                     <div class="range-control">
-                      <input
-                        type="range"
-                        class="range-slider"
+                      <input type="range" class="range-slider" 
+                        step="0.01"
                         :min="getIntRangeMin(field.control)"
-                        :max="getIntRangeMax(field.control)"
-                        :value="Number(getDraftValue(field.path))"
+                        :max="getIntRangeMax(field.control)" 
+                        :value="getLocalSliderValue(field.path)"
                         :style="getRangeStyle(field)"
-                        @input="(e) => setDraftInt(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))"
-                      >
-                      <input
-                        class="input range-input"
-                        type="number"
+                        @input="(e) => handleSliderInput(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))">
+                      
+                      <input class="input range-input" type="number" 
                         :min="getIntRangeMin(field.control)"
-                        :max="getIntRangeMax(field.control)"
+                        :max="getIntRangeMax(field.control)" 
                         :value="Number(getDraftValue(field.path))"
-                        @input="(e) => setDraftInt(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))"
-                      />
+                        @input="(e) => setDraftInt(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))" />
                     </div>
                   </template>
                 </div>
               </div>
 
-              <div
-                v-if="isFieldVisible(field) && field.control.type === 'intRange' && errors[field.path]"
-                class="field-error text-right"
-              >
+              <div v-if="isFieldVisible(field) && field.control.type === 'intRange' && errors[field.path]"
+                class="field-error text-right">
                 {{ errors[field.path] }}
               </div>
             </template>
@@ -104,7 +82,6 @@
       </div>
     </main>
 
-    <!-- 浮动操作栏 -->
     <div class="action-bar" :class="{ visible: isDirty }">
       <div class="action-info">
         <div class="changed-dot"></div>
@@ -118,7 +95,6 @@
       </div>
     </div>
 
-    <!-- 全局 Toast -->
     <div v-if="toast.show" class="toast" :class="toast.type">
       <div class="toast-content">
         <span>{{ toast.message }}</span>
@@ -140,6 +116,7 @@ import {
   type NcmConfigGroupSchema,
 } from '@/utils/configValidation'
 
+// ... 保持原有 interface 定义不变 ...
 interface ApiEnvelope<T> {
   code: number
   message: string
@@ -176,6 +153,9 @@ const originalConfig = ref<NcmConfig | null>(null)
 const draftConfig = ref<NcmConfigDraft | null>(null)
 const errors = reactive<ConfigValidationErrors>({})
 
+// 【新增】本地滑块状态，Key为字段path，Value为浮点数
+const localSliderValues = reactive<Record<string, number>>({})
+
 const configGroups = NCM_CONFIG_UI_SCHEMA
 const activeGroupId = ref(configGroups[0]?.id ?? '')
 const activeGroup = computed<NcmConfigGroupSchema | null>(() => {
@@ -188,7 +168,6 @@ const toast = reactive<Toast>({
   type: 'info',
 })
 
-// 计算整个配置是否脏了
 const isDirty = computed(() => {
   if (!originalConfig.value || !draftConfig.value) return false
   return JSON.stringify(originalConfig.value) !== JSON.stringify(draftConfig.value)
@@ -200,16 +179,23 @@ onMounted(() => {
   reload()
 })
 
-// 实时校验
+// 实时校验 + 【新增】本地状态同步
 watch(
   draftConfig,
   (next) => {
     Object.keys(errors).forEach((k) => delete errors[k])
     if (!next) return
+    
     const nextErrors = validateNcmConfigDraft(next)
     Object.entries(nextErrors).forEach(([k, v]) => {
       errors[k] = v
     })
+
+    // 【新增】当 draftConfig 变化时（例如通过数字输入框修改，或 reset），
+    // 检查是否需要同步到 localSliderValues。
+    // 逻辑：如果 local 值的四舍五入结果 不等于 新的 draft 值，说明是外部修改，强制同步。
+    // 这样可以防止：滑动时 -> 修改 draft -> watcher 触发 -> 强制把 local 设为整数 -> 滑块顿挫。
+    syncLocalFromDraft()
   },
   { deep: true },
 )
@@ -226,7 +212,6 @@ function getValueByPath(obj: unknown, path: string): unknown {
   return current
 }
 
-// 辅助函数：设置嵌套属性值
 function setValueByPath(obj: unknown, path: string, value: unknown): void {
   if (!obj || typeof obj !== 'object') return
   const parts = path.split('.')
@@ -245,6 +230,53 @@ function setValueByPath(obj: unknown, path: string, value: unknown): void {
 function getDraftValue(path: string): unknown {
   if (!draftConfig.value) return null
   return getValueByPath(draftConfig.value, path)
+}
+
+// 【新增】获取本地滑块值，如果本地没有初始化，回退到 draftConfig
+function getLocalSliderValue(path: string): number {
+  if (localSliderValues[path] !== undefined) {
+    return localSliderValues[path]
+  }
+  return Number(getDraftValue(path)) || 0
+}
+
+// 【新增】将 Draft 中的所有 intRange 值同步到 localSliderValues
+function syncLocalFromDraft() {
+  if (!draftConfig.value) return
+  
+  // 遍历配置结构找到所有 intRange
+  configGroups.forEach(group => {
+    group.fields.forEach(field => {
+      if (field.control.type === 'intRange') {
+        const draftVal = Number(getDraftValue(field.path))
+        const localVal = localSliderValues[field.path]
+        
+        // 关键逻辑：
+        // 1. 如果本地还没值 (undefined)，直接同步
+        // 2. 如果本地值四舍五入后不等于 draft 值，说明 draft 发生了非滑动产生的变化（如输入框修改、重置），需要同步
+        if (localVal === undefined || Math.round(localVal) !== draftVal) {
+          localSliderValues[field.path] = draftVal
+        }
+      }
+    })
+  })
+}
+
+// 【新增】处理滑块滑动：实现无顿挫滑动的核心
+function handleSliderInput(path: string, rawValue: string, min: number) {
+  const floatVal = parseFloat(rawValue)
+  
+  // 1. 立即更新本地值，保证滑块和背景条完全跟手（无顿挫）
+  localSliderValues[path] = floatVal
+
+  // 2. 计算整数逻辑值
+  const intVal = Math.round(floatVal)
+  
+  // 3. 只有当整数值真正改变时才更新 Draft（减少抖动和性能消耗）
+  const currentDraftVal = Number(getDraftValue(path))
+  if (currentDraftVal !== intVal) {
+    setDraftInt(path, String(intVal), min)
+  }
 }
 
 function setDraftText(path: string, value: string): void {
@@ -275,15 +307,21 @@ function isFieldVisible(field: NcmConfigFieldSchema): boolean {
   return value === rule.value
 }
 
+// 【修改】样式计算现在依赖 localSliderValues 里的浮点数
 function getRangeStyle(field: NcmConfigFieldSchema): Record<string, string> {
   if (field.control.type !== 'intRange') return {}
+  
   const min = field.control.min
   const max = field.control.max
-  const value = Number(getDraftValue(field.path))
+  // 使用 getLocalSliderValue 获取精确的浮点数位置
+  const value = getLocalSliderValue(field.path)
+  
   const clamped = Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min
   const percent = max === min ? 0 : ((clamped - min) / (max - min)) * 100
+
   return {
-    background: `linear-gradient(to right, var(--range-fill) 0%, var(--range-fill) ${percent}%, var(--range-track) ${percent}%, var(--range-track) 100%)`,
+    '--range-percent': `${percent}%`,
+    background: `linear-gradient(to right, var(--range-fill) 0%, var(--range-fill) ${percent}%, var(--range-track) ${percent}%, var(--range-track) 100%)`
   }
 }
 
@@ -306,6 +344,10 @@ async function reload(): Promise<void> {
 
     originalConfig.value = payload.data
     draftConfig.value = deepClone(payload.data) as NcmConfigDraft
+    
+    // 初始化本地滑块值
+    syncLocalFromDraft()
+
     if (!activeGroupId.value) activeGroupId.value = configGroups[0]?.id ?? ''
   } catch (error) {
     console.error('Failed to load config:', error)
@@ -318,6 +360,8 @@ async function reload(): Promise<void> {
 function resetDraft(): void {
   if (!originalConfig.value) return
   draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
+  // 重置时同步本地滑块
+  syncLocalFromDraft()
   showToast('已放弃所有未保存的修改', 'info')
 }
 
@@ -327,7 +371,6 @@ function toggleCron(event: Event): void {
   if (!checked) {
     draftConfig.value.download.cron_expr = null
   } else {
-    // 恢复为原来的值，或者默认值
     const originalCron = originalConfig.value?.download.cron_expr
     draftConfig.value.download.cron_expr = originalCron || '0 2 * * *'
   }
@@ -361,6 +404,9 @@ async function save(): Promise<void> {
 
     originalConfig.value = payload.data
     draftConfig.value = deepClone(payload.data) as NcmConfigDraft
+    // 保存后同步一次（虽然理论上值一样，但保持一致性）
+    syncLocalFromDraft()
+    
     showToast('配置已保存并生效', 'success')
   } catch (error) {
     console.error('Failed to save config:', error)
@@ -387,20 +433,23 @@ function hideToast(): void {
 </script>
 
 <style scoped>
-/* 局部样式补充，大部分样式已在 components.scss 中定义 */
 .w-full {
   width: 100%;
 }
+
 .text-right {
   text-align: right;
 }
+
 .mt-xs {
   margin-top: var(--spacing-xs);
 }
+
 .px-xs {
   padding-left: 4px;
   padding-right: 4px;
 }
+
 .rounded {
   border-radius: 4px;
 }

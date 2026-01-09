@@ -1,9 +1,6 @@
 <template>
-  <div class="page" style="display: flex; align-items: center; justify-content: center; padding: 2rem;">
-    <div class="hero-section">
+  <div class="page">
 
-
-    </div>
   </div>
 </template>
 
