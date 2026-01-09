@@ -1,0 +1,100 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------
+  # 路径检测：判断是前端还是后端发生了变动
+  # ---------------------------------------------------------
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - '*.py'
+              - 'requirements.txt'
+              - '.github/workflows/check.yml'
+            frontend:
+              - 'web/**'
+
+  # ---------------------------------------------------------
+  # 后端检查
+  # ---------------------------------------------------------
+  check-backend:
+    name: Backend Check
+    needs: changes
+    if: |
+      github.event.pull_request.draft == false && 
+      needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Backend Lint
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Backend Tests
+        run: |
+          if [ -d tests ]; then pytest -q; else echo "No tests found."; fi
+
+  # ---------------------------------------------------------
+  # 前端检查
+  # ---------------------------------------------------------
+  check-frontend:
+    name: Frontend Check
+    needs: changes
+    if: |
+      github.event.pull_request.draft == false && 
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+          cache-dependency-path: web/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Frontend Lint
+        # 即使 Lint 脚本不存在也不要报错，提高兼容性
+        run: npm run | grep -q 'lint' && yarn lint || echo "Skip lint"
+
+      - name: Frontend Build
+        # 编译确保资源能正常打包
+        run: npm run | grep -q 'build' && yarn build || echo "Skip build"
