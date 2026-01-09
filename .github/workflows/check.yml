@@ -27,7 +27,7 @@ jobs:
         with:
           filters: |
             backend:
-              - '*.py'
+              - '**/*.py'
               - 'requirements.txt'
               - '.github/workflows/check.yml'
             frontend:
