@@ -7,6 +7,6 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // Home page - NCM Control Panel
 </script>

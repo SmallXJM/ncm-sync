@@ -226,22 +226,71 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 // 直接导入服务类
 import api from '@/api'
 
+// ----------------------
+// 类型定义
+// ----------------------
+interface Account {
+  account_id: string
+  nickname?: string
+  avatar_url?: string
+  status: 'active' | 'disabled' | 'banned' | string
+}
+
+interface Session {
+  session_id: string
+  login_type?: string
+  nickname?: string
+  avatar_url?: string
+  last_selected_at?: string
+  is_current?: boolean
+  is_valid?: boolean
+  account?: Account
+}
+
+interface QRCode {
+  key: string
+  qr_img: string
+  status: 'idle' | 'waiting_scan' | 'waiting_confirm' | 'success' | 'expired'
+  message: string
+}
+
+interface Toast {
+  show: boolean
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
+}
+
+interface ApiEnvelope<T> {
+  code: number
+  message?: string
+  data?: T
+}
+
+function getEnvelope<T>(value: unknown): ApiEnvelope<T> | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  if (typeof record.code !== 'number') return null
+  return record as unknown as ApiEnvelope<T>
+}
+
+// ----------------------
 // Reactive data
-const currentAccount = ref(null)
-const currentSession = ref(null)
-const sessions = ref([])
+// ----------------------
+const currentAccount = ref<Account | null>(null)
+const currentSession = ref<Session | null>(null)
+const sessions = ref<Session[]>([])
 const cookieInput = ref('')
 
 // QR Code state
-const qrCode = reactive({
+const qrCode = reactive<QRCode>({
   key: '',
   qr_img: '',
-  status: 'idle', // idle, waiting_scan, waiting_confirm, success, expired
+  status: 'idle',
   message: ''
 })
 
@@ -255,35 +304,37 @@ const isSwitchingSession = ref(false)
 const isInvalidatingSession = ref(false)
 
 // Toast notification
-const toast = reactive({
+const toast = reactive<Toast>({
   show: false,
   message: '',
-  type: 'info' // info, success, warning, error
+  type: 'info'
 })
 
 // QR polling timer
-let qrPollingTimer = null
+let qrPollingTimer: number | null = null
 
-// Lifecycle
+// ----------------------
+// Lifecycle hooks
+// ----------------------
 onMounted(() => {
   loadCurrentAccount()
   loadSessions()
 })
 
 onUnmounted(() => {
-  if (qrPollingTimer) {
-    clearInterval(qrPollingTimer)
-  }
+  if (qrPollingTimer) clearInterval(qrPollingTimer)
 })
 
+// ----------------------
 // Methods
-async function loadCurrentAccount() {
+// ----------------------
+async function loadCurrentAccount(): Promise<void> {
   try {
     const result = await api.user.getCurrentUser()
-
-    if (result.success && result.data.code === 200 && result.data.data) {
-      currentAccount.value = result.data.data.account
-      currentSession.value = result.data.data.session
+    const payload = getEnvelope<{ account: Account; session: Session }>(result.success ? result.data : null)
+    if (result.success && payload?.code === 200 && payload.data) {
+      currentAccount.value = payload.data.account
+      currentSession.value = payload.data.session
     } else {
       currentAccount.value = null
       currentSession.value = null
@@ -294,15 +345,16 @@ async function loadCurrentAccount() {
   }
 }
 
-async function loadSessions() {
+async function loadSessions(): Promise<void> {
   try {
     isRefreshingSessions.value = true
     const result = await api.user.getSessionsList()
-
-    if (result.success && result.data.code === 200) {
-      sessions.value = result.data.data.sessions.map(session => ({
+    const payload = getEnvelope<{ sessions: Session[]; current_session_id: string }>(result.success ? result.data : null)
+    if (result.success && payload?.code === 200 && payload.data) {
+      const currentSessionId = payload.data.current_session_id
+      sessions.value = payload.data.sessions.map((session: Session) => ({
         ...session,
-        is_current: session.session_id === result.data.data.current_session_id
+        is_current: session.session_id === currentSessionId,
       }))
     }
   } catch (error) {
@@ -313,12 +365,12 @@ async function loadSessions() {
   }
 }
 
-async function refreshAccountStatus() {
+async function refreshAccountStatus(): Promise<void> {
   try {
     isRefreshing.value = true
     const result = await api.auth.checkStatus()
-
-    if (result.success && result.data.code === 200) {
+    const payload = getEnvelope<unknown>(result.success ? result.data : null)
+    if (result.success && payload?.code === 200) {
       await loadCurrentAccount()
       showToast('状态刷新成功', 'success')
     } else {
@@ -332,15 +384,14 @@ async function refreshAccountStatus() {
   }
 }
 
-async function logout() {
+async function logout(): Promise<void> {
   if (!confirm('确定要退出当前账号吗？')) return
 
   try {
     isLoggingOut.value = true
-    // Invalidate current session
-    const currentSession = sessions.value.find(s => s.is_current)
-    if (currentSession) {
-      await invalidateSession(currentSession.session_id)
+    const current = sessions.value.find(s => s.is_current)
+    if (current) {
+      await invalidateSession(current.session_id)
     }
 
     currentAccount.value = null
@@ -354,18 +405,16 @@ async function logout() {
   }
 }
 
-async function startQRLogin() {
+async function startQRLogin(): Promise<void> {
   try {
     isStartingQR.value = true
     const result = await api.auth.startQRLogin()
-
-    if (result.success && result.data.code === 200) {
-      qrCode.key = result.data.data.qr_key
-      qrCode.qr_img = result.data.data.qr_img
+    const payload = getEnvelope<{ qr_key: string; qr_img: string }>(result.success ? result.data : null)
+    if (result.success && payload?.code === 200 && payload.data) {
+      qrCode.key = payload.data.qr_key
+      qrCode.qr_img = payload.data.qr_img
       qrCode.status = 'waiting_scan'
       qrCode.message = '等待扫码'
-
-      // Start polling
       startQRPolling()
       showToast('二维码生成成功，请使用网易云音乐 App 扫码', 'success')
     } else {
@@ -379,37 +428,33 @@ async function startQRLogin() {
   }
 }
 
-function startQRPolling() {
-  if (qrPollingTimer) {
-    clearInterval(qrPollingTimer)
-  }
+function startQRPolling(): void {
+  if (qrPollingTimer) clearInterval(qrPollingTimer)
 
-  qrPollingTimer = setInterval(async () => {
+  qrPollingTimer = window.setInterval(async () => {
     try {
       const result = await api.auth.checkQRLogin(qrCode.key)
-
-      if (result.success) {
-        const status = result.data.data.status
+      const payload = getEnvelope<{ status: QRCode['status']; message?: string }>(result.success ? result.data : null)
+      if (result.success && payload?.code === 200 && payload.data) {
+        const status: QRCode['status'] = payload.data.status
         qrCode.status = status
 
         if (status === 'success') {
-          clearInterval(qrPollingTimer)
+          clearInterval(qrPollingTimer!)
           qrPollingTimer = null
-
           showToast('登录成功！', 'success')
           await loadCurrentAccount()
           await loadSessions()
-
-          // Reset QR code
           setTimeout(() => {
             qrCode.key = ''
             qrCode.qr_img = ''
             qrCode.status = 'idle'
           }, 2000)
         } else if (status === 'expired') {
-          clearInterval(qrPollingTimer)
+          clearInterval(qrPollingTimer!)
           qrPollingTimer = null
           showToast('二维码已过期，请重新生成', 'warning')
+          if (payload.data.message) qrCode.message = payload.data.message
         }
       }
     } catch (error) {
@@ -418,36 +463,33 @@ function startQRPolling() {
   }, 2000)
 }
 
-function cancelQRLogin() {
+function cancelQRLogin(): void {
   if (qrPollingTimer) {
     clearInterval(qrPollingTimer)
     qrPollingTimer = null
   }
-
   qrCode.key = ''
   qrCode.qr_img = ''
   qrCode.status = 'idle'
-
   showToast('已取消二维码登录', 'info')
 }
 
-async function loginWithCookie() {
+async function loginWithCookie(): Promise<void> {
   if (!cookieInput.value.trim()) {
     showToast('请输入 Cookie', 'warning')
     return
   }
-
   try {
     isLoggingInWithCookie.value = true
     const result = await api.auth.loginWithCookie(cookieInput.value.trim())
-
-    if (result.success && result.data.code === 200) {
+    const payload = getEnvelope<unknown>(result.success ? result.data : null)
+    if (result.success && payload?.code === 200) {
       showToast('Cookie 登录成功！', 'success')
       cookieInput.value = ''
       await loadCurrentAccount()
       await loadSessions()
     } else {
-      showToast(result.data?.message || 'Cookie 登录失败', 'error')
+      showToast((payload?.message as string | undefined) || 'Cookie 登录失败', 'error')
     }
   } catch (error) {
     console.error('Failed to login with cookie:', error)
@@ -457,21 +499,21 @@ async function loginWithCookie() {
   }
 }
 
-function clearCookieInput() {
+function clearCookieInput(): void {
   cookieInput.value = ''
 }
 
-async function switchToSession(sessionId) {
+async function switchToSession(sessionId: string): Promise<void> {
   try {
     isSwitchingSession.value = true
     const result = await api.user.switchSession(sessionId)
-
-    if (result.success && result.data.code === 200) {
+    const payload = getEnvelope<unknown>(result.success ? result.data : null)
+    if (result.success && payload?.code === 200) {
       showToast('切换账号成功', 'success')
       await loadCurrentAccount()
       await loadSessions()
     } else {
-      showToast(result.data?.message || '切换账号失败', 'error')
+      showToast((payload?.message as string | undefined) || '切换账号失败', 'error')
     }
   } catch (error) {
     console.error('Failed to switch session:', error)
@@ -481,24 +523,22 @@ async function switchToSession(sessionId) {
   }
 }
 
-async function invalidateSession(sessionId) {
+async function invalidateSession(sessionId: string): Promise<void> {
   if (!confirm('确定要使此会话失效吗？')) return
 
   try {
     isInvalidatingSession.value = true
     const result = await api.user.invalidateSession(sessionId)
-
-    if (result.success && result.data.code === 200) {
+    const payload = getEnvelope<unknown>(result.success ? result.data : null)
+    if (result.success && payload?.code === 200) {
       showToast('会话已失效', 'success')
       await loadSessions()
-
-      // If current session was invalidated, reload current account
-      const currentSession = sessions.value.find(s => s.is_current && s.session_id === sessionId)
-      if (currentSession) {
+      const current = sessions.value.find(s => s.is_current && s.session_id === sessionId)
+      if (current) {
         await loadCurrentAccount()
       }
     } else {
-      showToast(result.data?.message || '操作失败', 'error')
+      showToast((payload?.message as string | undefined) || '操作失败', 'error')
     }
   } catch (error) {
     console.error('Failed to invalidate session:', error)
@@ -508,26 +548,29 @@ async function invalidateSession(sessionId) {
   }
 }
 
-async function refreshSessions() {
+async function refreshSessions(): Promise<void> {
   await loadSessions()
   showToast('会话列表已刷新', 'success')
 }
 
+// ----------------------
 // Utility functions
-function handleAvatarError(event) {
-  event.target.src = '/default-avatar.png'
+// ----------------------
+function handleAvatarError(event: Event) {
+  const target = event.target as HTMLImageElement
+  target.src = '/default-avatar.png'
 }
 
-function getStatusClass(status) {
+function getStatusClass(status: Account['status']): string {
   switch (status) {
     case 'active': return 'status-online'
-    case 'disabled': return 'status-offline'
+    case 'disabled': 
     case 'banned': return 'status-offline'
     default: return 'status-pending'
   }
 }
 
-function getStatusText(status) {
+function getStatusText(status: Account['status']): string {
   switch (status) {
     case 'active': return '正常'
     case 'disabled': return '已禁用'
@@ -536,7 +579,7 @@ function getStatusText(status) {
   }
 }
 
-function getLoginTypeText(type) {
+function getLoginTypeText(type: string | undefined): string {
   switch (type) {
     case 'qr': return '二维码'
     case 'phone': return '手机号'
@@ -546,9 +589,9 @@ function getLoginTypeText(type) {
   }
 }
 
-function getQRStatusClass(status) {
+function getQRStatusClass(status: QRCode['status']): string {
   switch (status) {
-    case 'waiting_scan': return 'status-pending'
+    case 'waiting_scan':
     case 'waiting_confirm': return 'status-pending'
     case 'success': return 'status-online'
     case 'expired': return 'status-offline'
@@ -556,7 +599,7 @@ function getQRStatusClass(status) {
   }
 }
 
-function getQRStatusText(status) {
+function getQRStatusText(status: QRCode['status']): string {
   switch (status) {
     case 'waiting_scan': return '等待扫码'
     case 'waiting_confirm': return '待确认'
@@ -566,12 +609,11 @@ function getQRStatusText(status) {
   }
 }
 
-function formatTime(timeString) {
+function formatTime(timeString?: string): string {
   if (!timeString) return '从未'
-
   const time = new Date(timeString)
   const now = new Date()
-  const diff = now - time
+  const diff = now.getTime() - time.getTime()
 
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`
@@ -581,17 +623,14 @@ function formatTime(timeString) {
   return time.toLocaleDateString()
 }
 
-function showToast(message, type = 'info') {
+function showToast(message: string, type: Toast['type'] = 'info'): void {
   toast.message = message
   toast.type = type
   toast.show = true
-
-  setTimeout(() => {
-    hideToast()
-  }, 5000)
+  setTimeout(() => hideToast(), 5000)
 }
 
-function hideToast() {
+function hideToast(): void {
   toast.show = false
 }
 </script>

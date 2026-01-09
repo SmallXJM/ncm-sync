@@ -20,6 +20,14 @@ const router = createRouter({
         title: '账号管理',
       },
     },
+    {
+      path: '/config',
+      name: 'config',
+      component: () => import('../views/ConfigView.vue'),
+      meta: {
+        title: '配置管理',
+      },
+    },
   ],
 })
 
