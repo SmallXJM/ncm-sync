@@ -1,0 +1,17 @@
+[flake8]
+# 排除虚拟环境、缓存、构建目录
+exclude =
+    .venv,
+    __pycache__,
+    build,
+    dist
+
+# 最大行长度
+max-line-length = 88
+
+# 只检查这些严重错误（可按需调整）
+select = E9,F63,F7,F82
+
+# 显示源代码和统计信息
+show-source = True
+statistics = True
