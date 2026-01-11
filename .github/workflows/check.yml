@@ -50,18 +50,39 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.9"
-          cache: 'pip'
+
+      # 缓存 pip wheel
+      - name: Cache pip downloads
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      # 缓存虚拟环境（安装后的 site-packages）
+      - name: Cache Python venv
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
 
       - name: Install dependencies
         run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Backend Lint
-        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        run: |
+          source .venv/bin/activate
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
       - name: Backend Tests
         run: |
+          source .venv/bin/activate
           if [ -d tests ]; then pytest -q; else echo "No tests found."; fi
 
   # ---------------------------------------------------------
@@ -78,8 +99,7 @@ jobs:
       run:
         working-directory: web
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -88,13 +108,20 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: web/yarn.lock
 
+      # 缓存 node_modules，加速安装
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: web/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('web/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
       - name: Frontend Lint
-        # 即使 Lint 脚本不存在也不要报错，提高兼容性
         run: npm run | grep -q 'lint' && yarn lint || echo "Skip lint"
 
       - name: Frontend Build
-        # 编译确保资源能正常打包
         run: npm run | grep -q 'build' && yarn build || echo "Skip build"
