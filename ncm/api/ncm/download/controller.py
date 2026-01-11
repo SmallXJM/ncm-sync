@@ -5,10 +5,10 @@ from typing import Dict, Any, List, Optional
 from pathlib import Path
 
 from ncm.api.ncm.download import DownloadContext
-from ncm.api.ncm.download.daemon import DownloadDaemonController
-from ncm.api.ncm.download.job import DownloadJobController
-from ncm.api.ncm.download.system import DownloadSystemController
-from ncm.api.ncm.download.task import DownloadTaskController
+from ncm.api.ncm.download.daemon import DownloadControllerDaemon
+from ncm.api.ncm.download.job import DownloadControllerJob
+from ncm.api.ncm.download.system import DownloadControllerSystem
+from ncm.api.ncm.download.task import DownloadControllerTask
 from ncm.service.download.orchestrator import DownloadOrchestrator, DownloadProcess
 from ncm.infrastructure.db.models.download_task import DownloadTask, TaskProgress
 from ncm.infrastructure.db.models.download_job import DownloadJob
@@ -51,10 +51,10 @@ class DownloadController:
         context = DownloadContext(self.orchestrator, self.process, self._scheduler)
 
         # 3. 实例化子控制器 (组合模式)
-        self.jobs = DownloadJobController(context)
-        self.tasks = DownloadTaskController(context)
-        self.daemon = DownloadDaemonController(context)
-        self.system = DownloadSystemController(context)
+        self.jobs = DownloadControllerJob(context)
+        self.tasks = DownloadControllerTask(context)
+        self.daemon = DownloadControllerDaemon(context)
+        self.system = DownloadControllerSystem(context)
 
         # 5. 初始设置 Cron
         if self._current_cron:

@@ -41,6 +41,7 @@ def start_server():
             host="0.0.0.0",
             port=8000,
             reload=True,
+            use_colors=False,
             # reload_dirs=["ncm"],
             # reload_excludes=["**/__pycache__/**", "**/*.pyc"],
             # reload_delay=0.5,

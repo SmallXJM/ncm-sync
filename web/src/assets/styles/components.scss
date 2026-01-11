@@ -635,7 +635,7 @@
   background: var(--range-track);
   outline: none;
   cursor: pointer;
-  --range-fill: var(--color-info);
+  --range-fill: var(--control-active-bg);
   --range-track: var(--border-hover);
   transition: transform $ts-quick, height $ts-quick , --range-fill 0.3s ease, --range-track 0.3s ease;
 
@@ -651,6 +651,7 @@
 
 
 }
+
 
 
 .range-slider:hover {
@@ -822,8 +823,9 @@
 
 /* 开启状态 */
 .switch input:checked+.switch-track {
-  background: var(--color-info);
-  /* iOS Green */
+  background: var(--control-active-bg);
+  transition: background-color 0.2s ease;
+  
 }
 
 .switch input:checked~.switch-handle {

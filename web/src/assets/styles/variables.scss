@@ -80,6 +80,9 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-active-bg: #{$sidebar-dark-active-bg};
   --sidebar-btn-bg: #{$sidebar-dark-btn};
   --sidebar-active-text: #{$sidebar-dark-text};
+
+  // 控件高亮色
+  --control-active-bg: #{var(--color-info)};
 }
 
 /* 定义浅色模式变量集合 */
@@ -116,6 +119,9 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-active-bg: #{$color-gray-800};
   --sidebar-btn-bg: #{$color-gray-200};
   --sidebar-active-text: #{$color-white};
+
+    // 控件高亮色
+  --control-active-bg: #{$sidebar-dark-active-bg};
 }
 
 /* CSS 变量定义 - 支持深浅模式 */

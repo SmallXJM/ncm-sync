@@ -8,7 +8,7 @@ from ncm.infrastructure.http import ncm_service
 logger = get_logger(__name__)
 
 
-class DownloadSystemController:
+class DownloadControllerSystem:
     def __init__(self, context: DownloadContext):
         # self.ctx = context
         self.orchestrator = context.orchestrator
