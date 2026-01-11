@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || '',
+  BASE_URL: '',
   TIMEOUT: 10000,
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
@@ -44,6 +44,7 @@ export const NCM_API = {
   },
   DOWNLOAD: {
     CREATE_JOB: '/ncm/download/job/create',
+    GET_JOB_LIST: '/ncm/download/job',
   },
 } as const
 

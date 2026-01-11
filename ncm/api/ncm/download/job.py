@@ -56,8 +56,8 @@ class DownloadControllerJob:
                          storage_path: str,
                          source_name: Optional[str] = None,
                          target_quality: str = "lossless",
-                         download_cover: bool = True,
-                         download_lyrics: bool = True,
+                         embed_cover: bool = True,
+                         embed_lyrics: bool = True,
                          embed_metadata: bool = True,
                          **kwargs) -> APIResponse:
         """
@@ -71,8 +71,8 @@ class DownloadControllerJob:
             storage_path: Storage directory path
             source_name: Optional source name
             target_quality: Target audio quality
-            download_cover: Whether to download cover art
-            download_lyrics: Whether to download lyrics
+            embed_cover: Whether to download cover art
+            embed_lyrics: Whether to download lyrics
             embed_metadata: Whether to embed metadata
         """
         try:
@@ -84,8 +84,8 @@ class DownloadControllerJob:
                 storage_path=storage_path,
                 source_name=source_name,
                 target_quality=target_quality,
-                download_cover=download_cover,
-                download_lyrics=download_lyrics,
+                embed_cover=embed_cover,
+                embed_lyrics=embed_lyrics,
                 embed_metadata=embed_metadata
             )
 

@@ -124,9 +124,9 @@ class TaskProgress:
         # Add required tasks based on job configuration
         if job_config.embed_metadata:
             required |= TaskProgress.METADATA_COMPLETED
-        if job_config.download_cover:
+        if job_config.embed_cover:
             required |= TaskProgress.COVER_COMPLETED
-        if job_config.download_lyrics:
+        if job_config.embed_lyrics:
             required |= TaskProgress.LYRICS_COMPLETED
         
         return (progress_flags & required) == required

@@ -7,14 +7,14 @@ export interface DownloadSettingsDraft {
   temp_downloads_dir: string
 }
 
-export interface TemplateSettingsDraft {
+export interface SubscriptionSettingsDraft {
   filename: string
-  music_dir_prefix_playlist: string
+  music_dir_playlist: string
 }
 
 export interface NcmConfigDraft {
   download: DownloadSettingsDraft
-  template: TemplateSettingsDraft
+  subscription: SubscriptionSettingsDraft
 }
 
 export type NcmConfigFieldRule =
@@ -25,8 +25,10 @@ export type NcmConfigFieldRule =
 
 export type NcmConfigFieldControl =
   | { type: 'cronToggle' }
+  | { type: 'switch' }
   | { type: 'text'; placeholder?: string; mono?: boolean }
   | { type: 'intRange'; min: number; max: number }
+  | { type: 'select'; options: { label: string; value: unknown }[] }
 
 export type NcmConfigVisibleWhen =
   | { path: string; operator: 'notNull' }
@@ -84,7 +86,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         id: 'download.max_threads_per_download',
         path: 'download.max_threads_per_download',
         label: '单任务线程数',
-        description: '单个下载任务使用的最大线程数（1 ~ 10）。\n建议设置为 2-6 之间。',
+        description: '单个下载任务使用的最大线程数（1 ~ 10）。\n建议设置为 4。',
         control: { type: 'intRange', min: 1, max: 10 },
         rule: { kind: 'intRange', min: 1, max: 10, label: '单任务最大线程数' },
       },
@@ -99,25 +101,67 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
     ],
   },
   {
-    id: 'template',
-    title: '模板设置',
-    description: '自定义文件命名和目录结构',
+    id: 'subscription',
+    title: '订阅设置',
+    description: '设置订阅时的默认设置',
     fields: [
       {
-        id: 'template.filename',
-        path: 'template.filename',
-        label: '文件名模板',
-        description: '歌曲文件的命名格式。\n支持变量：{artist}, {title}, {album} 等。',
-        control: { type: 'text', placeholder: '{artist} - {title}', mono: true },
+        id: 'subscription.target_quality',
+        path: 'subscription.target_quality',
+        label: '目标音质',
+        description: '默认歌曲下载的目标音质。',
+        //         <option value="jymaster">超清母带 (Jymaster)</option>
+        // <option value="dolby">杜比全景声 (Dolby)</option>
+        // <option value="sky">沉浸环绕声 (Sky)</option>
+        // <option value="jyeffect">高清环绕声 (Jyeffect)</option>
+        // <option value="hires">Hi-Res</option>
+        // <option value="lossless">无损 (Lossless)</option>
+        // <option value="exhigh">极高 (Exhigh)</option>
+        // <option value="standard">标准 (Standard)</option>
+        control: {
+          type: 'select', 
+          options:
+            [
+              { label: '超清母带 (Jymaster)', value: 'jymaster' }, 
+              { label: '杜比全景声 (Dolby)', value: 'dolby' }, 
+              { label: '沉浸环绕声 (Sky)', value: 'sky' }, 
+              { label: '高清环绕声 (Jyeffect)', value: 'jyeffect' }, 
+              { label: 'Hi-Res', value: 'hires' }, 
+              { label: '无损 (Lossless)', value: 'lossless' }, 
+              { label: '极高 (Exhigh)', value: 'exhigh' }, 
+              { label: '标准 (Standard)', value: 'standard' }
+            ]
+        },
         rule: { kind: 'templateString', label: '文件名模板' },
       },
       {
-        id: 'template.music_dir_prefix_playlist',
-        path: 'template.music_dir_prefix_playlist',
-        label: '歌单目录前缀',
-        description: '歌单下载时的目录层级结构。\n支持变量：{user_name}, {playlist_name}。',
+        id: 'subscription.embed_metadata',
+        path: 'subscription.embed_metadata',
+        label: '嵌入元数据',
+        description: '包含音乐基本数据，如艺术家、标题、专辑等。',
+        control: { type: 'switch' },
+      },
+      {
+        id: 'subscription.embed_cover',
+        path: 'subscription.embed_cover',
+        label: '嵌入封面',
+        description: '嵌入音乐专辑封面。',
+        control: { type: 'switch' },
+      },
+      {
+        id: 'subscription.embed_lyrics',
+        path: 'subscription.embed_lyrics',
+        label: '嵌入歌词',
+        description: '嵌入音乐同步歌词\n支持Potplayer，Navidrome等播放器。',
+        control: { type: 'switch' },
+      },
+      {
+        id: 'subscription.music_dir_playlist',
+        path: 'subscription.music_dir_playlist',
+        label: '存储路径',
+        description: '歌单下载时的存储路径。\n支持变量：{user_name}, {playlist_name}。',
         control: { type: 'text', placeholder: '歌单/{user_name}/{playlist_name}', mono: true },
-        rule: { kind: 'templateString', label: '歌单目录前缀模板' },
+        rule: { kind: 'templateString', label: '存储路径模板' },
       },
     ],
   },

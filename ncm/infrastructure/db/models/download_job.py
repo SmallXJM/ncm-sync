@@ -28,8 +28,8 @@ class DownloadJob(Base):
     
     # Download configuration - simplified to single quality
     target_quality = Column(String, default='lossless')  # Target quality 'hires', 'lossless', 'standard'
-    download_cover = Column(Boolean, default=True)  # Whether to download cover
-    download_lyrics = Column(Boolean, default=True)  # Whether to download lyrics
+    embed_cover = Column(Boolean, default=True)  # Whether to download cover
+    embed_lyrics = Column(Boolean, default=True)  # Whether to download lyrics
     embed_metadata = Column(Boolean, default=True)  # Whether to embed metadata
     
     # Job status
@@ -63,8 +63,8 @@ class DownloadJob(Base):
             'storage_path': self.storage_path,
             'filename_template': self.filename_template,
             'target_quality': self.target_quality,
-            'download_cover': self.download_cover,
-            'download_lyrics': self.download_lyrics,
+            'embed_cover': self.embed_cover,
+            'embed_lyrics': self.embed_lyrics,
             'embed_metadata': self.embed_metadata,
             'status': self.status,
             'total_tasks': self.total_tasks,

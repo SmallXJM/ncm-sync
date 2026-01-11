@@ -6,6 +6,8 @@ from typing import Optional
 
 from ncm.core.logging import get_logger
 from ncm.service.download.service.async_task_service import AsyncTaskService
+from ncm.infrastructure.db.models.download_job import DownloadJob
+from ncm.infrastructure.db.models.download_task import DownloadTask
 
 logger = get_logger(__name__)
 
@@ -69,7 +71,7 @@ class StorageManager:
             await self.task_service.update_fields(task_id, error_message=f"Finalization failed: {str(e)}")
             return False
 
-    def _generate_final_path(self, task, job) -> Path:
+    def _generate_final_path(self, task: DownloadTask, job: DownloadJob) -> Path:
         """
         生成最终文件路径
         
@@ -93,11 +95,12 @@ class StorageManager:
 
         # 准备模板变量
         template_vars = {
-            'title': self._sanitize_filename(task.music_title or 'Unknown'),
-            'artist': self._sanitize_filename(task.music_artist or 'Unknown'),
-            'album': self._sanitize_filename(task.music_album or 'Unknown'),
-            'quality': task.quality or 'unknown',
-            'format': task.file_format or 'unknown'
+            'id': task.music_id or 'UnknownID',
+            'title': self._sanitize_filename(task.music_title or 'UnknownTitile'),
+            'artist': self._sanitize_filename(task.music_artist or 'UnknownArtist'),
+            'album': self._sanitize_filename(task.music_album or 'UnknownAlbum'),
+            'quality': task.quality or 'UnknownQuality',
+            'format': task.file_format or 'UnknownFormat'
         }
 
         # 生成文件名

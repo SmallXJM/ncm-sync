@@ -177,8 +177,8 @@ class DownloadOrchestrator:
                                  source_name: str = None,
                                  filename_template: str = '{artist} - {title}',
                                  target_quality: str = 'lossless',
-                                 download_cover: bool = True,
-                                 download_lyrics: bool = True,
+                                 embed_cover: bool = True,
+                                 embed_lyrics: bool = True,
                                  embed_metadata: bool = True) -> int:
         """
         创建下载作业
@@ -193,8 +193,8 @@ class DownloadOrchestrator:
             source_name: 源名称 (可选)
             filename_template: 文件名模板
             target_quality: 目标音质
-            download_cover: 是否下载封面
-            download_lyrics: 是否下载歌词
+            embed_cover: 是否下载封面
+            embed_lyrics: 是否下载歌词
             embed_metadata: 是否嵌入元数据
             
         Returns:
@@ -212,8 +212,8 @@ class DownloadOrchestrator:
                 source_name=source_name,
                 filename_template=filename_template,
                 target_quality=target_quality,
-                download_cover=download_cover,
-                download_lyrics=download_lyrics,
+                embed_cover=embed_cover,
+                embed_lyrics=embed_lyrics,
                 embed_metadata=embed_metadata
             )
             if not job:

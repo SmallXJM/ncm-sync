@@ -96,6 +96,8 @@
   gap: 0.5rem;
   text-decoration: none;
   font-size: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-sm {
@@ -108,7 +110,6 @@
   background: var(--bution-primary);
   color: var(--accent-fg);
   border-color: var(--bution-primary-border);
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -122,13 +123,39 @@
   background: var(--bg-surface);
   border-color: var(--border-color);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-surface-hover);
   border-color: var(--border-color);
 }
+
+// 定义禁用按钮
+/* 禁用按钮 - 降低透明度、禁用指针事件 */
+.btn:disabled {
+  opacity: 0.5;
+  transform: none !important;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.btn-primary:disabled {
+  background: var(--bution-primary);
+  color: var(--accent-fg);
+  border-color: var(--bution-primary-border);
+}
+
+.btn-secondary:disabled {
+  background: var(--bg-surface);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-danger:disabled {
+  background: var(--color-error);
+  color: #fff;
+}
+
 
 /* 危险按钮 */
 .btn-danger {

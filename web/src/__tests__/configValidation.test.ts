@@ -89,7 +89,7 @@ describe('configValidation', () => {
         },
         template: {
           filename: 'artist}',
-          music_dir_prefix_playlist: '',
+          music_dir_playlist: '',
         },
       })
 
@@ -98,7 +98,7 @@ describe('configValidation', () => {
       expect(errors['download.max_threads_per_download']).toBeTruthy()
       expect(errors['download.temp_downloads_dir']).toBeTruthy()
       expect(errors['template.filename']).toBeTruthy()
-      expect(errors['template.music_dir_prefix_playlist']).toBeTruthy()
+      expect(errors['template.music_dir_playlist']).toBeTruthy()
     })
   })
 })

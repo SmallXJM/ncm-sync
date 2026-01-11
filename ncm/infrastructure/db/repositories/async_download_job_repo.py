@@ -36,7 +36,7 @@ class AsyncDownloadJobRepository:
                      source_owner_id: Optional[str] = None, source_name: Optional[str] = None,
                      filename_template: str = "{artist} - {title}",
                      target_quality: str = "lossless",
-                     download_cover: bool = True, download_lyrics: bool = True,
+                     embed_cover: bool = True, embed_lyrics: bool = True,
                      embed_metadata: bool = True, enabled: bool = True) -> Optional[DownloadJob]:
         job = DownloadJob(
             job_name=job_name,
@@ -48,8 +48,8 @@ class AsyncDownloadJobRepository:
             storage_path=storage_path,
             filename_template=filename_template,
             target_quality=target_quality,
-            download_cover=download_cover,
-            download_lyrics=download_lyrics,
+            embed_cover=embed_cover,
+            embed_lyrics=embed_lyrics,
             embed_metadata=embed_metadata,
             enabled=enabled
         )

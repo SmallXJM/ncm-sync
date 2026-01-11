@@ -1,10 +1,49 @@
 """FastAPI application factory for NCM API http."""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from .routing.auto_router import auto_register_routes, auto_register_services, register_health_check
 from ncm.infrastructure.db.async_session import dispose_async_engine
+import asyncio
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan events handler for FastAPI.
+    Handles startup and shutdown logic.
+    """
+    try:
+        # Startup logic here (if needed)
+        yield
+    except asyncio.CancelledError:
+        # Handle cancellation gracefully
+        pass
+    finally:
+        # Shutdown logic
+        # Cleanup service instances with cleanup method
+        instances = getattr(app.state, "service_instances", [])
+        for inst in instances:
+            try:
+                cleanup = getattr(inst, "cleanup", None)
+                if cleanup:
+                    if callable(cleanup):
+                        result = cleanup()
+                        if hasattr(result, "__await__"):
+                            try:
+                                await result
+                            except Exception:
+                                pass
+            except Exception:
+                pass
+        
+        # Dispose shared async DB engine
+        try:
+            await dispose_async_engine()
+        except Exception:
+            pass
 
 
 def create_app() -> FastAPI:
@@ -20,7 +59,8 @@ def create_app() -> FastAPI:
         version="0.1.0",
         docs_url="/docs",
         redoc_url="/redoc",
-        openapi_url="/openapi.json"
+        openapi_url="/openapi.json",
+        lifespan=lifespan
     )
     
     # Add CORS middleware
@@ -43,26 +83,6 @@ def create_app() -> FastAPI:
     
     # Automatically register all ncm routes
     auto_register_services(app, "ncm.api.ncm")
-    
-    @app.on_event("shutdown")
-    async def _cleanup_resources():
-        # Cleanup service instances with cleanup method
-        instances = getattr(app.state, "service_instances", [])
-        for inst in instances:
-            try:
-                cleanup = getattr(inst, "cleanup", None)
-                if cleanup:
-                    if callable(cleanup):
-                        result = cleanup()
-                        if hasattr(result, "__await__"):
-                            await result
-            except Exception:
-                pass
-        # Dispose shared async DB engine
-        try:
-            await dispose_async_engine()
-        except Exception:
-            pass
     
     return app
 

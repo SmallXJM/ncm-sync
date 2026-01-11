@@ -7,6 +7,10 @@ from ncm.infrastructure.db.async_session import get_uow_factory
 from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
 from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDownloadJobRepository
 from ncm.infrastructure.db.models.download_task import TaskProgress
+from ncm.infrastructure.db.models.download_job import DownloadJob
+from ncm.infrastructure.db.models.download_task import DownloadTask
+
+
 
 class AsyncTaskService:
     def __init__(self, db_url: Optional[str] = None):
@@ -14,11 +18,11 @@ class AsyncTaskService:
         self.task_repo = AsyncDownloadTaskRepository()
         self.job_repo = AsyncDownloadJobRepository()
 
-    async def get_task(self, task_id: int):
+    async def get_task(self, task_id: int) -> Optional[DownloadTask]:
         async with self.uow_factory() as uow:
             return await self.task_repo.get_by_id(uow.session, task_id)
 
-    async def get_job_for_task(self, task_id: int):
+    async def get_job_for_task(self, task_id: int) -> Optional[DownloadJob]:
         async with self.uow_factory() as uow:
             task = await self.task_repo.get_by_id(uow.session, task_id)
             if not task:

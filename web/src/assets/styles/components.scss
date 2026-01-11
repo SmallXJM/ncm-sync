@@ -543,7 +543,7 @@
 }
 
 .item-control {
-  width: 260px;
+  width: 300px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -813,7 +813,7 @@
   position: absolute;
   width: 48px;
   height: 25.5px;
-  top: 3px;
+  top: 10%; //原为3px，但是可能遇到错位
   left: 3px;
   border-radius: 999px;
   background: var(--bg-surface);
@@ -922,6 +922,7 @@
   line-clamp: 2; /* 标准属性，用于未来兼容性 */
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.3s ease;
 }
 
 .creator-info {
@@ -931,6 +932,7 @@
   margin-top: var(--spacing-xs);
   color: var(--text-secondary);
   font-size: 0.9rem;
+  transition: color 0.3s ease;
 }
 
 .creator-info img {
@@ -953,7 +955,7 @@
 .track-count {
   font-size: 0.85rem;
   color: var(--text-tertiary);
-  margin-top: auto;
+  transition: color 0.3s ease;
 }
 
 .card-footer {
@@ -968,4 +970,11 @@
 .card-footer .btn {
   /* 固定在右下角 */
   margin-left: auto;
+}
+
+.card-footer-privacy {
+  // 垂直居中
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }

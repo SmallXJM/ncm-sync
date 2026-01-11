@@ -10,19 +10,23 @@ export interface DownloadSettings {
   temp_downloads_dir: string
 }
 
-export interface TemplateSettings {
+export interface SubscriptionSettings {
+  target_quality: string
+  embed_metadata: boolean
+  embed_cover: boolean
+  embed_lyrics: boolean
   filename: string
-  music_dir_prefix_playlist: string
+  music_dir_playlist: string
 }
 
 export interface NcmConfig {
   download: DownloadSettings
-  template: TemplateSettings
+  subscription: SubscriptionSettings
 }
 
 export type UpdateConfigPayload = {
   download?: Partial<DownloadSettings>
-  template?: Partial<TemplateSettings>
+  subscription?: Partial<SubscriptionSettings>
 }
 
 export const getConfig = async (): Promise<ApiResult<ApiEnvelope<NcmConfig>>> => {

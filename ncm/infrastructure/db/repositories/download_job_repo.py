@@ -113,7 +113,7 @@ class DownloadJobRepository:
                source_owner_id: str = None, source_name: str = None,
                filename_template: str = '{artist} - {title}',
                target_quality: str = 'lossless',
-               download_cover: bool = True, download_lyrics: bool = True,
+               embed_cover: bool = True, embed_lyrics: bool = True,
                embed_metadata: bool = True, enabled: bool = True) -> Optional[DownloadJob]:
         """
         Create a new download job.
@@ -129,8 +129,8 @@ class DownloadJobRepository:
             source_name: Source name (optional)
             filename_template: Filename template
             target_quality: Target quality
-            download_cover: Whether to download cover
-            download_lyrics: Whether to download lyrics
+            embed_cover: Whether to download cover
+            embed_lyrics: Whether to download lyrics
             embed_metadata: Whether to embed metadata
             enabled: Whether to enable this job
             
@@ -148,8 +148,8 @@ class DownloadJobRepository:
                 storage_path=storage_path,
                 filename_template=filename_template,
                 target_quality=target_quality,
-                download_cover=download_cover,
-                download_lyrics=download_lyrics,
+                embed_cover=embed_cover,
+                embed_lyrics=embed_lyrics,
                 embed_metadata=embed_metadata,
                 enabled=enabled
             )
