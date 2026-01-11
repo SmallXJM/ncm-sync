@@ -7,95 +7,9 @@ from ncm.api.modules.user import login
 from ncm.core.logging import get_logger
 from ncm.service.cookie import get_cookie_manager
 
+
+
 logger = get_logger(__name__)
-
-
-async def upload_and_validate_cookie(cookie: str, login_status_service, **kwargs) -> Dict[str, Any]:
-    """
-    Upload and validate cookie business logic.
-
-    Args:
-        cookie: Cookie string to upload and validate
-        login_status_service: Service to validate cookie
-
-    Returns:
-        Dict containing validation result and user info
-    """
-    try:
-        # Validate cookie by getting user info
-        user_info = await login_status_service.get_user_info_from_cookie(cookie, **kwargs)
-
-        if not user_info:
-            return {
-                "success": False,
-                "code": 400,
-                "message": "Cookie 无效或已过期"
-            }
-
-        # Save user login with cookie
-        result = await login_status_service.save_user_login(user_info, cookie, "cookie_upload")
-
-        return {
-            "success": True,
-            "code": 200,
-            "message": "Cookie 上传成功",
-            "data": {
-                "user_info": user_info,
-                "account": result.get("account"),
-                "session": result.get("session")
-            }
-        }
-
-    except Exception as e:
-        logger.exception(f"Cookie 上传失败")
-        return {
-            "success": False,
-            "code": 500,
-            "message": f"Cookie 上传失败: {str(e)}"
-        }
-
-
-async def validate_cookie_only(cookie: str, login_status_service, **kwargs) -> Dict[str, Any]:
-    """
-    Validate cookie without saving to database.
-
-    Args:
-        cookie: Cookie string to validate
-        login_status_service: Service to validate cookie
-
-    Returns:
-        Dict containing validation result
-    """
-    try:
-        # Validate cookie by getting user info
-        user_info = await login_status_service.get_user_info_from_cookie(cookie, **kwargs)
-
-        if not user_info:
-            return {
-                "success": True,
-                "code": 400,
-                "message": "Cookie 无效或已过期",
-                "data": {"valid": False}
-            }
-
-        return {
-            "success": True,
-            "code": 200,
-            "message": "Cookie 有效",
-            "data": {
-                "valid": True,
-                "user_info": user_info
-            }
-        }
-
-    except Exception as e:
-        logger.error(f"Cookie 验证失败: {str(e)}")
-        return {
-            "success": False,
-            "code": 500,
-            "message": f"Cookie 验证失败: {str(e)}",
-            "data": {"valid": False}
-        }
 
 
 

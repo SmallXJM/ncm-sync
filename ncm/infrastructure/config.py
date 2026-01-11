@@ -31,15 +31,20 @@ class DownloadSettings(BaseModel):
 
 
 
-class TemplateSettings(BaseModel):
+class SubscriptionSettings(BaseModel):
+    target_quality: str = Field(default=r"hires")
+    embed_metadata: bool = Field(default=True)
+    embed_cover: bool = Field(default=True)
+    embed_lyrics: bool = Field(default=True)
     filename: str = Field(default=r"{artist} - {title}")
-    # 音乐列表下载目录前缀
-    music_dir_prefix_playlist: str = Field(default=r"歌单/{user_name}/{playlist_name}")
+    filename: str = Field(default=r"{artist} - {title}")
+    # 歌单下载目录
+    music_dir_playlist: str = Field(default=r"歌单/{user_name}/{playlist_name}")
 
 
 class NcmConfig(BaseModel):
     download: DownloadSettings = Field(default_factory=DownloadSettings)
-    template: TemplateSettings = Field(default_factory=TemplateSettings)
+    subscription: SubscriptionSettings = Field(default_factory=SubscriptionSettings)
 
 
 class ConfigManager:

@@ -167,7 +167,7 @@ def extract_lrc_content(lyrics_data: Dict[str, Any], song_metadata: Dict[str, An
             lrc_lines.append(f"[by:{lyric_user['nickname']}]")
 
         # Add tool info
-        lrc_lines.append("[tool:ncm-sync]")
+        # lrc_lines.append("[tool:ncm-sync]")
         lrc_lines.append("")
 
         # Process main lyrics only

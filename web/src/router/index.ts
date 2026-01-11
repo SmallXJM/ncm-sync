@@ -28,6 +28,14 @@ const router = createRouter({
         title: '设置',
       },
     },
+    {
+      path: '/my/playlist',
+      name: 'my-playlist',
+      component: () => import('../views/MyPlaylistView.vue'),
+      meta: {
+        title: '我的歌单',
+      },
+    },
   ],
 })
 

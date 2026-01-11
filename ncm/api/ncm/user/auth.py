@@ -4,7 +4,6 @@ import asyncio
 from typing import Dict, Any, Optional
 
 from ncm.service.auth import AuthenticationService
-from ncm.service.auth.authentication import upload_and_validate_cookie, validate_cookie_only
 from ncm.service.cookie import get_cookie_manager, with_cookie
 from ncm.infrastructure.db import AccountRepository
 from ncm.infrastructure.db.session import get_session
@@ -31,8 +30,8 @@ class AuthController:
     async def upload_cookie(self, cookie: str, **kwargs) -> APIResponse:
         """Upload and validate cookie directly."""
         try:
-            result = await upload_and_validate_cookie(
-                cookie, self, **kwargs
+            result = await self.upload_and_validate_cookie(
+                cookie, **kwargs
             )
             
             return APIResponse(
@@ -58,8 +57,8 @@ class AuthController:
     async def validate_cookie(self, cookie: str, **kwargs) -> APIResponse:
         """Validate cookie without saving to database."""
         try:
-            result = await validate_cookie_only(
-                cookie, self, **kwargs
+            result = await self.validate_cookie_only(
+                cookie, **kwargs
             )
             
             return APIResponse(
@@ -346,16 +345,110 @@ class AuthController:
     async def save_user_login(self, user_info: Dict[str, Any], cookie: str, login_type: str) -> Dict[str, Any]:
         """Save user login info to database."""
         account_id = user_info["user_id"]
-
         # Create account and session
         with get_session() as session:
-            result = self.account_repo.create_account_with_session(
+            account = self.account_repo.get_account_by_id(session, account_id)
+            if not account:
+                account = self.account_repo.create_account(
                 session=session,
                 account_id=account_id,
                 nickname=user_info["nickname"],
                 avatar_url=user_info["avatar_url"],
+            )
+            session = self.account_repo.create_session(
+                session=session,
+                account_id=account_id,
                 cookie=cookie,
                 login_type=login_type
             )
 
+            result = {
+                'account': account.to_dict(),
+                'sessions': session.to_dict()
+            }
         return result
+
+    async def upload_and_validate_cookie(self, cookie: str, **kwargs) -> Dict[str, Any]:
+        """
+        Upload and validate cookie business logic.
+
+        Args:
+            cookie: Cookie string to upload and validate
+
+        Returns:
+            Dict containing validation result and user info
+        """
+        try:
+            # Validate cookie by getting user info
+            user_info = await self.get_user_info_from_cookie(cookie, **kwargs)
+
+            if not user_info:
+                return {
+                    "success": False,
+                    "code": 400,
+                    "message": "Cookie 无效或已过期"
+                }
+
+            # Save user login with cookie
+            result = await self.save_user_login(user_info, cookie, "cookie_upload")
+
+            return {
+                "success": True,
+                "code": 200,
+                "message": "Cookie 上传成功",
+                "data": {
+                    "user_info": user_info,
+                    "account": result.get("account"),
+                    "session": result.get("session")
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Cookie 上传失败")
+            return {
+                "success": False,
+                "code": 500,
+                "message": f"Cookie 上传失败: {str(e)}"
+            }
+
+
+    async def validate_cookie_only(self, cookie: str, **kwargs) -> Dict[str, Any]:
+        """
+        Validate cookie without saving to database.
+
+        Args:
+            cookie: Cookie string to validate
+
+        Returns:
+            Dict containing validation result
+        """
+        try:
+            # Validate cookie by getting user info
+            user_info = await self.get_user_info_from_cookie(cookie, **kwargs)
+
+            if not user_info:
+                return {
+                    "success": True,
+                    "code": 400,
+                    "message": "Cookie 无效或已过期",
+                    "data": {"valid": False}
+                }
+
+            return {
+                "success": True,
+                "code": 200,
+                "message": "Cookie 有效",
+                "data": {
+                    "valid": True,
+                    "user_info": user_info
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Cookie 验证失败: {str(e)}")
+            return {
+                "success": False,
+                "code": 500,
+                "message": f"Cookie 验证失败: {str(e)}",
+                "data": {"valid": False}
+            }

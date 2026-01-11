@@ -40,6 +40,26 @@
                     </label>
                   </template>
 
+                  <template v-else-if="field.control.type === 'switch'">
+                    <label class="switch">
+                      <input type="checkbox" :checked="getDraftValue(field.path) === true" :data-path="field.path"
+                        @change="toggleSwitch" />
+                      <span class="switch-track"></span>
+                      <span class="switch-handle"></span>
+                    </label>
+                  </template>
+                  
+                  <template v-else-if="field.control.type === 'select'">
+                    <select :value="getDraftValue(field.path)" class="input w-full"
+                      @change="(e) => setDraftText(field.path, (e.target as HTMLSelectElement).value)">
+                      <option v-for="option in field.control.options" :key="option.value" :value="option.value">
+                        {{ option.label }}
+                      </option>
+                    </select>
+                    <div v-if="errors[field.path]" class="field-error">
+                      {{ errors[field.path] }}
+                    </div>
+                  </template>
                   <template v-else-if="field.control.type === 'text'">
                     <div class="w-full">
                       <input :value="String(getDraftValue(field.path) ?? '')"
@@ -54,18 +74,13 @@
 
                   <template v-else-if="field.control.type === 'intRange'">
                     <div class="range-control">
-                      <input type="range" class="range-slider" 
-                        step="0.01"
-                        :min="getIntRangeMin(field.control)"
-                        :max="getIntRangeMax(field.control)" 
-                        :value="getLocalSliderValue(field.path)"
+                      <input type="range" class="range-slider" step="0.01" :min="getIntRangeMin(field.control)"
+                        :max="getIntRangeMax(field.control)" :value="getLocalSliderValue(field.path)"
                         :style="getRangeStyle(field)"
                         @input="(e) => handleSliderInput(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))">
-                      
-                      <input class="input range-input" type="number" 
-                        :min="getIntRangeMin(field.control)"
-                        :max="getIntRangeMax(field.control)" 
-                        :value="Number(getDraftValue(field.path))"
+
+                      <input class="input range-input" type="number" :min="getIntRangeMin(field.control)"
+                        :max="getIntRangeMax(field.control)" :value="Number(getDraftValue(field.path))"
                         @input="(e) => setDraftInt(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))" />
                     </div>
                   </template>
@@ -130,14 +145,14 @@ interface DownloadSettings {
   temp_downloads_dir: string
 }
 
-interface TemplateSettings {
+interface SubscriptionSettings {
   filename: string
-  music_dir_prefix_playlist: string
+  music_dir_playlist: string
 }
 
 interface NcmConfig {
   download: DownloadSettings
-  template: TemplateSettings
+  subscription: SubscriptionSettings
 }
 
 interface Toast {
@@ -185,7 +200,7 @@ watch(
   (next) => {
     Object.keys(errors).forEach((k) => delete errors[k])
     if (!next) return
-    
+
     const nextErrors = validateNcmConfigDraft(next)
     Object.entries(nextErrors).forEach(([k, v]) => {
       errors[k] = v
@@ -243,14 +258,14 @@ function getLocalSliderValue(path: string): number {
 // 【新增】将 Draft 中的所有 intRange 值同步到 localSliderValues
 function syncLocalFromDraft() {
   if (!draftConfig.value) return
-  
+
   // 遍历配置结构找到所有 intRange
   configGroups.forEach(group => {
     group.fields.forEach(field => {
       if (field.control.type === 'intRange') {
         const draftVal = Number(getDraftValue(field.path))
         const localVal = localSliderValues[field.path]
-        
+
         // 关键逻辑：
         // 1. 如果本地还没值 (undefined)，直接同步
         // 2. 如果本地值四舍五入后不等于 draft 值，说明 draft 发生了非滑动产生的变化（如输入框修改、重置），需要同步
@@ -265,13 +280,13 @@ function syncLocalFromDraft() {
 // 【新增】处理滑块滑动：实现无顿挫滑动的核心
 function handleSliderInput(path: string, rawValue: string, min: number) {
   const floatVal = parseFloat(rawValue)
-  
+
   // 1. 立即更新本地值，保证滑块和背景条完全跟手（无顿挫）
   localSliderValues[path] = floatVal
 
   // 2. 计算整数逻辑值
   const intVal = Math.round(floatVal)
-  
+
   // 3. 只有当整数值真正改变时才更新 Draft（减少抖动和性能消耗）
   const currentDraftVal = Number(getDraftValue(path))
   if (currentDraftVal !== intVal) {
@@ -288,6 +303,11 @@ function setDraftInt(path: string, raw: string, fallback: number): void {
   if (!draftConfig.value) return
   const parsed = Number.parseInt(raw, 10)
   setValueByPath(draftConfig.value, path, Number.isNaN(parsed) ? fallback : parsed)
+}
+
+function setDraftBool(path: string, value: boolean): void {
+  if (!draftConfig.value) return
+  setValueByPath(draftConfig.value, path, value)
 }
 
 function getIntRangeMin(control: NcmConfigFieldSchema['control']): number {
@@ -310,12 +330,12 @@ function isFieldVisible(field: NcmConfigFieldSchema): boolean {
 // 【修改】样式计算现在依赖 localSliderValues 里的浮点数
 function getRangeStyle(field: NcmConfigFieldSchema): Record<string, string> {
   if (field.control.type !== 'intRange') return {}
-  
+
   const min = field.control.min
   const max = field.control.max
   // 使用 getLocalSliderValue 获取精确的浮点数位置
   const value = getLocalSliderValue(field.path)
-  
+
   const clamped = Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min
   const percent = max === min ? 0 : ((clamped - min) / (max - min)) * 100
 
@@ -344,7 +364,7 @@ async function reload(): Promise<void> {
 
     originalConfig.value = payload.data
     draftConfig.value = deepClone(payload.data) as NcmConfigDraft
-    
+
     // 初始化本地滑块值
     syncLocalFromDraft()
 
@@ -376,6 +396,14 @@ function toggleCron(event: Event): void {
   }
 }
 
+function toggleSwitch(event: Event): void {
+  if (!draftConfig.value) return
+  const checked = (event.target as HTMLInputElement).checked
+  setDraftBool((event.target as HTMLInputElement).dataset.path || '', checked)
+}
+
+
+
 async function save(): Promise<void> {
   if (!draftConfig.value) return
   if (hasErrors.value) {
@@ -387,7 +415,7 @@ async function save(): Promise<void> {
     isLoading.value = true
     const partial = {
       download: draftConfig.value.download,
-      template: draftConfig.value.template,
+      subscription: draftConfig.value.subscription,
     }
 
     const result = await api.config.updateConfig(partial)
@@ -406,7 +434,7 @@ async function save(): Promise<void> {
     draftConfig.value = deepClone(payload.data) as NcmConfigDraft
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
-    
+
     showToast('配置已保存并生效', 'success')
   } catch (error) {
     console.error('Failed to save config:', error)

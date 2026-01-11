@@ -53,11 +53,11 @@ class WorkflowEngine:
                 await self._execute_metadata_task(task_id)
 
             # 3. 封面任务 (可选)
-            if job.download_cover:
+            if job.embed_cover:
                 await self._execute_cover_task(task_id)
 
             # 4. 歌词任务 (可选)
-            if job.download_lyrics:
+            if job.embed_lyrics:
                 await self._execute_lyrics_task(task_id)
 
             # 5. 文件最终化 (必需)

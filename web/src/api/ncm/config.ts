@@ -1,7 +1,7 @@
 import { http, type ApiEnvelope, type ApiResult } from '../request'
-import { SERVICE_ENDPOINTS } from '../config'
+import { NCM_API } from '../config'
 
-const CONFIG = SERVICE_ENDPOINTS.CONFIG
+const CONFIG = NCM_API.CONFIG
 
 export interface DownloadSettings {
   cron_expr: string | null
@@ -10,19 +10,23 @@ export interface DownloadSettings {
   temp_downloads_dir: string
 }
 
-export interface TemplateSettings {
+export interface SubscriptionSettings {
+  target_quality: string
+  embed_metadata: boolean
+  embed_cover: boolean
+  embed_lyrics: boolean
   filename: string
-  music_dir_prefix_playlist: string
+  music_dir_playlist: string
 }
 
 export interface NcmConfig {
   download: DownloadSettings
-  template: TemplateSettings
+  subscription: SubscriptionSettings
 }
 
 export type UpdateConfigPayload = {
   download?: Partial<DownloadSettings>
-  template?: Partial<TemplateSettings>
+  subscription?: Partial<SubscriptionSettings>
 }
 
 export const getConfig = async (): Promise<ApiResult<ApiEnvelope<NcmConfig>>> => {

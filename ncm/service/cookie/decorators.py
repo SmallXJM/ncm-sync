@@ -29,12 +29,13 @@ async def _execute_with_cookie(
     for attempt in range(retries + 1):
         try:
             # 自动注入 Cookie（若调用方未显式传入）
-            # if not kwargs.get("cookie"):
-            session = cookie_service.get_current_session()
-            if not session:
-                raise AuthenticationError("没有可用的登录会话，请先登录")
-            kwargs["cookie"] = session.cookie
-            kwargs["_session"] = session.to_dict()
+            if not kwargs.get("cookie"):
+                session = cookie_service.get_current_session()
+                if not session:
+                    raise AuthenticationError("没有可用的登录会话，请先登录")
+                kwargs["cookie"] = session.cookie
+                # 留个坑，传入cookie时没有_session
+                kwargs["_session"] = session.to_dict()
 
             result = await func(*args, **kwargs)
 

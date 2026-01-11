@@ -1,7 +1,7 @@
 import { http, type ApiEnvelope, type ApiResult } from '../request'
-import { SERVICE_ENDPOINTS } from '../config'
+import { NCM_API } from '../config'
 
-const AUTH = SERVICE_ENDPOINTS.AUTH
+const AUTH = NCM_API.USER.AUTH
 
 export type QrLoginStatus = 'idle' | 'waiting_scan' | 'waiting_confirm' | 'success' | 'expired'
 

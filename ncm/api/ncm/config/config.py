@@ -37,7 +37,7 @@ class ConfigController:
     @ncm_service("/ncm/config", ["POST"])
     async def update_config(self,
                             download: Optional[dict] = None,
-                            template: Optional[dict] = None,
+                            subscription: Optional[dict] = None,
                             **kwargs) -> APIResponse:
         try:
             
@@ -46,13 +46,13 @@ class ConfigController:
             # Support nested update
             if download is not None:
                 partial["download"] = download
-            if template is not None:
-                partial["template"] = template
+            if subscription is not None:
+                partial["subscription"] = subscription
             
             # Support flat update (backward compatibility)
             # Map flat keys to nested structure
             flat_download = {}
-            flat_template = {}
+            flat_subscription = {}
             
             # Download settings
             if "cron_expr" in kwargs:
@@ -64,9 +64,9 @@ class ConfigController:
             if "temp_downloads_dir" in kwargs:
                 flat_download["temp_downloads_dir"] = kwargs["temp_downloads_dir"]
             
-            # Template settings
+            # Subscription settings
             if "default_filename_template" in kwargs:
-                flat_template["filename"] = kwargs["default_filename_template"]
+                flat_subscription["filename"] = kwargs["default_filename_template"]
                 
             # Merge flat settings if they exist and weren't provided in nested dicts
             if flat_download:
@@ -74,10 +74,10 @@ class ConfigController:
                     partial["download"] = {}
                 partial["download"].update(flat_download)
                 
-            if flat_template:
-                if "template" not in partial:
-                    partial["template"] = {}
-                partial["template"].update(flat_template)
+            if flat_subscription:
+                if "subscription" not in partial:
+                    partial["subscription"] = {}
+                partial["subscription"].update(flat_subscription)
 
             if not partial:
                 return APIResponse(

@@ -80,6 +80,12 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-active-bg: #{$sidebar-dark-active-bg};
   --sidebar-btn-bg: #{$sidebar-dark-btn};
   --sidebar-active-text: #{$sidebar-dark-text};
+
+  // 控件高亮色
+  --control-active-bg: #{var(--color-info)};
+
+  --bution-primary: #{$color-gray-300};
+  --bution-primary-border: #{$color-gray-700};
 }
 
 /* 定义浅色模式变量集合 */
@@ -91,7 +97,7 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   /* 底座色 (Sidebar/Header) */
   --bg-surface: #{$color-white};
   /* 内容区背景 */
-  --bg-surface-hover: #{$color-gray-200};
+  --bg-surface-hover: #{$color-gray-100};
 
   --text-primary: #{$color-gray-900};
   --text-secondary: #{$color-gray-600};
@@ -116,6 +122,12 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-active-bg: #{$color-gray-800};
   --sidebar-btn-bg: #{$color-gray-200};
   --sidebar-active-text: #{$color-white};
+
+    // 控件高亮色
+  --control-active-bg: #{$sidebar-dark-active-bg};
+
+  --bution-primary: #{$color-gray-800};
+  --bution-primary-border: #{$color-gray-800};
 }
 
 /* CSS 变量定义 - 支持深浅模式 */
