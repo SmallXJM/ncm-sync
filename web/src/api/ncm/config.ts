@@ -1,7 +1,7 @@
 import { http, type ApiEnvelope, type ApiResult } from '../request'
-import { SERVICE_ENDPOINTS } from '../config'
+import { NCM_API } from '../config'
 
-const CONFIG = SERVICE_ENDPOINTS.CONFIG
+const CONFIG = NCM_API.CONFIG
 
 export interface DownloadSettings {
   cron_expr: string | null

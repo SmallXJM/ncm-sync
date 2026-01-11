@@ -83,6 +83,25 @@ const UserIcon = h('svg', {
     h('circle', { cx: '12', cy: '7', r: '4' })
 ])
 
+const SubscribeIcon = h('svg', {
+    xmlns: 'http://www.w3.org/2000/svg',
+    width: '20',
+    height: '20',
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round'
+}, [
+    h('line', { x1: '8', y1: '6', x2: '21', y2: '6' }),
+    h('line', { x1: '8', y1: '12', x2: '21', y2: '12' }),
+    h('line', { x1: '8', y1: '18', x2: '21', y2: '18' }),
+    h('line', { x1: '3', y1: '6', x2: '3.01', y2: '6' }),
+    h('line', { x1: '3', y1: '12', x2: '3.01', y2: '12' }),
+    h('line', { x1: '3', y1: '18', x2: '3.01', y2: '18' })
+])
+
 const SettingsIcon = h('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
     width: '20',
@@ -124,6 +143,7 @@ interface MenuItem {
 const menus: MenuItem[] = [
     { title: '首页', path: '/', icon: HomeIcon },
     { title: '账号管理', path: '/account', icon: UserIcon },
+    { title: '我的歌单', path: '/my/playlist', icon: SubscribeIcon },
     // { title: '设置', path: '/config', icon: SettingsIcon }
 ]
 

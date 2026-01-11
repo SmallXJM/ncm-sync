@@ -6,29 +6,7 @@ export const API_CONFIG = {
   },
 } as const
 
-export const API_ENDPOINTS = {
-  USER: {
-    DETAIL: '/api/user/detail',
-  },
-  MUSIC: {
-    SEARCH_ENHANCED: '/ncm/music/search/enhanced',
-    PLAYLIST_ANALYZE: '/ncm/music/playlist/analyze',
-    DOWNLOAD_PREPARE: '/ncm/music/download/prepare',
-  },
-  MODULES: {
-    REGISTER_ANONYMOUS: '/api/anonimous/register_anonimous',
-    SEARCH_HOT: '/api/search/search_hot',
-    SEARCH: '/api/search/search',
-  },
-} as const
-
-export const SERVICE_ENDPOINTS = {
-  AUTH: {
-    QR_START: '/ncm/user/qr/start',
-    QR_CHECK: '/ncm/user/qr/check',
-    COOKIE_UPLOAD: '/ncm/user/cookie/upload',
-    STATUS: '/ncm/user/status',
-  },
+export const NCM_API = {
   USER: {
     CURRENT: '/ncm/user/current',
     LIST: '/ncm/user/list',
@@ -39,20 +17,33 @@ export const SERVICE_ENDPOINTS = {
     QR_CHECK: '/ncm/user/qr/check',
     COOKIE_UPLOAD: '/ncm/user/cookie/upload',
     STATUS: '/ncm/user/status',
+    AUTH: {
+      QR_START: '/ncm/user/qr/start',
+      QR_CHECK: '/ncm/user/qr/check',
+      COOKIE_UPLOAD: '/ncm/user/cookie/upload',
+      STATUS: '/ncm/user/status',
+    },
   },
   MUSIC: {
-    SEARCH_ENHANCED: '/ncm/music/search/enhanced',
-    PLAYLIST_ANALYZE: '/ncm/music/playlist/analyze',
-    DOWNLOAD_PREPARE: '/ncm/music/download/prepare',
+    USER: {
+      PLAYLIST_LIST: '/ncm/music/user/playlist',
+    },
+    SONG: {
+      URLV1: '/ncm/music/song/url_v1',
+      DETAIL: '/ncm/music/song/detail',
+      LYRIC: '/ncm/music/song/lyric',
+    },
+    SEARCH: '/ncm/music/search',
+    PLAYLIST: {
+      DETAIL: '/ncm/music/playlist/detail',
+    },
   },
   CONFIG: {
     GET: '/ncm/config',
     UPDATE: '/ncm/config',
   },
-  MODULES: {
-    REGISTER_ANONYMOUS: '/api/anonimous/register_anonimous',
-    SEARCH_HOT: '/api/search/search_hot',
-    SEARCH: '/api/search/search',
+  DOWNLOAD: {
+    CREATE_JOB: '/ncm/download/job/create',
   },
 } as const
 

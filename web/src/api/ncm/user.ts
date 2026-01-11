@@ -1,7 +1,7 @@
 import { http, type ApiEnvelope, type ApiResult } from '../request'
-import { SERVICE_ENDPOINTS } from '../config'
+import { NCM_API } from '../config'
 
-const USER = SERVICE_ENDPOINTS.USER
+const USER = NCM_API.USER
 
 export interface Account {
   account_id: string

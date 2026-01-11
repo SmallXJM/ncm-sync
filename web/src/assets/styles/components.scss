@@ -805,14 +805,14 @@
   background: var(--border-hover);
   /* Default Off Color */
   border-radius: 999px;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 /* 滑块 */
 .switch .switch-handle {
   position: absolute;
   width: 48px;
-  height: 26px;
+  height: 25.5px;
   top: 3px;
   left: 3px;
   border-radius: 999px;
@@ -831,4 +831,141 @@
 .switch input:checked~.switch-handle {
   transform: translateX(26px);
   /* Move handle to end */
+}
+
+/* 歌单卡片 - 重构版 */
+.playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.playlist-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease,background-color 0.3s ease;
+  height: 100%;
+  box-shadow: var(--shadow-sm);
+}
+
+.playlist-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+
+}
+
+.card-main {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  flex: 1;
+}
+
+.card-cover {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--bg-surface-hover);
+}
+
+.card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease, filter 0.3s ease;
+}
+
+.dark .card-cover img {
+  filter: brightness(0.7); /* 亮度降低到 70% */
+}
+
+
+.play-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 500;
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2; /* 标准属性，用于未来兼容性 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.creator-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.creator-info img {
+  transition: filter 0.3s ease;
+}
+
+.dark .creator-info img {
+  filter: brightness(0.7); /* 亮度降低到 70% */
+}
+
+.creator-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-surface-hover);
+  transition: background-color 0.3s ease;
+}
+
+.track-count {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin-top: auto;
+}
+
+.card-footer {
+  padding: var(--spacing-md);
+  // border-top: 1px solid var(--border-color);
+  background: var(--bg-surface); /* Slightly different bg for footer? Or keep same */
+  display: flex;
+  justify-content: flex-end; /* 让按钮靠右 */
+  transition: background-color 0.3s ease;
+}
+
+.card-footer .btn {
+  /* 固定在右下角 */
+  margin-left: auto;
 }
