@@ -256,16 +256,16 @@ class DownloadProcess:
                         music_artist=data.get("music_artist"),
                         music_album=data.get("music_album"),
                     )
-                    from types import SimpleNamespace
-                    fake_task = SimpleNamespace(
-                        music_title=new_task.music_title,
-                        music_artist=new_task.music_artist,
-                        music_album=new_task.music_album,
-                        quality=source_task.quality,
-                        file_format=source_task.file_format,
-                    )
+                    # from types import SimpleNamespace
+                    # fake_task = SimpleNamespace(
+                    #     music_title=new_task.music_title,
+                    #     music_artist=new_task.music_artist,
+                    #     music_album=new_task.music_album,
+                    #     quality=source_task.quality,
+                    #     file_format=source_task.file_format,
+                    # )
                     job_obj = await self.job_repo.get_by_id(uow.session, job.id)
-                    target_path = self.storage_manager._generate_final_path(fake_task, job_obj)
+                    target_path = self.storage_manager._generate_final_path(new_task, job_obj)
                     target_path.parent.mkdir(parents=True, exist_ok=True)  # 确保目标目录存在
                     shutil.copy2(source_task.file_path, str(target_path))  # 保留元信息地复制文件
                     await self.task_repo.update(
