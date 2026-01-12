@@ -2,9 +2,19 @@
   <div class="page">
     <main>
       <div class="container">
+        <aside class="glass-card config-sidebar">
+          <nav class="config-nav">
+            <button v-for="group in selectGroups" :key="group.id" class="config-nav-item"
+              :class="{ 'active': group.id == activeGroupId }" @click="activeGroupId = group.id" type="button">
+              <span class="config-nav-item-text">{{ group.name }}</span>
+            </button>
+          </nav>
+        </aside>
         <div class="header">
-          <p class="text-secondary">共 {{ playlists.length }} 个歌单</p>
-          <p class="text-secondary">当前 {{ currentPage }}/{{ totalPages }} 页</p>
+          <!-- <p class="text-secondary">共 {{ playlists.length }} 个歌单</p> -->
+          <!-- <p class="text-secondary">{{ selectGroups.find(g => g.id == activeGroupId)?.name }}有 {{ showPlaylists.length }} 个</p> -->
+          <p class="text-secondary">共 {{ showPlaylists.length }} 个歌单</p>
+          <p class="text-secondary">当前 {{ currentPage }} / {{ totalPages }} 页</p>
         </div>
         <div v-if="isLoading && !playlists.length" class="text-center py-2xl">
           <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
@@ -136,16 +146,17 @@
           <label>目标音质</label>
           <select v-model="jobConfig.target_quality" class="input w-full">
             <!-- standard, exhigh, lossless, hires, jyeffect(高清环绕声), sky(沉浸环绕声), jymaster(超清母带) -->
-            <option value="jymaster">超清母带 (Jymaster)</option>
             <option value="dolby">杜比全景声 (Dolby)</option>
+            <option value="jymaster">超清母带 (Jymaster)</option>
             <option value="sky">沉浸环绕声 (Sky)</option>
             <option value="jyeffect">高清环绕声 (Jyeffect)</option>
-            <option value="hires">Hi-Res</option>
+            <option value="hires">高解析度无损 (Hi-Res)</option>
             <option value="lossless">无损 (Lossless)</option>
             <option value="exhigh">极高 (Exhigh)</option>
             <option value="standard">标准 (Standard)</option>
           </select>
           <p class="help-text">目标音质为请求的最高音质，如下载音乐未包含该音质，会由服务器自动向下兼容</p>
+          <p class="help-text">推荐选择：高解析度无损</p>
 
         </div>
 
@@ -153,7 +164,7 @@
 
         <div class="form-group">
           <div class="form-group row">
-            <label>嵌入元数据</label>
+            <label>嵌入标签</label>
             <label class="switch">
               <input type="checkbox" v-model="jobConfig.embed_metadata" />
               <span class="switch-track"></span>
@@ -229,7 +240,11 @@ import api from '@/api'
 import type { Playlist } from '@/api/ncm/music/user'
 import type { CreateJobParams, DownloadJobItem } from '@/api/ncm/download'
 import type { NcmConfig } from '@/api/ncm/config'
+import { useRoute, useRouter } from 'vue-router'
+import { nextTick } from 'vue'
 
+const route = useRoute()
+const router = useRouter()
 
 
 interface Toast {
@@ -241,9 +256,21 @@ interface Toast {
 // State
 const isLoading = ref(false)
 const isSubmitting = ref(false)
+const selectGroups = ref([
+  {
+    id: 1,
+    name: '创建的歌单',
+  },
+  {
+    id: 2,
+    name: '收藏的歌单',
+  },
+])
+const activeGroupId = ref(Number(route.query.group) || 1)
+
 const playlists = ref<Playlist[]>([])
-const currentPage = ref(1)
 const pageSize = 30
+const currentPage = ref(Number(route.query.page) || 1)
 const isDrawerOpen = ref(false)
 const globalConfig = ref<NcmConfig | null>(null)
 const DownloadJob = ref<DownloadJobItem[] | null>(null)
@@ -271,11 +298,21 @@ const toast = reactive<Toast>({
   type: 'info',
 })
 
+
 // Computed
-const totalPages = computed(() => Math.ceil(playlists.value.length / pageSize))
+const showPlaylists = computed(() => {
+  if (activeGroupId.value === 1) {
+    return playlists.value.filter(p => p.subscribed === false)
+  }
+  return playlists.value.filter(p => p.subscribed === true)
+})
+
+const totalPages = computed(() => Math.ceil(showPlaylists.value.length / pageSize))
+
+console.log('currentPage', currentPage.value, totalPages.value, showPlaylists.value.length,Number(route.query.page))
 const displayPlaylists = computed(() => {
   const start = (currentPage.value - 1) * pageSize
-  return playlists.value.slice(start, start + pageSize)
+  return showPlaylists.value.slice(start, start + pageSize)
 })
 
 const visiblePages = computed(() => {
@@ -323,9 +360,66 @@ const visiblePages = computed(() => {
   return pages
 })
 
-import { nextTick } from 'vue'
 
-watch(currentPage, async () => {
+
+// Methods
+onMounted(async () => {
+  console.log('Component Mounted', new Date().getTime());
+  // fetchGlobalConfig(),
+  await fetchDownloadJob()
+  await fetchPlaylists()
+  
+  // 修正正确页码逻辑
+  if (Number(route.query.group) < 1) {
+    activeGroupId.value = 1
+  }
+  if (Number(route.query.group) > selectGroups.value.length) {
+    activeGroupId.value = selectGroups.value.length
+  }
+  if (Number(route.query.page) < 1) {
+    currentPage.value = 1
+  }
+  if (Number(route.query.page) > totalPages.value) {
+    currentPage.value = totalPages.value
+  }
+
+  updateUrl()
+
+})
+
+
+const updateUrl = () => {
+  const query = { ...route.query }
+
+  if (activeGroupId.value === 1) {
+    delete query.group
+  } else {
+    query.group = activeGroupId.value.toString()
+  }
+
+  if (currentPage.value === 1) {
+    delete query.page
+  } else {
+    query.page = currentPage.value.toString()
+  }
+
+  router.push({ query })
+}
+
+
+watch(activeGroupId, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    currentPage.value = 1 // 切换分类时强制回第一页
+    updateUrl()
+  }
+})
+
+watch(currentPage, async (newVal, oldVal) => {
+  if (newVal === oldVal) return
+  // 更新 URL (如果不是通过路由变化触发的)
+  updateUrl()
+
+  // 滚动到顶部逻辑
   await nextTick()
   // 查找 Layout 组件中定义的那个滚动容器类名
   const scrollContainer = document.querySelector('.layout__content')
@@ -335,17 +429,29 @@ watch(currentPage, async () => {
       behavior: 'smooth'
     })
   }
+
+
 })
 
-// Methods
-onMounted(async () => {
-  console.log('Component Mounted', new Date().getTime());
-  Promise.all([
-    // fetchGlobalConfig(),
-    fetchDownloadJob(),
-    fetchPlaylists(),
-  ]);
-})
+// 监听路由 query 的变化，确保点击后退键时 UI 同步更新
+watch(() => route.query, (newQuery) => {
+  const qGroup = Number(newQuery.group) > selectGroups.value.length ? selectGroups.value.length : Number(newQuery.group) || 1
+  const qPage = Number(newQuery.page) > totalPages.value ? totalPages.value : Number(newQuery.page) || 1
+
+  
+  if (activeGroupId.value !== qGroup) {
+    activeGroupId.value = qGroup
+  }
+  if (currentPage.value !== qPage) {
+    currentPage.value = qPage
+  }
+
+
+
+
+}, { deep: true })
+
+
 
 async function fetchGlobalConfig() {
   try {
@@ -379,7 +485,7 @@ async function fetchPlaylists() {
     if (res.success && res.data.code === 200) {
       // The API returns { playlist: [...] }
       const data = res.data
-        if (data && Array.isArray(data.playlist)) {
+      if (data && Array.isArray(data.playlist)) {
         playlists.value = data.playlist || []
       } else {
         playlists.value = []
@@ -388,7 +494,7 @@ async function fetchPlaylists() {
       showToast('获取歌单失败: ' + (res.success ? res.data.code : res.error || '未知错误'), 'error')
     }
   } catch (e) {
-    showToast('获取歌单失败:'+ (e as Error).message, 'error')
+    showToast('获取歌单失败:' + (e as Error).message, 'error')
   } finally {
     isLoading.value = false
   }
@@ -466,12 +572,12 @@ async function submitJob() {
       closeDrawer()
       fetchDownloadJob()
     } else {
-        // 访问 res.data.message 前先判断 res.success
+      // 访问 res.data.message 前先判断 res.success
       const message = res.success ? res.data.message : res.error
       showToast('订阅失败: ' + (message || '未知错误'), 'error')
     }
   } catch (e) {
-    showToast('订阅失败:'+ (e as Error).message, 'error')
+    showToast('订阅失败:' + (e as Error).message, 'error')
   } finally {
     isSubmitting.value = false
   }
@@ -500,7 +606,6 @@ function hideToast() {
 </script>
 
 <style scoped lang="scss">
-
 .container {
   margin: 0 auto;
 }
@@ -510,6 +615,7 @@ function hideToast() {
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
 
   p {

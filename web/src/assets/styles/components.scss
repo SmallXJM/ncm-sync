@@ -405,7 +405,7 @@
 .config-sidebar {
   width: 220px;
   flex-shrink: 0;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   position: sticky;
   top: 1.5rem;
   width: 100%;
@@ -537,7 +537,7 @@
   color: var(--text-secondary);
   line-height: 1.5;
   /* 保留换行符，同时允许文本在到达容器边缘时自动换行 */
-  white-space: pre-wrap; 
+  white-space: pre-wrap;
   /* 可选：如果你希望字数过多时强制折断单词 */
   word-break: break-word;
 }
@@ -561,7 +561,7 @@
   position: fixed;
   bottom: 2rem;
   left: 50%;
-  
+
   /* 初始位置：水平居中，垂直隐藏 */
   transform: translate(-50%, 150%);
 
@@ -584,13 +584,12 @@
   /* 确保内容居中 */
   gap: var(--spacing-lg);
   z-index: 100;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)
-  , background-color 0.3s ease
-  , border-color 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease, border-color 0.3s ease;
 
   /* 防止内容换行导致的局促感 */
   white-space: nowrap;
-  .btn{
+
+  .btn {
     margin-right: var(--spacing-sm);
   }
 }
@@ -787,8 +786,10 @@
   display: inline-block;
   cursor: pointer;
   width: 80px;
-  /* *更长条* */
   height: 32px;
+  border-radius: 999px;
+  overflow: hidden;
+  /* 关键：隐藏溢出 */
 }
 
 .switch input {
@@ -798,40 +799,78 @@
   height: 0;
 }
 
-/* 轨道 */
+/* 轨道：依然绝对定位撑满整个容器 */
 .switch .switch-track {
   position: absolute;
   inset: 0;
   background: var(--border-hover);
-  /* Default Off Color */
   border-radius: 999px;
   transition: background-color 0.2s ease;
+  pointer-events: none;
+  /* 让点击穿透到 input 或 label */
 }
 
-/* 滑块 */
+/* 滑块：核心改变 */
 .switch .switch-handle {
   position: absolute;
-  width: 48px;
-  height: 25.5px;
-  top: 10%; //原为3px，但是可能遇到错位
-  left: 3px;
+  /* 1. 滑块初始大小直接撑满整个容器 */
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 100%;
+
+  /* 2. 关键：利用控制 border 宽度来产生间距感 */
+  /* 设置边框颜色与背景一致，视觉上就像滑块变小了 */
+  box-sizing: border-box;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  /* 保证背景只在内容区绘制 */
+
+  background-color: var(--bg-surface);
   border-radius: 999px;
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 /* 开启状态 */
 .switch input:checked+.switch-track {
   background: var(--control-active-bg);
   transition: background-color 0.2s ease;
-  
+
 }
 
 .switch input:checked~.switch-handle {
-  transform: translateX(26px);
-  /* Move handle to end */
+  /* 此时位移计算变得极其简单，不受 padding 干扰 */
+  transform: translateX(24px);
+  /* 80 - 56 = 24 */
 }
+
+/* 禁用状态 */
+.switch.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+  /* 降低整体透明度体现不可用感 */
+
+}
+
+/* 2. 轨道禁用样式 */
+.switch input:disabled + .switch-track {
+  // 降低轨道透明度
+  opacity: 0.6;
+  // background: var(--bg-secondary) !important; /* 使用更灰暗的背景 */
+  // border: 1px solid var(--border-color); /* 增加边框感 */
+}
+
+// /* 3. 滑块禁用样式 */
+// .switch input:disabled ~ .switch-handle {
+//   background: var(--text-tertiary); /* 滑块变灰 */
+//   box-shadow: none; /* 去掉阴影 */
+// }
+
+// /* 4. 如果需要在禁用状态下保持选中色（变淡的选中色） */
+// .switch input:disabled:checked + .switch-track {
+//   background: var(--control-active-bg); 
+//   filter: grayscale(0.5) opacity(0.5); /* 将原本的激活色灰度处理 */
+// }
 
 /* 歌单卡片 - 重构版 */
 .playlist-grid {
@@ -847,7 +886,7 @@
   border: 1px solid var(--border-color);
   border-radius: 1rem;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease,background-color 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
   height: 100%;
   box-shadow: var(--shadow-sm);
 }
@@ -883,7 +922,8 @@
 }
 
 .dark .card-cover img {
-  filter: brightness(0.7); /* 亮度降低到 70% */
+  filter: brightness(0.7);
+  /* 亮度降低到 70% */
 }
 
 
@@ -919,7 +959,8 @@
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2; /* 标准属性，用于未来兼容性 */
+  line-clamp: 2;
+  /* 标准属性，用于未来兼容性 */
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 0.3s ease;
@@ -940,7 +981,8 @@
 }
 
 .dark .creator-info img {
-  filter: brightness(0.7); /* 亮度降低到 70% */
+  filter: brightness(0.7);
+  /* 亮度降低到 70% */
 }
 
 .creator-avatar {
@@ -961,9 +1003,11 @@
 .card-footer {
   padding: var(--spacing-md);
   // border-top: 1px solid var(--border-color);
-  background: var(--bg-surface); /* Slightly different bg for footer? Or keep same */
+  background: var(--bg-surface);
+  /* Slightly different bg for footer? Or keep same */
   display: flex;
-  justify-content: flex-end; /* 让按钮靠右 */
+  justify-content: flex-end;
+  /* 让按钮靠右 */
   transition: background-color 0.3s ease;
 }
 

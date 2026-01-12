@@ -45,6 +45,7 @@ export const NCM_API = {
   DOWNLOAD: {
     CREATE_JOB: '/ncm/download/job/create',
     GET_JOB_LIST: '/ncm/download/job',
+    UPDATE_JOB: '/ncm/download/job/update',
   },
 } as const
 

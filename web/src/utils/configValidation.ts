@@ -28,11 +28,11 @@ export type NcmConfigFieldControl =
   | { type: 'switch' }
   | { type: 'text'; placeholder?: string; mono?: boolean }
   | { type: 'intRange'; min: number; max: number }
-  | { type: 'select'; options: { label: string; value: unknown }[] }
+  | { type: 'select'; options: { label: string; value: string }[] }
 
 export type NcmConfigVisibleWhen =
   | { path: string; operator: 'notNull' }
-  | { path: string; operator: 'equals'; value: unknown }
+  | { path: string; operator: 'equals'; value: string }
 
 export interface NcmConfigFieldSchema {
   id: string
@@ -122,11 +122,11 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
           type: 'select', 
           options:
             [
-              { label: '超清母带 (Jymaster)', value: 'jymaster' }, 
               { label: '杜比全景声 (Dolby)', value: 'dolby' }, 
+              { label: '超清母带 (Jymaster)', value: 'jymaster' }, 
               { label: '沉浸环绕声 (Sky)', value: 'sky' }, 
               { label: '高清环绕声 (Jyeffect)', value: 'jyeffect' }, 
-              { label: 'Hi-Res', value: 'hires' }, 
+              { label: '高解析度无损 (Hi-Res)', value: 'hires' }, 
               { label: '无损 (Lossless)', value: 'lossless' }, 
               { label: '极高 (Exhigh)', value: 'exhigh' }, 
               { label: '标准 (Standard)', value: 'standard' }
@@ -137,7 +137,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
       {
         id: 'subscription.embed_metadata',
         path: 'subscription.embed_metadata',
-        label: '嵌入元数据',
+        label: '嵌入标签',
         description: '包含音乐基本数据，如艺术家、标题、专辑等。',
         control: { type: 'switch' },
       },

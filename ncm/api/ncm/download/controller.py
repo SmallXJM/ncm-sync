@@ -131,6 +131,10 @@ class DownloadController:
     async def retry_job_tasks(self, **kwargs) -> APIResponse:
         return await self.jobs.retry_job_tasks(**kwargs)
 
+    @ncm_service("/ncm/download/job/update", ["POST"])
+    async def update_job(self, **kwargs) -> APIResponse:
+        return await self.jobs.update_job(**kwargs)
+
     # ===== TASK MANAGEMENT =====
     @ncm_service("/ncm/download/task/submit", ["POST"])
     async def submit_task(self, **kwargs) -> APIResponse:

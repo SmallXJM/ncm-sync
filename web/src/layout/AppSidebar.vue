@@ -114,6 +114,7 @@ const menus: MenuItem[] = [
     { title: '首页', path: '/', icon: HomeIcon },
     { title: '账号管理', path: '/account', icon: UserIcon },
     { title: '我的歌单', path: '/my/playlist', icon: SubscribeIcon },
+    { title: '订阅管理', path: '/subscription', icon: SubscribeIcon },
     // { title: '设置', path: '/config', icon: SettingsIcon }
 ]
 

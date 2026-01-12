@@ -12,6 +12,7 @@ from ncm.core.options import APIResponse
 from ncm.core.logging import get_logger
 from ncm.infrastructure.http import ncm_service
 from ncm.infrastructure.config import get_config_manager
+from datetime import datetime
 
 logger = get_logger(__name__)
 
@@ -129,7 +130,6 @@ class DownloadControllerJob:
                     }
                 }
             )
-
         except Exception as e:
             logger.exception(f"Failed to restart failed tasks")
             return APIResponse(
@@ -139,3 +139,73 @@ class DownloadControllerJob:
                     "message": f"Failed to restart failed tasks: {str(e)}"
                 }
             )
+
+
+    async def update_job(self,
+                         job_id: int,
+                         job_name: Optional[str] = None,
+                         storage_path: Optional[str] = None,
+                         filename_template: Optional[str] = None,
+                         target_quality: Optional[str] = None,
+                         embed_cover: Optional[bool] = None,
+                         embed_lyrics: Optional[bool] = None,
+                         embed_metadata: Optional[bool] = None,
+                         enabled: Optional[bool] = None,
+                         **kwargs) -> APIResponse:
+        try:
+            job_id = int(job_id)
+
+            update_fields: Dict[str, Any] = {"updated_at": datetime.utcnow()}
+            if job_name is not None:
+                update_fields["job_name"] = job_name
+            if storage_path is not None:
+                update_fields["storage_path"] = storage_path
+            if filename_template is not None:
+                update_fields["filename_template"] = filename_template
+            if target_quality is not None:
+                update_fields["target_quality"] = target_quality
+            if embed_cover is not None:
+                update_fields["embed_cover"] = bool(embed_cover)
+            if embed_lyrics is not None:
+                update_fields["embed_lyrics"] = bool(embed_lyrics)
+            if embed_metadata is not None:
+                update_fields["embed_metadata"] = bool(embed_metadata)
+            if enabled is not None:
+                update_fields["enabled"] = bool(enabled)
+
+            if "storage_path" in update_fields and not str(update_fields["storage_path"]).strip():
+                return APIResponse(
+                    status=400,
+                    body={"code": 400, "message": "storage_path 不能为空"}
+                )
+            if "filename_template" in update_fields and not str(update_fields["filename_template"]).strip():
+                return APIResponse(
+                    status=400,
+                    body={"code": 400, "message": "filename_template 不能为空"}
+                )
+
+            job_data = await self.orchestrator.update_download_job_dict(job_id, **update_fields)
+            if not job_data:
+                return APIResponse(
+                    status=404,
+                    body={"code": 404, "message": f"Job not found: {job_id}"}
+                )
+
+            return APIResponse(
+                status=200,
+                body={
+                    "code": 200,
+                    "message": "Job updated successfully",
+                    "data": job_data
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to update job")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to update job: {str(e)}"
+                }
+            )
+
