@@ -129,7 +129,7 @@
         <div class="header-content">
           <h3>订阅歌单</h3>
           <div style="margin-top: 8px;">
-            <p class="help-text">即将订阅歌单「{{ jobConfig.source_name }}」</p>
+            <p class="help-text">即将订阅歌单 "{{ jobConfig.source_name }}"</p>
             <p class="help-text">请配置以下信息：</p>
           </div>
         </div>
@@ -225,12 +225,6 @@
       </div>
     </aside>
 
-    <div v-if="toast.show" class="toast" :class="toast.type">
-      <div class="toast-content">
-        <span>{{ toast.message }}</span>
-        <button class="toast-close" @click="hideToast">×</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -242,6 +236,7 @@ import type { CreateJobParams, DownloadJobItem } from '@/api/ncm/download'
 import type { NcmConfig } from '@/api/ncm/config'
 import { useRoute, useRouter } from 'vue-router'
 import { nextTick } from 'vue'
+import { toast } from '@/utils/toast'
 
 const route = useRoute()
 const router = useRouter()
@@ -289,13 +284,6 @@ const jobConfig = reactive<CreateJobParams>({
   embed_lyrics: true,
   filename_template: '{artist} - {title}',
   storage_path: '',
-})
-
-// Toast State
-const toast = reactive<Toast>({
-  show: false,
-  message: '',
-  type: 'info',
 })
 
 
@@ -491,10 +479,10 @@ async function fetchPlaylists() {
         playlists.value = []
       }
     } else {
-      showToast('获取歌单失败: ' + (res.success ? res.data.code : res.error || '未知错误'), 'error')
+      toast.show('获取歌单失败: ' + (res.success ? res.data.code : res.error || '未知错误'), 'error')
     }
   } catch (e) {
-    showToast('获取歌单失败:' + (e as Error).message, 'error')
+    toast.show('获取歌单失败:' + (e as Error).message, 'error')
   } finally {
     isLoading.value = false
   }
@@ -560,7 +548,7 @@ function closeDrawer() {
 
 async function submitJob() {
   if (!jobConfig.job_name || !jobConfig.storage_path) {
-    showToast('请填写完整信息', 'warning')
+    toast.show('请填写完整信息', 'warning')
     return
   }
 
@@ -568,16 +556,16 @@ async function submitJob() {
   try {
     const res = await api.download.createJob(jobConfig)
     if (res.success && (res.data.code === 200 || res.data.code === 201)) {
-      showToast(`订阅歌单「${jobConfig.job_name}」成功`, 'success')
+      toast.show(`订阅歌单 "${jobConfig.job_name}"成功`, 'success')
       closeDrawer()
       fetchDownloadJob()
     } else {
       // 访问 res.data.message 前先判断 res.success
       const message = res.success ? res.data.message : res.error
-      showToast('订阅失败: ' + (message || '未知错误'), 'error')
+      toast.show('订阅失败: ' + (message || '未知错误'), 'error')
     }
   } catch (e) {
-    showToast('订阅失败:' + (e as Error).message, 'error')
+    toast.show('订阅失败:' + (e as Error).message, 'error')
   } finally {
     isSubmitting.value = false
   }
@@ -593,16 +581,6 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[\\/:*?"<>|]/g, '_')
 }
 
-function showToast(message: string, type: Toast['type'] = 'info') {
-  toast.message = message
-  toast.type = type
-  toast.show = true
-  setTimeout(() => hideToast(), 5000)
-}
-
-function hideToast() {
-  toast.show = false
-}
 </script>
 
 <style scoped lang="scss">
@@ -694,7 +672,7 @@ function hideToast() {
   bottom: 0;
   width: 400px;
   max-width: 90vw;
-  background: var(--bg-surface);
+  background: var(--bg-modal);
   box-shadow: var(--shadow-2xl);
   z-index: 101;
   transform: translateX(100%);

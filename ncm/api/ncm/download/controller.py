@@ -135,6 +135,10 @@ class DownloadController:
     async def update_job(self, **kwargs) -> APIResponse:
         return await self.jobs.update_job(**kwargs)
 
+    @ncm_service("/ncm/download/job/delete", ["POST"])
+    async def delete_job(self, **kwargs) -> APIResponse:
+        return await self.jobs.delete_job(**kwargs)
+
     # ===== TASK MANAGEMENT =====
     @ncm_service("/ncm/download/task/submit", ["POST"])
     async def submit_task(self, **kwargs) -> APIResponse:

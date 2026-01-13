@@ -2,8 +2,17 @@
   <div class="page">
     <main>
       <div class="container">
+        <!-- 为后期新增多个类别时保留 -->
+        <!-- <aside class="glass-card config-sidebar">
+          <nav class="config-nav">
+            <button v-for="group in selectGroups" :key="group.id" class="config-nav-item"
+              :class="{ 'active': group.id == activeGroupId }" @click="activeGroupId = group.id" type="button">
+              <span class="config-nav-item-text">{{ group.name }}</span>
+            </button>
+          </nav>
+        </aside> -->
+
         <header class="header">
-          <h2 class="section-title">订阅管理</h2>
           <p class="text-secondary">共 {{ jobs.length }} 个订阅</p>
         </header>
 
@@ -19,16 +28,18 @@
             <div>存储路径</div>
             <!-- <div>文件名模板</div> -->
             <!-- <div class="col-stats">任务统计</div> -->
-            <div>状态</div>
+            <div>启用状态</div>
             <div>操作</div>
           </div>
 
           <div class="job-list">
             <div v-for="job in jobs" :key="job.id" class="glass-card job-row">
               <div class="col-name">
-                <h3 :title="job.job_name">{{ job.job_name }}</h3>
-                <!-- <p class="text-secondary">{{ job.source_name || '未知' }}</p> -->
-                <p class="text-secondary">{{ formatSourceType(job.source_type) }}</p>
+                <div>
+                  <h3 :title="job.job_name">{{ job.job_name }}</h3>
+                  <!-- <p class="text-secondary">{{ job.source_name || '未知' }}</p> -->
+                  <p class="text-secondary">{{ formatSourceType(job.source_type) }}</p>
+                </div>
               </div>
 
               <div class="col-quality">
@@ -52,8 +63,11 @@
                 <!-- <span class="status-pill" :class="job.enabled ? 'status-pill--enabled' : 'status-pill--disabled'">
                   {{ job.enabled ? '已启用' : '已禁用' }}
                 </span> -->
-                <label class="switch is-disabled">
-                  <input type="checkbox" v-model="job.enabled" disabled />
+                <!-- <span class="status-pill" :class="job.enabled ? 'status-pill--enabled' : 'status-pill--disabled'">
+                    {{ job.enabled ? '已启用' : '未启用' }}
+                  </span> -->
+                <label class="switch">
+                  <input type="checkbox" v-model="job.enabled" v-on:change="updateJobStatus(job)"/>
                   <span class="switch-track"></span>
                   <span class="switch-handle"></span>
                 </label>
@@ -61,7 +75,7 @@
 
               <div class="col-actions">
                 <!-- 编辑按钮 -->
-                <button class="btn btn-secondary btn-sm" @click="openEdit(job)">
+                <button class="btn btn-secondary btn-sm" @click="openEditModal(job)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                     <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                       stroke-width="2">
@@ -71,7 +85,7 @@
                   </svg>
                 </button>
                 <!-- 删除按钮 -->
-                <button class="btn btn-secondary btn-sm" @click="openEdit(job)">
+                <button class="btn btn-secondary btn-sm" @click="openDeleteModal(job)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                     <g fill="none">
                       <path
@@ -92,124 +106,146 @@
       </div>
     </main>
 
-    <div class="drawer-backdrop" :class="{ visible: isDrawerOpen }" @click="closeDrawer"></div>
-    <aside class="drawer" :class="{ visible: isDrawerOpen }">
-      <div class="drawer-header">
-        <div class="header-content">
-          <h3>编辑订阅</h3>
-          <div class="drawer-subtitle">
-            <p class="help-text">正在编辑订阅「{{ editForm.job_name }}」</p>
+    <Transition name="modal">
+      <div v-if="isEditModalOpen" class="modal-overlay" @click.self="closeEditModal">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="modal-header">
+              <div class="header-content">
+                <h3>编辑订阅：{{ formatSourceType(editForm.source_type) }} "{{ editForm.job_name }}"</h3>
+                <div class="modal-subtitle">
+                  <!-- <p class="help-text">正在编辑{{ formatSourceType(editForm.source_type) }} "{{ editForm.job_name }}"</p> -->
+                </div>
+              </div>
+              <button class="close-btn" @click="closeEditModal">×</button>
+            </div>
+
+            <div class="form-group">
+              <label>目标音质</label>
+              <select v-model="editForm.target_quality" class="input w-full">
+                <option value="dolby">杜比全景声 (Dolby)</option>
+                <option value="jymaster">超清母带 (Jymaster)</option>
+                <option value="sky">沉浸环绕声 (Sky)</option>
+                <option value="jyeffect">高清环绕声 (Jyeffect)</option>
+                <option value="hires">高解析度无损 (Hi-Res)</option>
+                <option value="lossless">无损 (Lossless)</option>
+                <option value="exhigh">极高 (Exhigh)</option>
+                <option value="standard">标准 (Standard)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <div class="form-group row">
+                <label>启用订阅</label>
+                <label class="switch">
+                  <input type="checkbox" v-model="editForm.enabled"/>
+                  <span class="switch-track"></span>
+                  <span class="switch-handle"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-group row">
+                <div class="form-group row">
+                  <label>嵌入标签</label>
+                  <label class="switch">
+                    <input type="checkbox" v-model="editForm.embed_metadata" />
+                    <span class="switch-track"></span>
+                    <span class="switch-handle"></span>
+                  </label>
+                </div>
+                <div class="form-group row">
+                  <label>嵌入封面</label>
+                  <label class="switch">
+                    <input type="checkbox" v-model="editForm.embed_cover" />
+                    <span class="switch-track"></span>
+                    <span class="switch-handle"></span>
+                  </label>
+                </div>
+                <div class="form-group row">
+                  <label>嵌入歌词</label>
+                  <label class="switch">
+                    <input type="checkbox" v-model="editForm.embed_lyrics" />
+                    <span class="switch-track"></span>
+                    <span class="switch-handle"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>音乐名模板</label>
+              <input v-model="editForm.filename_template" class="input w-full mono" type="text" />
+            </div>
+
+            <div class="form-group">
+              <label>存储路径</label>
+              <input v-model="editForm.storage_path" class="input w-full mono" type="text" />
+            </div>
           </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeEditModal">取消</button>
+            <button class="btn btn-primary" @click="submitEdit" :disabled="isSaving">
+              {{ isSaving ? '保存中...' : '保存' }}
+            </button>
+          </div>
+
         </div>
-        <button class="close-btn" @click="closeDrawer">×</button>
       </div>
 
-      <div class="drawer-body" v-if="isDrawerOpen">
-        <div class="form-group">
-          <label>订阅名称</label>
-          <input v-model="editForm.job_name" class="input w-full" type="text" />
-        </div>
+      <div v-else-if="isDeleteModalOpen" class="modal-overlay" @click.self="closeDeleteModal">
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-body" style="padding: 1.5rem;">
+            <div class="modal-header">
+              <div class="header-content">
+                <h3>删除订阅：{{ formatSourceType(deleteForm.source_type) }} "{{ deleteForm.job_name }}"</h3>
+                <div class="modal-subtitle">
+                  <!-- <p class="help-text">正在删除{{ formatSourceType(deleteForm.source_type) }} "{{ deleteForm.job_name }}"</p> -->
+                </div>
+              </div>
+              <button class="close-btn" @click="closeDeleteModal">×</button>
+            </div>
 
-        <div class="form-group">
-          <label>目标音质</label>
-          <select v-model="editForm.target_quality" class="input w-full">
-            <option value="dolby">杜比全景声 (Dolby)</option>
-            <option value="jymaster">超清母带 (Jymaster)</option>
-            <option value="sky">沉浸环绕声 (Sky)</option>
-            <option value="jyeffect">高清环绕声 (Jyeffect)</option>
-            <option value="hires">高解析度无损 (Hi-Res)</option>
-            <option value="lossless">无损 (Lossless)</option>
-            <option value="exhigh">极高 (Exhigh)</option>
-            <option value="standard">标准 (Standard)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <div class="form-group row">
-            <label>启用订阅</label>
-            <label class="switch">
-              <input type="checkbox" v-model="editForm.enabled" />
-              <span class="switch-track"></span>
-              <span class="switch-handle"></span>
-            </label>
+            <div class="form-group">
+              <div class="modal-subtitle">
+                <p class="help-text">确定要删除订阅{{ formatSourceType(deleteForm.source_type) }} "<strong
+                    style="font-weight: bolder;">{{ deleteForm.job_name }}</strong>"吗？</p>
+                <p class="help-text">该操作<span style="color: red;">无法撤销</span>，请谨慎选择！</p>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <div class="form-group row">
-            <label>嵌入标签</label>
-            <label class="switch">
-              <input type="checkbox" v-model="editForm.embed_metadata" />
-              <span class="switch-track"></span>
-              <span class="switch-handle"></span>
-            </label>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeDeleteModal">取消</button>
+            <button class="btn btn-primary" @click="submitDelete" :disabled="isDeleting">
+              {{ isDeleting ? '删除中...' : '删除' }}
+            </button>
           </div>
-        </div>
 
-        <div class="form-group">
-          <div class="form-group row">
-            <label>嵌入封面</label>
-            <label class="switch">
-              <input type="checkbox" v-model="editForm.embed_cover" />
-              <span class="switch-track"></span>
-              <span class="switch-handle"></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <div class="form-group row">
-            <label>嵌入歌词</label>
-            <label class="switch">
-              <input type="checkbox" v-model="editForm.embed_lyrics" />
-              <span class="switch-track"></span>
-              <span class="switch-handle"></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>音乐名模板</label>
-          <input v-model="editForm.filename_template" class="input w-full mono" type="text" />
-        </div>
-
-        <div class="form-group">
-          <label>存储路径</label>
-          <input v-model="editForm.storage_path" class="input w-full mono" type="text" />
         </div>
       </div>
+    </Transition>
 
-      <div class="drawer-footer">
-        <button class="btn btn-secondary" @click="closeDrawer">取消</button>
-        <button class="btn btn-primary" @click="submitEdit" :disabled="isSaving">
-          {{ isSaving ? '保存中...' : '保存' }}
-        </button>
-      </div>
-    </aside>
-
-    <div v-if="toast.show" class="toast" :class="toast.type">
-      <div class="toast-content">
-        <span>{{ toast.message }}</span>
-        <button class="toast-close" @click="hideToast">×</button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import api from '@/api'
 import type { DownloadJobItem, UpdateJobParams } from '@/api/ncm/download'
+import { toast } from '@/utils/toast'
 
-interface Toast {
-  show: boolean
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-}
+const route = useRoute()
+const router = useRouter()
+
 
 interface EditFormState {
   job_id: number | null
   job_name: string
+  source_type: string
   target_quality: string
   embed_metadata: boolean
   embed_cover: boolean
@@ -221,18 +257,28 @@ interface EditFormState {
 
 const isLoading = ref(false)
 const isSaving = ref(false)
+const isDeleting = ref(false)
 const jobs = ref<DownloadJobItem[]>([])
-const isDrawerOpen = ref(false)
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
 
-const toast = reactive<Toast>({
-  show: false,
-  message: '',
-  type: 'info',
-})
+const selectGroups = ref([
+  {
+    id: 1,
+    name: '全部',
+  },
+  {
+    id: 2,
+    name: '歌单',
+  },
+])
+const activeGroupId = ref(Number(route.query.group) || 1)
+
 
 const editForm = reactive<EditFormState>({
   job_id: null,
   job_name: '',
+  source_type: '',
   target_quality: 'hires',
   embed_metadata: true,
   embed_cover: true,
@@ -242,6 +288,18 @@ const editForm = reactive<EditFormState>({
   enabled: true,
 })
 
+const deleteForm = reactive<{
+  job_id: number | null
+  job_name: string
+  source_type: string
+}>({
+  job_id: null,
+  job_name: '',
+  source_type: '',
+})
+
+
+
 function formatSourceType(value: string) {
   const map: Record<string, string> = {
     playlist: '歌单',
@@ -250,6 +308,7 @@ function formatSourceType(value: string) {
   }
   return map[value] || value
 }
+
 
 onMounted(async () => {
   await fetchJobs()
@@ -263,21 +322,30 @@ async function fetchJobs() {
     if (res.success && res.data.code === 200 && res.data.data) {
       jobs.value = res.data.data.jobs || []
     } else if (!res.success) {
-      showToast('获取订阅列表失败: ' + res.error, 'error')
+      toast.error('获取订阅列表失败: ' + res.error)
     } else {
-      showToast('获取订阅列表失败: ' + (res.data.message || '未知错误'), 'error')
+      toast.error('获取订阅列表失败: ' + (res.data.message || '未知错误'))
     }
   } catch (e) {
     const err = e as Error
-    showToast('获取订阅列表失败: ' + err.message, 'error')
+    toast.error('获取订阅列表失败: ' + err.message) 
   } finally {
     isLoading.value = false
   }
 }
 
-function openEdit(job: DownloadJobItem) {
+async function syncLocalJobs(updatedJob: DownloadJobItem) {
+  const index = jobs.value.findIndex((j) => j.id === updatedJob?.id)
+  if (index !== -1) {
+    jobs.value[index] = updatedJob
+  }
+  // console.log(index, jobs.value, updatedJob)
+}
+
+function openEditModal(job: DownloadJobItem) {
   editForm.job_id = job.id
   editForm.job_name = job.job_name
+  editForm.source_type = job.source_type
   editForm.target_quality = job.target_quality
   editForm.embed_metadata = job.embed_metadata
   editForm.embed_cover = job.embed_cover
@@ -285,19 +353,71 @@ function openEdit(job: DownloadJobItem) {
   editForm.filename_template = job.filename_template
   editForm.storage_path = job.storage_path
   editForm.enabled = job.enabled
-  isDrawerOpen.value = true
+  isEditModalOpen.value = true
 }
 
-function closeDrawer() {
-  isDrawerOpen.value = false
+function closeEditModal() {
+  isEditModalOpen.value = false
 }
+
+
+function openDeleteModal(job: DownloadJobItem) {
+  deleteForm.job_id = job.id
+  deleteForm.job_name = job.job_name
+  deleteForm.source_type = job.source_type
+  isDeleteModalOpen.value = true
+}
+
+function closeDeleteModal() {
+  isDeleteModalOpen.value = false
+}
+
+
+async function submitDelete() {
+  const job_name = `订阅：${formatSourceType(deleteForm.source_type || '')} "${deleteForm.job_name}"`
+  // const confirm = window.confirm(`确定要删除${job_name}吗？\n该操作<span style="color: red;">无法撤销</span>，请谨慎选择！`)
+  // if (!confirm) return
+  if (!deleteForm.job_id) {
+    toast.error('无效的订阅 ID')  
+    return
+  }
+  isDeleting.value = true
+  try {
+    const res = await api.download.deleteJob(deleteForm.job_id)
+
+    if (res.success && res.data.code === 200) {
+      toast.success(`${job_name}删除成功`)
+      closeDeleteModal()
+      jobs.value = jobs.value.filter((j) => j.id !== deleteForm.job_id)
+    } else if (!res.success) {
+      toast.error(`${job_name}删除失败: ${res.error}`)
+    } else {
+      toast.error(`${job_name}删除失败: ${res.data.message || '未知错误'}`)
+    }
+  } catch (e) {
+    const err = e as Error
+    toast.error('订阅删除失败: ' + err.message)
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+
 
 function formatQuality(value: string) {
+  //   <option value="dolby">杜比全景声 (Dolby)</option>
+  // <option value="jymaster">超清母带 (Jymaster)</option>
+  // <option value="sky">沉浸环绕声 (Sky)</option>
+  // <option value="jyeffect">高清环绕声 (Jyeffect)</option>
+  // <option value="hires">高解析度无损 (Hi-Res)</option>
+  // <option value="lossless">无损 (Lossless)</option>
+  // <option value="exhigh">极高 (Exhigh)</option>
+  // <option value="standard">标准 (Standard)</option>
   const map: Record<string, string> = {
     standard: '标准',
     exhigh: '极高',
     lossless: '无损',
-    hires: 'Hi-Res',
+    hires: '高解析度无损',
     jyeffect: '高清环绕声',
     sky: '沉浸环绕声',
     jymaster: '超清母带',
@@ -306,23 +426,60 @@ function formatQuality(value: string) {
   return map[value] || value
 }
 
+async function updateJobStatus(params: DownloadJobItem) {
+  const payload: UpdateJobParams = {
+    job_id: params.id,
+    job_name: params.job_name,
+    source_type: params.source_type,
+    enabled: params.enabled,
+  }
+
+  if (!payload.job_id) {
+    toast.error('无效的订阅 ID')
+    return
+  }
+
+  const job_name = `订阅：${formatSourceType(payload.source_type || '')} "${payload.job_name}"`
+
+  try {
+    const res = await api.download.updateJob(payload)
+    if (res.success && res.data.code === 200) {
+      if (res.data.data) {
+        if(res.data.data.enabled){}
+        toast.show(`${job_name}已${res.data.data.enabled ? '启用' : '关闭'}`, res.data.data.enabled ? 'success' : 'info')
+        await syncLocalJobs(res.data.data)
+      }
+
+    } else if (!res.success) {
+      toast.error(`${job_name}状态更新失败: ${res.error}`)
+    } else {
+      toast.error(`${job_name}状态更新失败: ${res.data.message || '未知错误'}`)
+    }
+  } catch (e) {
+    const err = e as Error
+    toast.error('订阅状态更新失败: ' + err.message)
+  } finally {
+  }
+}
+
 async function submitEdit() {
   if (!editForm.job_id) {
-    showToast('无效的订阅 ID', 'error')
+    toast.error('无效的订阅 ID')
     return
   }
   if (!editForm.storage_path.trim()) {
-    showToast('存储路径不能为空', 'warning')
+    toast.warning('存储路径不能为空')
     return
   }
   if (!editForm.filename_template.trim()) {
-    showToast('音乐名模板不能为空', 'warning')
+    toast.warning('音乐名模板不能为空')
     return
   }
 
   const payload: UpdateJobParams = {
     job_id: editForm.job_id,
     job_name: editForm.job_name,
+    source_type: editForm.source_type,
     target_quality: editForm.target_quality,
     embed_metadata: editForm.embed_metadata,
     embed_cover: editForm.embed_cover,
@@ -335,55 +492,51 @@ async function submitEdit() {
   isSaving.value = true
   try {
     const res = await api.download.updateJob(payload)
+    const job_name = `订阅：${formatSourceType(payload.source_type || '')} "${payload.job_name}"`
     if (res.success && res.data.code === 200) {
-      showToast('订阅更新成功', 'success')
-      closeDrawer()
-      await fetchJobs()
+      toast.success(`${job_name}保存成功`)
+      closeEditModal()
+      if (res.data.data) await syncLocalJobs(res.data.data)
     } else if (!res.success) {
-      showToast('订阅更新失败: ' + res.error, 'error')
+      toast.error(`${job_name}保存失败: ${res.error}`)
     } else {
-      showToast('订阅更新失败: ' + (res.data.message || '未知错误'), 'error')
+      toast.error(`${job_name}保存失败: ${res.data.message || '未知错误'}`)
     }
   } catch (e) {
     const err = e as Error
-    showToast('订阅更新失败: ' + err.message, 'error')
+    toast.error('订阅保存失败: ' + err.message)
   } finally {
     isSaving.value = false
   }
 }
 
-function showToast(message: string, type: Toast['type'] = 'info') {
-  toast.message = message
-  toast.type = type
-  toast.show = true
-  setTimeout(() => hideToast(), 5000)
-}
 
-function hideToast() {
-  toast.show = false
-}
 </script>
 
 <style scoped lang="scss">
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
+  // margin-top: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
+
+  p {
+    font-size: 1rem;
+    font-weight: 500;
+  }
 }
 
 /* 定义统一的列宽比例 */
 /* 这里的顺序对应：订阅名称、音质、存储路径、状态、操作 */
 /* 使用 minmax 确保最小宽度，max-content 适应内容 */
-$grid-config: minmax(200px, auto) max-content max-content max-content max-content;
+$grid-config: minmax(150px, auto) max-content max-content max-content max-content;
 
 .job-list-container {
   margin-top: var(--spacing-lg);
   /* 屏幕太小时允许横向滚动 */
   overflow-x: auto;
-  
+
   /* 桌面端使用 Subgrid 实现跨行对齐 */
   @media (min-width: 769px) {
     display: grid;
@@ -396,18 +549,22 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
 .list-header {
   /* 移动端隐藏逻辑保持不变 */
   display: none;
-  
+
   @media (min-width: 769px) {
     /* 设为 Grid Item 并跨越所有列 */
     grid-column: 1 / -1;
     /* 启用 Subgrid 继承父容器列定义 */
     display: grid;
     grid-template-columns: subgrid;
-    
+
     padding: 0 var(--spacing-lg);
     color: var(--text-tertiary);
     font-size: 0.875rem;
     font-weight: 500;
+
+    transition: transform 0.2s, color 0.3s;
+
+    gap: var(--spacing-sm);
 
     div {
       padding: 0 var(--spacing-xs);
@@ -419,7 +576,7 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  
+
   /* 桌面端移除布局容器身份，使子元素直接参与父 Grid */
   @media (min-width: 769px) {
     display: contents;
@@ -429,17 +586,18 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
 .job-row {
   /* 基础样式 */
   padding: var(--spacing-md) var(--spacing-lg);
-  transition: transform 0.2s;
-  
+  transition: transform 0.2s, background-color 0.3s, color 0.3s, border-color 0.3s;
+
   &:hover {
-    transform: translateY(-2px);
+    // transform: translateY(-2px);
     background: var(--bg-surface-hover);
   }
 
   /* 通用列处理 */
   >div {
     padding: 0 var(--spacing-xs);
-    min-width: 0; /* 触发省略号的关键 */
+    min-width: 0;
+    /* 触发省略号的关键 */
   }
 
   /* 桌面端布局 */
@@ -483,16 +641,16 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
     background: var(--bg-secondary);
     border-radius: 4px;
     text-align: left;
-    
+
 
   }
 }
 
-.mono {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
+// .mono {
+//   font-family: var(--font-mono);
+//   font-size: 0.85rem;
+//   opacity: 0.8;
+// }
 
 /* 状态药丸微调 */
 .status-pill {
@@ -502,6 +660,7 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
 
 .col-actions {
   text-align: left;
+
   .btn {
     margin-right: var(--spacing-xs);
   }
@@ -540,9 +699,9 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
   }
 }
 
-.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-}
+// .mono {
+//   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+// }
 
 .job-actions {
   display: flex;
@@ -573,64 +732,56 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
   color: var(--color-error);
 }
 
-.drawer-backdrop {
+.modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   z-index: 100;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
 }
 
-.drawer-backdrop.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 400px;
-  max-width: 90vw;
-  background: var(--bg-surface);
+.modal-content {
+  width: 100%;
+  //最大宽度适应窗口大小
+  max-width: 80%;
+  max-height: 90vh;
+  background: var(--bg-modal);
+  border-radius: 12px;
   box-shadow: var(--shadow-2xl);
-  z-index: 101;
-  transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+
+  /* 增加过渡效果，只针对宽度 */
+  transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.drawer.visible {
-  transform: translateX(0);
-}
-
-.drawer-header {
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-color);
+.modal-header {
+  // padding:  var(--spacing-xl);
+  // border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+
+  .header-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+  }
 }
 
-.drawer-header .header-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.drawer-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.drawer-subtitle .help-text {
+.modal-subtitle .help-text {
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
@@ -644,33 +795,56 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
   color: var(--text-secondary);
   padding: 4px;
   margin-top: -4px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--text-primary);
+  }
 }
 
-.close-btn:hover {
-  color: var(--text-primary);
-}
-
-.drawer-body {
+.modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
 }
 
-.drawer-footer {
+.modal-footer {
   padding: var(--spacing-lg);
-  border-top: 1px solid var(--border-color);
+  // border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-md);
+}
+
+/* Transition Animations */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+
+  .modal-content {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+
+  .modal-content {
+    transform: scale(0.95) translateY(10px);
+  }
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  //宽度不够时自动换行
+  // flex-wrap: wrap;
+
 }
 
 .form-group label {
@@ -680,7 +854,9 @@ $grid-config: minmax(200px, auto) max-content max-content max-content max-conten
 
 .form-group.row {
   flex-direction: row;
-  justify-content: space-between;
+  // justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+
 }
 </style>

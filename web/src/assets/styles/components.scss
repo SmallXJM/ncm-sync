@@ -785,8 +785,8 @@
   position: relative;
   display: inline-block;
   cursor: pointer;
-  width: 80px;
-  height: 32px;
+  width: 64px;
+  height: 26px;
   border-radius: 999px;
   overflow: hidden;
   /* 关键：隐藏溢出 */
@@ -816,7 +816,9 @@
   /* 1. 滑块初始大小直接撑满整个容器 */
   top: 0;
   left: 0;
-  width: 56px;
+
+  // 按照比例计算 handle 宽度（总宽 64px，占 62.5%）
+  width: percentage(40px/64px);
   height: 100%;
 
   /* 2. 关键：利用控制 border 宽度来产生间距感 */
@@ -828,7 +830,7 @@
 
   background-color: var(--bg-surface);
   border-radius: 999px;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 /* 开启状态 */
@@ -840,8 +842,8 @@
 
 .switch input:checked~.switch-handle {
   /* 此时位移计算变得极其简单，不受 padding 干扰 */
-  transform: translateX(24px);
-  /* 80 - 56 = 24 */
+  // 按照比例计算位移：总宽 64px，滑块宽 40px，位移 = 64 - 40 = 24px
+  transform: translateX(percentage(38px/64px));
 }
 
 /* 禁用状态 */

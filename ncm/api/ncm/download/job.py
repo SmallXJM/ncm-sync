@@ -140,7 +140,6 @@ class DownloadControllerJob:
                 }
             )
 
-
     async def update_job(self,
                          job_id: int,
                          job_name: Optional[str] = None,
@@ -209,3 +208,29 @@ class DownloadControllerJob:
                 }
             )
 
+    async def delete_job(self, job_id: int, **kwargs) -> APIResponse:
+        try:
+            job_id = int(job_id)
+            result = await self.orchestrator.delete_download_job(job_id)
+            if result:
+                return APIResponse(
+                    status=200,
+                    body={
+                        "code": 200,
+                        "message": f"Job {job_id} deleted successfully"
+                    }
+                )
+            else:
+                return APIResponse(
+                    status=404,
+                    body={"code": 404, "message": f"Job not found: {job_id}"}
+                )
+        except Exception as e:
+            logger.exception("Failed to delete job")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to delete job: {str(e)}"
+                }
+            )

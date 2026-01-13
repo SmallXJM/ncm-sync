@@ -46,9 +46,15 @@ export const createJob = async (params: CreateJobParams): Promise<ApiResult<ApiE
   return http.post<ApiEnvelope<unknown>>(DOWNLOAD.CREATE_JOB, params)
 }
 
-export const updateJob = async (params: UpdateJobParams): Promise<ApiResult<ApiEnvelope<unknown>>> => {
-  return http.post<ApiEnvelope<unknown>>(DOWNLOAD.UPDATE_JOB, params)
+export const updateJob = async (params: UpdateJobParams): Promise<ApiResult<ApiEnvelope<DownloadJobItem>>> => {
+  return http.post<ApiEnvelope<DownloadJobItem>>(DOWNLOAD.UPDATE_JOB, params)
 }
+
+export const deleteJob = async (job_id: number): Promise<ApiResult<ApiEnvelope<unknown>>> => {
+  return http.post<ApiEnvelope<unknown>>(DOWNLOAD.DELETE_JOB, { job_id })
+}
+
+
 
 export const getJobList = async (): Promise<ApiResult<ApiEnvelope<{ jobs: DownloadJobItem[]; count: number }>>> => {
   return http.get<ApiEnvelope<{ jobs: DownloadJobItem[]; count: number }>>(DOWNLOAD.GET_JOB_LIST)

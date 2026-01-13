@@ -102,7 +102,34 @@ const SubscribeIcon = h('svg', {
     h('line', { x1: '3', y1: '18', x2: '3.01', y2: '18' })
 ])
 
-
+const BellIcon = h(
+  'svg',
+  {
+    xmlns: 'http://www.w3.org/2000/svg',
+    width: '20',
+    height: '20',
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+  },
+  [
+    h('path', {
+      d: 'M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6',
+    }),
+    h('path', {
+      d: 'M9 17v1a3 3 0 0 0 6 0v-1',
+    }),
+    h('path', {
+      d: 'M21 6.727A11.05 11.05 0 0 0 18.206 3',
+    }),
+    h('path', {
+      d: 'M3 6.727A11.05 11.05 0 0 1 5.792 3',
+    }),
+  ]
+)
 
 interface MenuItem {
     title: string
@@ -112,9 +139,9 @@ interface MenuItem {
 
 const menus: MenuItem[] = [
     { title: '首页', path: '/', icon: HomeIcon },
-    { title: '账号管理', path: '/account', icon: UserIcon },
+    { title: '登录态', path: '/account', icon: UserIcon },
+    { title: '订阅', path: '/subscription', icon: BellIcon },
     { title: '我的歌单', path: '/my/playlist', icon: SubscribeIcon },
-    { title: '订阅管理', path: '/subscription', icon: SubscribeIcon },
     // { title: '设置', path: '/config', icon: SettingsIcon }
 ]
 
