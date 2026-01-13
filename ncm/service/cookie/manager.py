@@ -59,10 +59,10 @@ class CookieManager:
                 # 转换为 SessionInfo 对象
                 session_info = SessionInfo.from_orm(sessions[0])
                 self._set_current_session(session_info, update_selected_time=True)
-                logger.info(
-                    f"恢复使用会话: {session_info.session_id} "
-                    f"(账户: {session_info.account_id})"
-                )
+                # logger.debug(
+                #     f"恢复使用会话: {session_info.session_id} "
+                #     f"(账户: {session_info.account_id})"
+                # )
         except Exception as e:
             logger.error(f"初始化会话失败: {str(e)}")
 

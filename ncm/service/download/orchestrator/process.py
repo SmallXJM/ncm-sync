@@ -388,3 +388,11 @@ class DownloadProcess:
             except Exception as e:
                 logger.warning(f"Error during process task cancellation: {e}")
             logger.info("DownloadProcess task cancelled")
+        
+        # Dispose uow_factory to release DB resources
+        if hasattr(self.uow_factory, "dispose") and callable(self.uow_factory.dispose):
+            try:
+                await self.uow_factory.dispose()
+                logger.debug("DownloadProcess uow_factory disposed")
+            except Exception as e:
+                logger.warning(f"Error disposing DownloadProcess uow_factory: {e}")

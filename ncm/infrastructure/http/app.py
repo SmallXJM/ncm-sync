@@ -94,8 +94,13 @@ async def lifespan(app: FastAPI):
                 logger.info(f"Cancelling {len(tasks)} pending async tasks...")
                 for task in tasks:
                     task.cancel()
-                # Wait briefly for tasks to acknowledge cancellation
-                await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # Wait briefly for tasks to acknowledge cancellation, suppressing CancelledError
+                try:
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                except asyncio.CancelledError:
+                    # If we are cancelled while waiting, we can't do much more
+                    logger.debug("Gathering pending tasks was cancelled")
 
             # 3. Shutdown default executor if it exists
             loop = asyncio.get_running_loop()
@@ -103,7 +108,12 @@ async def lifespan(app: FastAPI):
                 executor = loop._default_executor
                 if isinstance(executor, ThreadPoolExecutor):
                     logger.info("Shutting down default ThreadPoolExecutor...")
+                    # wait=False ensures we don't block if threads are stuck
                     executor.shutdown(wait=False)
+                    
+        except asyncio.CancelledError:
+            # Swallow CancelledError during final cleanup to ensure graceful exit
+            logger.info("Final cleanup interrupted by cancellation")
         except Exception as e:
             logger.error(f"Error during final cleanup: {e}")
             
@@ -118,13 +128,16 @@ def create_app() -> FastAPI:
         FastAPI: Configured FastAPI application instance
     """
     app = FastAPI(
-        title="NCM Python API Server",
-        description="网易云音乐 Python API 服务器 - A Python implementation of Netease Cloud Music API",
+        title="NCM Sync Server",
+        description="NCM Sync - A Python implementation of Netease Cloud Music Sync Service",
         version="0.1.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
-        lifespan=lifespan
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+        # docs_url="/docs",
+        # redoc_url="/redoc",
+        # openapi_url="/openapi.json",
     )
     
     # Add CORS middleware

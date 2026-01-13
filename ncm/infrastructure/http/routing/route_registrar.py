@@ -52,7 +52,7 @@ class RouteRegistrar:
             # print(f"✓ Registered Module: [{methods_str}] {route_info['path']} -> {module_path}.{func_name}")
         
         if registered_count > 0:
-            print(f"🚀 Successfully registered {registered_count} module endpoints\n")
+            print(f"✅ Successfully registered {registered_count} module endpoints")
         
         return registered_count
     
@@ -102,7 +102,7 @@ class RouteRegistrar:
             # print(f"✓ Registered Controller: [{methods_str}] {route_info['path']} -> {class_name}.{method_name}")
         
         if registered_count > 0:
-            print(f"🎯 Successfully registered {registered_count} ncm controllers\n")
+            print(f"✅ Successfully registered {registered_count} ncm controllers")
         
         return registered_count
     
