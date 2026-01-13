@@ -4,21 +4,21 @@
 @use './styles/components';
 
 /* 全局 App 调整 */
-body {
-  background: var(--bg-body);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
+// body {
+//   background: var(--bg-body);
+//   color: var(--text-primary);
+//   transition: background-color 0.3s ease, color 0.3s ease;
+// }
 
-#app {
-  max-width: none;
-  margin: 0;
-  padding: 0;
-  font-weight: normal;
-  min-height: 100vh;
-  /* 确保 app 容器也能透出背景 */
-  background: transparent;
-}
+// #app {
+//   max-width: none;
+//   margin: 0;
+//   padding: 0;
+//   font-weight: normal;
+//   min-height: 100vh;
+//   /* 确保 app 容器也能透出背景 */
+//   background: transparent;
+// }
 
 /* 保留链接基准样式 */
 // a {

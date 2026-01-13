@@ -35,7 +35,7 @@ $nav-width-desktop: 220px;
 $nav-width-md: 200px;
 $nav-width-sm: 180px;
 $nav-width-sidebar-narrow: 64px;
-$nav-width-sidebar-widen: 200px;
+$nav-width-sidebar-widen: 220px;
 
 /* 圆角 */
 $radius-sm: 4px;
@@ -84,6 +84,7 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-active-bg: #{$sidebar-dark-active-bg};
   --sidebar-btn-bg: #{$sidebar-dark-btn};
   --sidebar-active-text: #{$sidebar-dark-text};
+  --sidebar-hover: #{$color-gray-800};
 
   // 控件高亮色
   --control-active-bg: #{var(--color-info)};
@@ -127,6 +128,7 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-active-bg: #{$color-gray-800};
   --sidebar-btn-bg: #{$color-gray-200};
   --sidebar-active-text: #{$color-white};
+  --sidebar-hover: #{$color-gray-200};
 
     // 控件高亮色
   --control-active-bg: #{$sidebar-dark-active-bg};

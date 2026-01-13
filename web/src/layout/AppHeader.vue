@@ -71,7 +71,7 @@ const toggleSidebar = () => {
     /* Changed from sticky to relative since outer container is fixed */
     /* top: 0; */
     // z-index: 144;
-    height: 60px;
+    height: 50px;
     background: var(--bg-base);
     /* Use base color */
     /* border-bottom: 1px solid $border; */
@@ -123,13 +123,13 @@ const toggleSidebar = () => {
     height: 36px;
     border-radius: $radius-lg;
     border: 1px solid var(--border-color);
-    background: var(--bg-surface);
+    background: transparent;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all $ts-quick, background-color 0.3s ease;
+    transition: all $ts-quick,  border-color 0.3s ease;
 
     &:hover {
         background: var(--bg-surface-hover);

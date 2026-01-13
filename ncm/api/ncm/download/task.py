@@ -151,6 +151,79 @@ class DownloadControllerTask:
                 }
             )
 
+    async def reset_task(self, task_id: int, **kwargs) -> APIResponse:
+        """Reset a task to pending status."""
+        try:
+            task_id = int(task_id)
+            success = await self.orchestrator.reset_task(task_id)
+
+            if success:
+                return APIResponse(
+                    status=200,
+                    body={
+                        "code": 200,
+                        "message": "Task reset successfully"
+                    }
+                )
+            else:
+                return APIResponse(
+                    status=404,
+                    body={
+                        "code": 404,
+                        "message": "Task not found"
+                    }
+                )
+        except Exception as e:
+            logger.exception(f"Failed to reset task")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to reset task: {str(e)}"
+                }
+            )
+
+    async def list_tasks(self,
+                        page: int = 1,
+                        limit: int = 20,
+                        job_id: Optional[int] = None,
+                        status: Optional[str] = None,
+                        keyword: Optional[str] = None,
+                        **kwargs) -> APIResponse:
+        """List tasks with pagination and filtering."""
+        try:
+            page = int(page)
+            limit = int(limit)
+            offset = (page - 1) * limit
+            if job_id:
+                job_id = int(job_id)
+
+            result = await self.orchestrator.search_tasks(
+                job_id=job_id,
+                status=status,
+                keyword=keyword,
+                limit=limit,
+                offset=offset
+            )
+
+            return APIResponse(
+                status=200,
+                body={
+                    "code": 200,
+                    "message": "Tasks retrieved successfully",
+                    "data": result
+                }
+            )
+        except Exception as e:
+            logger.exception(f"Failed to list tasks")
+            return APIResponse(
+                status=500,
+                body={
+                    "code": 500,
+                    "message": f"Failed to list tasks: {str(e)}"
+                }
+            )
+
     # ===== QUALITY MANAGEMENT =====
 
     async def upgrade_task_quality(self,

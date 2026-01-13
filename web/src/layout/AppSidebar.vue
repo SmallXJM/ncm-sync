@@ -207,6 +207,25 @@ const BellIcon = h(
     ]
 )
 
+const TaskIcon = h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: '24',
+        height: '24',
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        stroke: 'currentColor',
+        'stroke-width': '2',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+    },
+    [
+        h('path', { d: 'M9 11l3 3L22 4' }),
+        h('path', { d: 'M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11' }),
+    ]
+)
+
 interface MenuItem {
     title: string
     path: string
@@ -216,8 +235,9 @@ interface MenuItem {
 const menus: MenuItem[] = [
     { title: '首页', path: '/', icon: HomeIcon },
     { title: '登录态', path: '/account', icon: UserIcon },
-    { title: '音乐', path: '/musics', icon: FileMusicIcon },
+    { title: '音乐', path: '/music', icon: FileMusicIcon },
     { title: '订阅', path: '/subscription', icon: BellIcon },
+    // { title: '任务', path: '/download/tasks', icon: TaskIcon },
     { title: '我的歌单', path: '/my/playlist', icon: PlaylistIcon },
     // { title: '设置', path: '/config', icon: SettingsIcon }
 ]
@@ -265,7 +285,7 @@ onMounted(() => {
     background: var(--bg-base);
     /* Use base color */
     /* border-right: 1px solid var(--border-color); */
-    padding: $space-md;
+    padding: $space-sm;
     display: flex;
     flex-direction: column;
     gap: $space-md;
@@ -280,7 +300,7 @@ onMounted(() => {
         // padding: $space-md $space-xs;
         // 保持右侧 padding 为 space-md (12px)，左侧为 space-xs (4px)
         // 这样配合 flex-end，按钮(40px)在64px宽度下：左(4+8)px，右12px -> 视觉居中
-        padding: $space-md $space-md $space-md $space-md;
+        padding: $space-sm;
 
         .brand-text,
         .menu-text {
@@ -321,7 +341,7 @@ onMounted(() => {
         box-shadow: var(--shadow-lg);
         // border-right: 1px solid var(--border-color);
         background: var(--bg-modal);
-        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s 0.3s, width 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s ease;
+        // transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s 0.3s, width 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s ease;
 
     }
 
@@ -394,7 +414,7 @@ onMounted(() => {
     /* 图标和文字间距 */
 
     &:hover {
-        background: var(--bg-surface-hover);
+        background: var(--sidebar-hover);
         color: var(--text-primary);
     }
 
@@ -408,6 +428,8 @@ onMounted(() => {
 }
 
 .menu-text {
+    font-size: 0.80rem;
+
     white-space: nowrap;
     overflow: hidden;
     max-width: 200px; // 初始最大宽度，确保能完全显示文本

@@ -59,3 +59,40 @@ export const deleteJob = async (job_id: number): Promise<ApiResult<ApiEnvelope<u
 export const getJobList = async (): Promise<ApiResult<ApiEnvelope<{ jobs: DownloadJobItem[]; count: number }>>> => {
   return http.get<ApiEnvelope<{ jobs: DownloadJobItem[]; count: number }>>(DOWNLOAD.GET_JOB_LIST)
 }
+
+export interface DownloadTaskItem {
+  id: number
+  music_id: string
+  music_title?: string
+  music_artist?: string
+  music_album?: string
+  job_id: number
+  quality?: string
+  progress_flags: number
+  file_path?: string
+  file_name?: string
+  file_format?: string
+  file_size?: number
+  status: string
+  error_message?: string
+  created_at?: string
+  updated_at?: string
+  started_at?: string
+  completed_at?: string
+}
+
+export interface ListTasksParams {
+  page?: number
+  limit?: number
+  job_id?: number
+  status?: string
+  keyword?: string
+}
+
+export const getTaskList = async (params: ListTasksParams): Promise<ApiResult<ApiEnvelope<{ tasks: DownloadTaskItem[]; total: number; limit: number; offset: number }>>> => {
+  return http.post<ApiEnvelope<{ tasks: DownloadTaskItem[]; total: number; limit: number; offset: number }>>(DOWNLOAD.TASK_LIST, params)
+}
+
+export const resetTask = async (task_id: number): Promise<ApiResult<ApiEnvelope<unknown>>> => {
+  return http.post<ApiEnvelope<unknown>>(DOWNLOAD.TASK_RESET, { task_id })
+}

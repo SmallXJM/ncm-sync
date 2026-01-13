@@ -47,6 +47,8 @@ export const NCM_API = {
     GET_JOB_LIST: '/ncm/download/job',
     UPDATE_JOB: '/ncm/download/job/update',
     DELETE_JOB: '/ncm/download/job/delete',
+    TASK_LIST: '/ncm/download/task/list',
+    TASK_RESET: '/ncm/download/task/reset',
   },
 } as const
 

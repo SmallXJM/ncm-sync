@@ -178,9 +178,17 @@ class DownloadController:
     async def get_task_status(self, **kwargs) -> APIResponse:
         return await self.tasks.get_task_status(**kwargs)
 
+    @ncm_service("/ncm/download/task/list", ["GET","POST"])
+    async def list_tasks(self, **kwargs) -> APIResponse:
+        return await self.tasks.list_tasks(**kwargs)
+
     @ncm_service("/ncm/download/task/cancel", ["POST"])
     async def cancel_task(self, **kwargs) -> APIResponse:
         return await self.tasks.cancel_task(**kwargs)
+
+    @ncm_service("/ncm/download/task/reset", ["POST"])
+    async def reset_task(self, **kwargs) -> APIResponse:
+        return await self.tasks.reset_task(**kwargs)
 
     @ncm_service("/ncm/download/task/upgrade_quality", ["GET", "POST"])
     async def upgrade_task_quality(self, **kwargs) -> APIResponse:

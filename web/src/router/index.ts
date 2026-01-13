@@ -37,6 +37,14 @@ const router = createRouter({
       },
     },
     {
+      path: '/music',
+      name: 'download-tasks',
+      component: () => import('../views/DownloadTasksView.vue'),
+      meta: {
+        title: '音乐管理',
+      },
+    },
+    {
       path: '/subscription',
       name: 'subscription',
       component: () => import('../views/SubscriptionView.vue'),

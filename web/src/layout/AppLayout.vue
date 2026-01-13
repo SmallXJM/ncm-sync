@@ -48,12 +48,6 @@ const { isNarrow } = useSidebar()
     }
 }
 
-@media (max-width: 768px) {
-    .layout__main {
-        margin-left: 0 !important;
-    }
-}
-
 .layout__content-wrapper {
     flex: 1;
     /* 占满剩余高度 */
@@ -65,22 +59,36 @@ const { isNarrow } = useSidebar()
     // 2. 制造悬浮感：通过 margin 设置左、右、底部的间距
     // 这里的 16px 是间距大小，你可以根据需要调整
     // margin-top: 0 意味着紧贴 Header
-    margin: 0 8px 8px 8px;
+    margin: 0 8px 8px 0;
 
     // 3. 模块化外观：必须给 Wrapper 一个背景色，否则它是透明的
     background: var(--bg-surface, #ffffff); // 假设你有一个亮色的背景变量，否则默认白色
 
     // 4. 圆角与阴影
     border-radius: $radius-lg; // 设置四周圆角
-    box-shadow: var(--shadow-ly);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
 
     // 5. 溢出处理：确保圆角不被内部内容遮挡，且限制滚动区域在卡片内
     overflow: hidden;
     display: flex; // 让内部的 content 能够继承高度
     flex-direction: column;
 
-    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, margin 0.3s ease, border-radius 0.3s ease;
 
+}
+
+@media (max-width: 768px) {
+    .layout__main {
+        margin-left: 0 !important;
+    }
+
+    .layout__content-wrapper {
+        border-radius: 0;
+        margin: 0 0 0 0;
+
+
+    }
 }
 
 .layout__content {
