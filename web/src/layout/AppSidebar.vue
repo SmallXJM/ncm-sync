@@ -83,24 +83,59 @@ const UserIcon = h('svg', {
     h('circle', { cx: '12', cy: '7', r: '4' })
 ])
 
-const SubscribeIcon = h('svg', {
+const PlaylistIcon = h(
+  'svg',
+  {
+    xmlns: 'http://www.w3.org/2000/svg',
+    width: '24',
+    height: '24',
+    viewBox: '0 0 24 24',
+  },
+  [
+    h('path', {
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      d: 'M11 17a3 3 0 1 0 6 0a3 3 0 1 0-6 0m6 0V4h4m-8 1H3m0 4h10m-4 4H3',
+    }),
+  ]
+)
+
+const FileMusicIcon = h(
+  'svg',
+  {
     xmlns: 'http://www.w3.org/2000/svg',
     width: '20',
     height: '20',
     viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': '2',
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round'
-}, [
-    h('line', { x1: '8', y1: '6', x2: '21', y2: '6' }),
-    h('line', { x1: '8', y1: '12', x2: '21', y2: '12' }),
-    h('line', { x1: '8', y1: '18', x2: '21', y2: '18' }),
-    h('line', { x1: '3', y1: '6', x2: '3.01', y2: '6' }),
-    h('line', { x1: '3', y1: '12', x2: '3.01', y2: '12' }),
-    h('line', { x1: '3', y1: '18', x2: '3.01', y2: '18' })
-])
+  },
+  [
+    h(
+      'g',
+      {
+        fill: 'none',
+        stroke: 'currentColor',
+        'stroke-width': '2',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+      },
+      [
+        h('path', {
+          d: 'M14 3v4a1 1 0 0 0 1 1h4',
+        }),
+        h('path', {
+          d: 'M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2',
+        }),
+        h('path', {
+          d: 'M10 16a1 1 0 1 0 2 0a1 1 0 0 0-2 0m2 0v-5l2 1',
+        }),
+      ]
+    ),
+  ]
+)
+
 
 const BellIcon = h(
   'svg',
@@ -140,8 +175,9 @@ interface MenuItem {
 const menus: MenuItem[] = [
     { title: '首页', path: '/', icon: HomeIcon },
     { title: '登录态', path: '/account', icon: UserIcon },
+    { title: '音乐', path: '/musics', icon: FileMusicIcon },
     { title: '订阅', path: '/subscription', icon: BellIcon },
-    { title: '我的歌单', path: '/my/playlist', icon: SubscribeIcon },
+    { title: '我的歌单', path: '/my/playlist', icon: PlaylistIcon },
     // { title: '设置', path: '/config', icon: SettingsIcon }
 ]
 
