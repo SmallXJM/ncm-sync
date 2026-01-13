@@ -647,8 +647,8 @@ function sanitizeFilename(name: string): string {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 100;
+  backdrop-filter: blur(2px);
+  z-index: 500; //页面遮罩 500
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -668,15 +668,22 @@ function sanitizeFilename(name: string): string {
   max-width: 90vw;
   background: var(--bg-modal);
   box-shadow: var(--shadow-2xl);
-  z-index: 101;
+  z-index: 600; //弹窗600
   transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
   display: flex;
   flex-direction: column;
 
   &.visible {
     transform: translateX(0);
   }
+
+}
+  @media (max-width: 768px) {
+    .drawer {
+      width: 100%;
+      max-width: 100vw;
+    }
 }
 
 .drawer-header {

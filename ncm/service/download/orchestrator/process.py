@@ -376,3 +376,15 @@ class DownloadProcess:
             "failed_ids": failed_ids,
             "skipped_existing_ids": skipped_existing_ids,
         }
+
+    async def cleanup(self):
+        """Cleanup process resources."""
+        if self._running_task and not self._running_task.done():
+            self._running_task.cancel()
+            try:
+                await self._running_task
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                logger.warning(f"Error during process task cancellation: {e}")
+            logger.info("DownloadProcess task cancelled")
