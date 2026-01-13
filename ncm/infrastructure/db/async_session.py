@@ -5,6 +5,18 @@ import os
 from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
+# Patch aiosqlite threads to be daemon threads to prevent shutdown hangs
+try:
+    import aiosqlite.core
+    _original_init = aiosqlite.core.Connection.__init__
+    def _patched_init(self, *args, **kwargs):
+        _original_init(self, *args, **kwargs)
+        if hasattr(self, '_thread'):
+            self._thread.daemon = True
+    aiosqlite.core.Connection.__init__ = _patched_init
+except ImportError:
+    pass
+
 _ENGINE: Optional[AsyncEngine] = None
 _SESSION_FACTORY: Optional[async_sessionmaker[AsyncSession]] = None
 

@@ -56,6 +56,7 @@ class DownloadControllerJob:
                          source_id: str,
                          storage_path: str,
                          source_name: Optional[str] = None,
+                         source_owner_id: Optional[str] = None,
                          target_quality: str = "lossless",
                          embed_cover: bool = True,
                          embed_lyrics: bool = True,
@@ -71,6 +72,7 @@ class DownloadControllerJob:
             source_id: Source ID (playlist ID, album ID, etc.)
             storage_path: Storage directory path
             source_name: Optional source name
+            source_owner_id: Source owner ID
             target_quality: Target audio quality
             embed_cover: Whether to download cover art
             embed_lyrics: Whether to download lyrics
@@ -84,6 +86,7 @@ class DownloadControllerJob:
                 source_id=source_id,
                 storage_path=storage_path,
                 source_name=source_name,
+                source_owner_id=source_owner_id,
                 target_quality=target_quality,
                 embed_cover=embed_cover,
                 embed_lyrics=embed_lyrics,

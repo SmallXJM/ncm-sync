@@ -52,6 +52,9 @@ def start_server():
         print("缺少 FastAPI 依赖，请运行: pip install -r requirements.txt")
     except KeyboardInterrupt:
         print("\n 服务器已停止")
+    finally:
+        # Additional cleanup if needed within start_server context
+        pass
 
 
 
@@ -74,9 +77,21 @@ def main():
     
     # Initialize database session manager
     from ncm.infrastructure.db.session import initialize_session_manager
+    from ncm.infrastructure.db.engine import close_engine
+    
     initialize_session_manager()
 
-    start_server()
+    try:
+        start_server()
+    except KeyboardInterrupt:
+        print("\n 程序已停止")
+    finally:
+        # Ensure database resources are released in the main process
+        try:
+            close_engine()
+            print("主进程资源已释放")
+        except Exception as e:
+            print(f"主进程资源释放失败: {e}")
 
 
 if __name__ == "__main__":

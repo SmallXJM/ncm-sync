@@ -1,5 +1,7 @@
 <template>
-    <aside class="sidebar" :class="{ 'sidebar--narrow': isNarrow }">
+    <aside id="app-sidebar" class="sidebar"
+        :class="{ 'sidebar--narrow': isNarrow && !isMobile, 'sidebar--open': isMobileOpen }" role="navigation"
+        :aria-hidden="isMobile && !isMobileOpen" :aria-modal="isMobile ? 'true' : 'false'" tabindex="-1">
         <div class="sidebar__brand">
             <router-link to="/" class="brand-link" :title="isNarrow ? 'ncm-sync' : ''">
                 <span class="brand-icon">🎵</span>
@@ -16,7 +18,14 @@
 
         <div class="sidebar__setting">
             <router-link to="/config" class="menu-item" title="设置">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" fill-rule="evenodd"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M16 15c1.306 0 2.418.835 2.83 2H20a1 1 0 1 1 0 2h-1.17a3.001 3.001 0 0 1-5.66 0H4a1 1 0 1 1 0-2h9.17A3 3 0 0 1 16 15m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2M8 9a3 3 0 0 1 2.762 1.828l.067.172H20a1 1 0 0 1 .117 1.993L20 13h-9.17a3.001 3.001 0 0 1-5.592.172L5.17 13H4a1 1 0 0 1-.117-1.993L4 11h1.17A3 3 0 0 1 8 9m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2m8-8c1.306 0 2.418.835 2.83 2H20a1 1 0 1 1 0 2h-1.17a3.001 3.001 0 0 1-5.66 0H4a1 1 0 0 1 0-2h9.17A3 3 0 0 1 16 3m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2"/></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <g fill="none" fill-rule="evenodd">
+                        <path
+                            d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z" />
+                        <path fill="currentColor"
+                            d="M16 15c1.306 0 2.418.835 2.83 2H20a1 1 0 1 1 0 2h-1.17a3.001 3.001 0 0 1-5.66 0H4a1 1 0 1 1 0-2h9.17A3 3 0 0 1 16 15m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2M8 9a3 3 0 0 1 2.762 1.828l.067.172H20a1 1 0 0 1 .117 1.993L20 13h-9.17a3.001 3.001 0 0 1-5.592.172L5.17 13H4a1 1 0 0 1-.117-1.993L4 11h1.17A3 3 0 0 1 8 9m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2m8-8c1.306 0 2.418.835 2.83 2H20a1 1 0 1 1 0 2h-1.17a3.001 3.001 0 0 1-5.66 0H4a1 1 0 0 1 0-2h9.17A3 3 0 0 1 16 3m0 2a1 1 0 1 0 0 2a1 1 0 0 0 0-2" />
+                    </g>
+                </svg>
                 <span class="menu-text">设置</span>
             </router-link>
         </div>
@@ -44,13 +53,45 @@
             </button>
         </div>
     </aside>
+    <div v-show="isMobile" class="sidebar-overlay" :class="{ visible: isMobileOpen }" @click="closeMobileSidebar"
+        aria-hidden="true" />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, h, type Component } from 'vue'
+import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
 
-const { isNarrow } = useSidebar()
+const { isNarrow, isMobileOpen } = useSidebar()
+
+const mq = window.matchMedia('(max-width: 768px)')
+const isMobile = ref(mq.matches)
+
+function handleMqChange(e: MediaQueryListEvent) {
+    isMobile.value = e.matches
+    if (!e.matches) {
+        isMobileOpen.value = false
+    }
+}
+
+function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && isMobile.value && isMobileOpen.value) {
+        isMobileOpen.value = false
+    }
+}
+
+function closeMobileSidebar() {
+    isMobileOpen.value = false
+}
+
+onMounted(() => {
+    mq.addEventListener('change', handleMqChange)
+    window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+    mq.removeEventListener('change', handleMqChange)
+    window.removeEventListener('keydown', handleKeydown)
+})
 
 // 定义图标组件
 const HomeIcon = h('svg', {
@@ -84,86 +125,86 @@ const UserIcon = h('svg', {
 ])
 
 const PlaylistIcon = h(
-  'svg',
-  {
-    xmlns: 'http://www.w3.org/2000/svg',
-    width: '24',
-    height: '24',
-    viewBox: '0 0 24 24',
-  },
-  [
-    h('path', {
-      fill: 'none',
-      stroke: 'currentColor',
-      'stroke-width': '2',
-      'stroke-linecap': 'round',
-      'stroke-linejoin': 'round',
-      d: 'M11 17a3 3 0 1 0 6 0a3 3 0 1 0-6 0m6 0V4h4m-8 1H3m0 4h10m-4 4H3',
-    }),
-  ]
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: '24',
+        height: '24',
+        viewBox: '0 0 24 24',
+    },
+    [
+        h('path', {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round',
+            d: 'M11 17a3 3 0 1 0 6 0a3 3 0 1 0-6 0m6 0V4h4m-8 1H3m0 4h10m-4 4H3',
+        }),
+    ]
 )
 
 const FileMusicIcon = h(
-  'svg',
-  {
-    xmlns: 'http://www.w3.org/2000/svg',
-    width: '20',
-    height: '20',
-    viewBox: '0 0 24 24',
-  },
-  [
-    h(
-      'g',
-      {
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: '20',
+        height: '20',
+        viewBox: '0 0 24 24',
+    },
+    [
+        h(
+            'g',
+            {
+                fill: 'none',
+                stroke: 'currentColor',
+                'stroke-width': '2',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+            },
+            [
+                h('path', {
+                    d: 'M14 3v4a1 1 0 0 0 1 1h4',
+                }),
+                h('path', {
+                    d: 'M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2',
+                }),
+                h('path', {
+                    d: 'M10 16a1 1 0 1 0 2 0a1 1 0 0 0-2 0m2 0v-5l2 1',
+                }),
+            ]
+        ),
+    ]
+)
+
+
+const BellIcon = h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: '20',
+        height: '20',
+        viewBox: '0 0 24 24',
         fill: 'none',
         stroke: 'currentColor',
         'stroke-width': '2',
         'stroke-linecap': 'round',
         'stroke-linejoin': 'round',
-      },
-      [
+    },
+    [
         h('path', {
-          d: 'M14 3v4a1 1 0 0 0 1 1h4',
+            d: 'M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6',
         }),
         h('path', {
-          d: 'M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2',
+            d: 'M9 17v1a3 3 0 0 0 6 0v-1',
         }),
         h('path', {
-          d: 'M10 16a1 1 0 1 0 2 0a1 1 0 0 0-2 0m2 0v-5l2 1',
+            d: 'M21 6.727A11.05 11.05 0 0 0 18.206 3',
         }),
-      ]
-    ),
-  ]
-)
-
-
-const BellIcon = h(
-  'svg',
-  {
-    xmlns: 'http://www.w3.org/2000/svg',
-    width: '20',
-    height: '20',
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': '2',
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round',
-  },
-  [
-    h('path', {
-      d: 'M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6',
-    }),
-    h('path', {
-      d: 'M9 17v1a3 3 0 0 0 6 0v-1',
-    }),
-    h('path', {
-      d: 'M21 6.727A11.05 11.05 0 0 0 18.206 3',
-    }),
-    h('path', {
-      d: 'M3 6.727A11.05 11.05 0 0 1 5.792 3',
-    }),
-  ]
+        h('path', {
+            d: 'M3 6.727A11.05 11.05 0 0 1 5.792 3',
+        }),
+    ]
 )
 
 interface MenuItem {
@@ -228,9 +269,11 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: $space-md;
-    z-index: 800;
+    z-index: 100; // 默认较低
+    // z-index: 140;
     /* Lowered from 1000 to allow Content shadow to be visible */
-    transition: width 0.3s ease, padding 0.3s ease, background-color 0.3s ease;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s 0.3s, width 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s ease;
 
     &.sidebar--narrow {
         width: $nav-width-sidebar-narrow;
@@ -265,6 +308,27 @@ onMounted(() => {
                 margin: 0;
             }
         }
+    }
+}
+
+/* 移动端抽屉样式 */
+@media (max-width: 768px) {
+    .sidebar {
+        width: $nav-width-sidebar-widen;
+        // max-width: $nav-width-sidebar-widen;
+        transform: translateX(-100%);
+        z-index: 100; // 默认较低
+        box-shadow: var(--shadow-lg);
+        // border-right: 1px solid var(--border-color);
+        background: var(--bg-modal);
+        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s 0.3s, width 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s ease;
+
+    }
+
+    .sidebar.sidebar--open {
+        transform: translateX(0);
+        z-index: 600; // 弹窗600
+        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s; // 进入时立即调高
     }
 }
 
@@ -381,12 +445,28 @@ onMounted(() => {
     justify-content: center;
     cursor: pointer;
     transition: all $ts-quick, background-color 0.3s ease;
-    ;
 
     &:hover {
         background: var(--bg-surface-hover);
         color: var(--text-primary);
         border-color: var(--text-secondary);
     }
+}
+
+/* 移动端遮罩层 */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 500; //页面遮罩 500
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
 }
 </style>

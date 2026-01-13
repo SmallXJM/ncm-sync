@@ -48,18 +48,24 @@ const { isNarrow } = useSidebar()
     }
 }
 
+@media (max-width: 768px) {
+    .layout__main {
+        margin-left: 0 !important;
+    }
+}
+
 .layout__content-wrapper {
     flex: 1;
     /* 占满剩余高度 */
     position: relative;
-    z-index: 850;
+    // z-index: 150;
     min-height: 0;
     // --- 核心修改开始 ---
 
     // 2. 制造悬浮感：通过 margin 设置左、右、底部的间距
     // 这里的 16px 是间距大小，你可以根据需要调整
     // margin-top: 0 意味着紧贴 Header
-    margin: 0 8px 8px 0;
+    margin: 0 8px 8px 8px;
 
     // 3. 模块化外观：必须给 Wrapper 一个背景色，否则它是透明的
     background: var(--bg-surface, #ffffff); // 假设你有一个亮色的背景变量，否则默认白色

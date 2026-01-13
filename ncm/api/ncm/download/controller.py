@@ -65,13 +65,43 @@ class DownloadController:
 
     # --- 统一的生命周期管理 ---
     async def cleanup(self):
-        """统一销毁资源，子控制器无需感知"""
+        """统一销毁资源，确保所有组件被正确清理"""
+        logger.info("Starting DownloadController cleanup...")
+        
+        # 1. 移除配置监听
+        try:
+            cfgm = get_config_manager()
+            if hasattr(cfgm, "remove_observer"):
+                cfgm.remove_observer(self._on_config_update)
+        except Exception as e:
+            logger.warning(f"Failed to remove config observer: {e}")
+
+        # 2. 清理调度器
         try:
             if hasattr(self, "_scheduler") and self._scheduler:
                 await self._scheduler.cleanup()
-        except Exception:
-            pass
-        await self.orchestrator.close()
+                logger.info("Scheduler cleaned up")
+        except Exception as e:
+            logger.error(f"Scheduler cleanup failed: {e}")
+
+        # 3. 清理下载流程 (停止运行中的任务)
+        try:
+            if hasattr(self, "process") and self.process:
+                if hasattr(self.process, "cleanup"):
+                    await self.process.cleanup()
+                    logger.info("DownloadProcess cleaned up")
+        except Exception as e:
+            logger.error(f"DownloadProcess cleanup failed: {e}")
+
+        # 4. 清理编排器 (关闭下载器、连接池等)
+        try:
+            if hasattr(self, "orchestrator") and self.orchestrator:
+                await self.orchestrator.close()
+                logger.info("DownloadOrchestrator closed")
+        except Exception as e:
+            logger.error(f"DownloadOrchestrator cleanup failed: {e}")
+            
+        logger.info("DownloadController cleanup completed")
 
     async def _on_config_update(self, config):
         """Handle dynamic config updates safely and efficiently."""

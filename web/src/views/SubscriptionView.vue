@@ -736,8 +736,8 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 100;
+  backdrop-filter: blur(2px);
+  z-index: 500; //页面遮罩 500
   display: flex;
   align-items: center;
   justify-content: center;
@@ -745,9 +745,9 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 }
 
 .modal-content {
-  width: 100%;
+  width: 70vw;
   //最大宽度适应窗口大小
-  max-width: 80%;
+  // max-width: 70%;
   max-height: 90vh;
   background: var(--bg-modal);
   border-radius: 12px;
@@ -757,7 +757,13 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
   overflow: hidden;
 
   /* 增加过渡效果，只针对宽度 */
-  transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+
+  /* 适配移动端：如果是手机，改回卡片流 */
+  @media (max-width: 768px) {
+    width: 90vw;
+
+  }
 }
 
 .modal-header {

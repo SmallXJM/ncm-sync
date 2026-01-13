@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSidebar } from '@/composables/useSidebar'
 
@@ -36,10 +36,29 @@ const title = computed(() => {
     return route.meta.title ?? 'ncm-sync'
 })
 
-const { isNarrow } = useSidebar()
+const { isNarrow, isMobileOpen } = useSidebar()
+
+const mq = window.matchMedia('(max-width: 768px)')
+const isMobile = ref(mq.matches)
+
+function handleMqChange(e: MediaQueryListEvent) {
+    isMobile.value = e.matches
+}
+
+onMounted(() => {
+    mq.addEventListener('change', handleMqChange)
+})
+
+onUnmounted(() => {
+    mq.removeEventListener('change', handleMqChange)
+})
 
 const toggleSidebar = () => {
-    isNarrow.value = !isNarrow.value
+    if (isMobile.value) {
+        isMobileOpen.value = !isMobileOpen.value
+    } else {
+        isNarrow.value = !isNarrow.value
+    }
 }
 </script>
 
@@ -51,7 +70,7 @@ const toggleSidebar = () => {
     position: relative;
     /* Changed from sticky to relative since outer container is fixed */
     /* top: 0; */
-    z-index: 850;
+    // z-index: 144;
     height: 60px;
     background: var(--bg-base);
     /* Use base color */

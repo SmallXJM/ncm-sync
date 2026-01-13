@@ -61,6 +61,11 @@ class ConfigManager:
         """
         self._observers.append(callback)
 
+    def remove_observer(self, callback):
+        """Remove a callback from observers."""
+        if callback in self._observers:
+            self._observers.remove(callback)
+
     def path(self) -> str:
         return os.path.abspath(self._path)
 

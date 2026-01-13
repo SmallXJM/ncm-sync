@@ -48,11 +48,11 @@ class RouteRegistrar:
                 )
             
             registered_count += 1
-            methods_str = ", ".join(route_info['methods'])
-            print(f"✓ Registered Module: [{methods_str}] {route_info['path']} -> {module_path}.{func_name}")
+            # methods_str = ", ".join(route_info['methods'])
+            # print(f"✓ Registered Module: [{methods_str}] {route_info['path']} -> {module_path}.{func_name}")
         
         if registered_count > 0:
-            print(f"🚀 Successfully registered {registered_count} module endpoints\n")
+            print(f"✅ Successfully registered {registered_count} module endpoints")
         
         return registered_count
     
@@ -98,11 +98,11 @@ class RouteRegistrar:
                 )
             
             registered_count += 1
-            methods_str = ", ".join(route_info['methods'])
-            print(f"✓ Registered Controller: [{methods_str}] {route_info['path']} -> {class_name}.{method_name}")
+            # methods_str = ", ".join(route_info['methods'])
+            # print(f"✓ Registered Controller: [{methods_str}] {route_info['path']} -> {class_name}.{method_name}")
         
         if registered_count > 0:
-            print(f"🎯 Successfully registered {registered_count} ncm controllers\n")
+            print(f"✅ Successfully registered {registered_count} ncm controllers")
         
         return registered_count
     
@@ -114,16 +114,16 @@ class RouteRegistrar:
             """Health check endpoint."""
             return {"status": "ok", "message": "NCM API Server is running"}
         
-        @self.app.get("/", tags=["System"])
-        async def root():
-            """Root endpoint with basic information."""
-            return {
-                "name": "NCM Python API Server",
-                "version": "0.1.0",
-                "description": "网易云音乐 Python API 服务器",
-                "docs": "/docs",
-                "health": "/health"
-            }
+        # @self.app.get("/", tags=["System"])
+        # async def root():
+        #     """Root endpoint with basic information."""
+        #     return {
+        #         "name": "NCM Python API Server",
+        #         "version": "0.1.0",
+        #         "description": "网易云音乐 Python API 服务器",
+        #         "docs": "/docs",
+        #         "health": "/health"
+        #     }
 
 
 def auto_register_all_routes(app: FastAPI) -> dict:
