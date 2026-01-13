@@ -232,6 +232,21 @@ class DownloadOrchestrator:
             job = await self.job_repo.get_by_id(uow.session, job_id)
             return job.to_dict() if job else None
 
+    async def update_download_job(self, job_id: int, **fields) -> Optional[DownloadJob]:
+        async with self.uow_factory() as uow:
+            job = await self.job_repo.update(uow.session, job_id, **fields)
+            return job
+
+    async def update_download_job_dict(self, job_id: int, **fields) -> Optional[dict]:
+        async with self.uow_factory() as uow:
+            job = await self.job_repo.update(uow.session, job_id, **fields)
+            return job.to_dict() if job else None
+
+    async def delete_download_job(self, job_id: int) -> bool:
+        async with self.uow_factory() as uow:
+            result = await self.job_repo.delete(uow.session, job_id)
+            return result
+
     async def list_download_jobs(self) -> list[DownloadJob]:
         """列出所有下载作业"""
         async with self.uow_factory() as uow:

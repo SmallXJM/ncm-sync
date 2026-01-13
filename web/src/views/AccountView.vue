@@ -216,13 +216,6 @@
       </div>
     </main>
 
-    <!-- Toast Notifications -->
-    <div v-if="toast.show" class="toast" :class="toast.type">
-      <div class="toast-content">
-        <span>{{ toast.message }}</span>
-        <button class="toast-close" @click="hideToast">×</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -230,6 +223,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 // 直接导入服务类
 import api from '@/api'
+import { toast } from '@/utils/toast'
 
 // ----------------------
 // 类型定义
@@ -259,11 +253,6 @@ interface QRCode {
   message: string
 }
 
-interface Toast {
-  show: boolean
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-}
 
 interface ApiEnvelope<T> {
   code: number
@@ -303,12 +292,6 @@ const isRefreshingSessions = ref(false)
 const isSwitchingSession = ref(false)
 const isInvalidatingSession = ref(false)
 
-// Toast notification
-const toast = reactive<Toast>({
-  show: false,
-  message: '',
-  type: 'info'
-})
 
 // QR polling timer
 let qrPollingTimer: number | null = null
@@ -341,7 +324,7 @@ async function loadCurrentAccount(): Promise<void> {
     }
   } catch (error) {
     console.error('Failed to load current account:', error)
-    showToast('加载当前账号失败', 'error')
+    toast.show('加载当前账号失败', 'error')
   }
 }
 
@@ -359,7 +342,7 @@ async function loadSessions(): Promise<void> {
     }
   } catch (error) {
     console.error('Failed to load sessions:', error)
-    showToast('加载会话列表失败', 'error')
+    toast.show('加载会话列表失败', 'error')
   } finally {
     isRefreshingSessions.value = false
   }
@@ -372,13 +355,13 @@ async function refreshAccountStatus(): Promise<void> {
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
       await loadCurrentAccount()
-      showToast('状态刷新成功', 'success')
+      toast.show('状态刷新成功', 'success')
     } else {
-      showToast('状态刷新失败', 'error')
+      toast.show('状态刷新失败', 'error')
     }
   } catch (error) {
     console.error('Failed to refresh status:', error)
-    showToast('状态刷新失败', 'error')
+    toast.show('状态刷新失败', 'error')
   } finally {
     isRefreshing.value = false
   }
@@ -396,10 +379,10 @@ async function logout(): Promise<void> {
 
     currentAccount.value = null
     currentSession.value = null
-    showToast('已退出登录', 'success')
+    toast.show('已退出登录', 'success')
   } catch (error) {
     console.error('Failed to logout:', error)
-    showToast('退出登录失败', 'error')
+    toast.show('退出登录失败', 'error')
   } finally {
     isLoggingOut.value = false
   }
@@ -416,13 +399,13 @@ async function startQRLogin(): Promise<void> {
       qrCode.status = 'waiting_scan'
       qrCode.message = '等待扫码'
       startQRPolling()
-      showToast('二维码生成成功，请使用网易云音乐 App 扫码', 'success')
+      toast.show('二维码生成成功，请使用网易云音乐 App 扫码', 'success')
     } else {
-      showToast('生成二维码失败', 'error')
+      toast.show('生成二维码失败', 'error')
     }
   } catch (error) {
     console.error('Failed to start QR login:', error)
-    showToast('生成二维码失败', 'error')
+    toast.show('生成二维码失败', 'error')
   } finally {
     isStartingQR.value = false
   }
@@ -442,7 +425,7 @@ function startQRPolling(): void {
         if (status === 'success') {
           clearInterval(qrPollingTimer!)
           qrPollingTimer = null
-          showToast('登录成功！', 'success')
+          toast.show('登录成功！', 'success')
           await loadCurrentAccount()
           await loadSessions()
           setTimeout(() => {
@@ -453,7 +436,7 @@ function startQRPolling(): void {
         } else if (status === 'expired') {
           clearInterval(qrPollingTimer!)
           qrPollingTimer = null
-          showToast('二维码已过期，请重新生成', 'warning')
+          toast.show('二维码已过期，请重新生成', 'warning')
           if (payload.data.message) qrCode.message = payload.data.message
         }
       }
@@ -471,12 +454,12 @@ function cancelQRLogin(): void {
   qrCode.key = ''
   qrCode.qr_img = ''
   qrCode.status = 'idle'
-  showToast('已取消二维码登录', 'info')
+  toast.show('已取消二维码登录', 'info')
 }
 
 async function loginWithCookie(): Promise<void> {
   if (!cookieInput.value.trim()) {
-    showToast('请输入 Cookie', 'warning')
+    toast.show('请输入 Cookie', 'warning')  
     return
   }
   try {
@@ -484,16 +467,16 @@ async function loginWithCookie(): Promise<void> {
     const result = await api.auth.loginWithCookie(cookieInput.value.trim())
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
-      showToast('Cookie 登录成功！', 'success')
+      toast.show('Cookie 登录成功！', 'success')
       cookieInput.value = ''
       await loadCurrentAccount()
       await loadSessions()
     } else {
-      showToast((payload?.message as string | undefined) || 'Cookie 登录失败', 'error')
+      toast.show((payload?.message as string | undefined) || 'Cookie 登录失败', 'error')
     }
   } catch (error) {
     console.error('Failed to login with cookie:', error)
-    showToast('Cookie 登录失败', 'error')
+    toast.show('Cookie 登录失败', 'error')
   } finally {
     isLoggingInWithCookie.value = false
   }
@@ -509,15 +492,15 @@ async function switchToSession(sessionId: string): Promise<void> {
     const result = await api.user.switchSession(sessionId)
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
-      showToast('切换账号成功', 'success')
+      toast.show('切换账号成功', 'success')
       await loadCurrentAccount()
       await loadSessions()
     } else {
-      showToast((payload?.message as string | undefined) || '切换账号失败', 'error')
+      toast.show((payload?.message as string | undefined) || '切换账号失败', 'error')
     }
   } catch (error) {
     console.error('Failed to switch session:', error)
-    showToast('切换账号失败', 'error')
+    toast.show('切换账号失败', 'error')
   } finally {
     isSwitchingSession.value = false
   }
@@ -531,18 +514,18 @@ async function invalidateSession(sessionId: string): Promise<void> {
     const result = await api.user.invalidateSession(sessionId)
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
-      showToast('会话已失效', 'success')
+      toast.show('会话已失效', 'success')
       await loadSessions()
       const current = sessions.value.find(s => s.is_current && s.session_id === sessionId)
       if (current) {
         await loadCurrentAccount()
       }
     } else {
-      showToast((payload?.message as string | undefined) || '操作失败', 'error')
+      toast.show((payload?.message as string | undefined) || '操作失败', 'error')
     }
   } catch (error) {
     console.error('Failed to invalidate session:', error)
-    showToast('操作失败', 'error')
+    toast.show('操作失败', 'error') 
   } finally {
     isInvalidatingSession.value = false
   }
@@ -550,7 +533,7 @@ async function invalidateSession(sessionId: string): Promise<void> {
 
 async function refreshSessions(): Promise<void> {
   await loadSessions()
-  showToast('会话列表已刷新', 'success')
+  toast.show('会话列表已刷新', 'success')
 }
 
 // ----------------------
@@ -623,14 +606,4 @@ function formatTime(timeString?: string): string {
   return time.toLocaleDateString()
 }
 
-function showToast(message: string, type: Toast['type'] = 'info'): void {
-  toast.message = message
-  toast.type = type
-  toast.show = true
-  setTimeout(() => hideToast(), 5000)
-}
-
-function hideToast(): void {
-  toast.show = false
-}
 </script>

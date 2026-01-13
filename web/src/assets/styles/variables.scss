@@ -55,6 +55,10 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --bg-surface: #{$color-gray-900};
   --bg-surface-hover: #{$color-gray-800};
 
+  /* 弹窗/抽屉背景 */
+  --bg-modal: #{$color-gray-1100};
+
+
   --text-primary: #{$color-gray-200};
   --text-secondary: #{$color-gray-400};
   --text-tertiary: #{$color-gray-600};
@@ -98,6 +102,7 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --bg-surface: #{$color-white};
   /* 内容区背景 */
   --bg-surface-hover: #{$color-gray-100};
+  --bg-modal: #{$color-gray-50};
 
   --text-primary: #{$color-gray-900};
   --text-secondary: #{$color-gray-600};

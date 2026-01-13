@@ -110,12 +110,6 @@
       </div>
     </div>
 
-    <div v-if="toast.show" class="toast" :class="toast.type">
-      <div class="toast-content">
-        <span>{{ toast.message }}</span>
-        <button class="toast-close" @click="hideToast">×</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -130,6 +124,7 @@ import {
   type NcmConfigFieldSchema,
   type NcmConfigGroupSchema,
 } from '@/utils/configValidation'
+import { toast } from '@/utils/toast'
 
 // ... 保持原有 interface 定义不变 ...
 interface ApiEnvelope<T> {
@@ -155,11 +150,6 @@ interface NcmConfig {
   subscription: SubscriptionSettings
 }
 
-interface Toast {
-  show: boolean
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-}
 
 const isLoading = ref(false)
 const loadError = ref<string | null>(null)
@@ -177,11 +167,6 @@ const activeGroup = computed<NcmConfigGroupSchema | null>(() => {
   return configGroups.find((g) => g.id === activeGroupId.value) ?? configGroups[0] ?? null
 })
 
-const toast = reactive<Toast>({
-  show: false,
-  message: '',
-  type: 'info',
-})
 
 const isDirty = computed(() => {
   if (!originalConfig.value || !draftConfig.value) return false
@@ -382,7 +367,7 @@ function resetDraft(): void {
   draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
   // 重置时同步本地滑块
   syncLocalFromDraft()
-  showToast('已放弃所有未保存的修改', 'info')
+  toast.show('已放弃所有未保存的修改', 'info')
 }
 
 function toggleCron(event: Event): void {
@@ -407,7 +392,7 @@ function toggleSwitch(event: Event): void {
 async function save(): Promise<void> {
   if (!draftConfig.value) return
   if (hasErrors.value) {
-    showToast('请先修复校验错误后再保存', 'error')
+    toast.show('请先修复校验错误后再保存', 'error')
     return
   }
 
@@ -420,13 +405,13 @@ async function save(): Promise<void> {
 
     const result = await api.config.updateConfig(partial)
     if (!result.success) {
-      showToast(result.error || '保存失败', 'error')
+      toast.show(result.error || '保存失败', 'error')
       return
     }
 
     const payload = result.data as ApiEnvelope<NcmConfig>
     if (payload.code !== 200) {
-      showToast(payload.message || '保存失败', 'error')
+      toast.show(payload.message || '保存失败', 'error')
       return
     }
 
@@ -435,10 +420,10 @@ async function save(): Promise<void> {
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
 
-    showToast('配置已保存并生效', 'success')
+    toast.show('配置已保存并生效', 'success')
   } catch (error) {
     console.error('Failed to save config:', error)
-    showToast('保存失败', 'error')
+    toast.show('保存失败', 'error')
   } finally {
     isLoading.value = false
   }
@@ -448,16 +433,6 @@ function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value))
 }
 
-function showToast(message: string, type: Toast['type'] = 'info'): void {
-  toast.message = message
-  toast.type = type
-  toast.show = true
-  setTimeout(() => hideToast(), 5000)
-}
-
-function hideToast(): void {
-  toast.show = false
-}
 </script>
 
 <style scoped>

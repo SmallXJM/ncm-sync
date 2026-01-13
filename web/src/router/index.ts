@@ -36,6 +36,14 @@ const router = createRouter({
         title: '我的歌单',
       },
     },
+    {
+      path: '/subscription',
+      name: 'subscription',
+      component: () => import('../views/SubscriptionView.vue'),
+      meta: {
+        title: '订阅管理',
+      },
+    },
   ],
 })
 

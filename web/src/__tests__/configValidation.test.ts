@@ -87,7 +87,7 @@ describe('configValidation', () => {
           max_threads_per_download: 999,
           temp_downloads_dir: '',
         },
-        template: {
+        subscription: {
           filename: 'artist}',
           music_dir_playlist: '',
         },
@@ -97,9 +97,8 @@ describe('configValidation', () => {
       expect(errors['download.max_concurrent_downloads']).toBeTruthy()
       expect(errors['download.max_threads_per_download']).toBeTruthy()
       expect(errors['download.temp_downloads_dir']).toBeTruthy()
-      expect(errors['template.filename']).toBeTruthy()
-      expect(errors['template.music_dir_playlist']).toBeTruthy()
+      expect(errors['subscription.filename']).toBeTruthy()
+      expect(errors['subscription.music_dir_playlist']).toBeTruthy()
     })
   })
 })
-
