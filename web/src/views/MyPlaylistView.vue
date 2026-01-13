@@ -242,12 +242,6 @@ const route = useRoute()
 const router = useRouter()
 
 
-interface Toast {
-  show: boolean
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-}
-
 // State
 const isLoading = ref(false)
 const isSubmitting = ref(false)

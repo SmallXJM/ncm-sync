@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import Toast from './Toast.vue'; // 确保路径正确
+import Toast from './AppToast.vue'; 
 
 interface ToastItem {
   id: number;

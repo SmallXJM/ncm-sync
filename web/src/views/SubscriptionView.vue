@@ -233,13 +233,13 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+// import { useRoute, useRouter } from 'vue-router'
 import api from '@/api'
 import type { DownloadJobItem, UpdateJobParams } from '@/api/ncm/download'
 import { toast } from '@/utils/toast'
 
-const route = useRoute()
-const router = useRouter()
+// const route = useRoute()
+// const router = useRouter()
 
 
 interface EditFormState {
@@ -262,17 +262,17 @@ const jobs = ref<DownloadJobItem[]>([])
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 
-const selectGroups = ref([
-  {
-    id: 1,
-    name: '全部',
-  },
-  {
-    id: 2,
-    name: '歌单',
-  },
-])
-const activeGroupId = ref(Number(route.query.group) || 1)
+// const selectGroups = ref([
+//   {
+//     id: 1,
+//     name: '全部',
+//   },
+//   {
+//     id: 2,
+//     name: '歌单',
+//   },
+// ])
+// const activeGroupId = ref(Number(route.query.group) || 1)
 
 
 const editForm = reactive<EditFormState>({

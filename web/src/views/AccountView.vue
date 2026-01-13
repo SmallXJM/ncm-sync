@@ -253,11 +253,6 @@ interface QRCode {
   message: string
 }
 
-interface Toast {
-  show: boolean
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-}
 
 interface ApiEnvelope<T> {
   code: number
