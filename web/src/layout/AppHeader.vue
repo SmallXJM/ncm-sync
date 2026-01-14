@@ -161,7 +161,7 @@ const toggleSidebar = () => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 40vw;
+    max-width: 40dvw;
     
     /* 核心对齐属性 */
     display: inline-flex;

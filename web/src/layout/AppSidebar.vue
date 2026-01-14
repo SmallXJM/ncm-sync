@@ -364,7 +364,7 @@ onUnmounted(() => {
     top: 0;
     left: 0;
     width: $nav-width-sidebar-widen;
-    height: 100vh;
+    height: 100dvh;
     background: var(--bg-base);
     /* Use base color */
     /* border-right: 1px solid var(--border-color); */

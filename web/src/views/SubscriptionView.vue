@@ -746,7 +746,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 }
 
 .modal-content {
-  width: 70vw;
+  width: 70dvw;
   //最大宽度适应窗口大小
   // max-width: 70%;
   max-height: 90vh;
@@ -762,7 +762,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 
   /* 适配移动端：如果是手机，改回卡片流 */
   @media (max-width: 768px) {
-    width: 90vw;
+    width: 90dvw;
 
   }
 }

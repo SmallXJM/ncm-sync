@@ -538,7 +538,7 @@ function sanitizeFilename(name: string): string {
   right: 0;
   bottom: 0;
   width: 400px;
-  max-width: 90vw;
+  max-width: 90dvw;
   background: var(--bg-modal);
   box-shadow: var(--shadow-2xl);
   z-index: 600; //弹窗600
@@ -555,7 +555,7 @@ function sanitizeFilename(name: string): string {
   @media (max-width: 768px) {
     .drawer {
       width: 100%;
-      max-width: 100vw;
+      max-width: 100dvw;
     }
 }
 
