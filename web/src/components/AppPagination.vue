@@ -159,4 +159,39 @@ const handlePageChange = (page: number) => {
   color: var(--text-muted);
   line-height: 2;
 }
+
+/* 将此代码添加到分页组件的 <style> 中 */
+@media (max-width: 480px) {
+.btn-group {
+    gap: 4px; // 缩小间距
+
+    .btn {
+      width: 32px;  // 稍微缩小按钮尺寸
+      height: 32px;
+      padding: 0;   // 确保内部没有多余边距
+      font-size: 13px;
+    }
+  }
+
+  // 隐藏第一个按钮 (首页) 和 最后一个按钮 (末页)
+  // .icon-btn:first-child,
+  // .icon-btn:last-child {
+  //   display: none;
+  // }
+
+  /* 如果页码还是多，甚至可以隐藏所有数字，只留上下页 */
+  // .btn-group .btn:not(.icon-btn):not(.btn-primary) {
+  //   display: none;
+  // }
+  .btn-group .pagination-ellipsis {
+    display: none;
+  }
+}
+
+/* 在极窄屏下隐藏所有数字，只留 上一页 1/10 下一页 */
+@media (max-width: 350px) {
+  .btn-group .btn:not(.icon-btn):not(.btn-primary) {
+    display: none;
+  }
+}
 </style>

@@ -540,6 +540,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+  
 .main-content {
   flex: 1;
   min-width: 0;
@@ -559,7 +560,7 @@ onUnmounted(() => {
   .search-form {
     flex: 1;
     /* 占据剩余所有空间 */
-    min-width: 280px;
+    min-width: 300px;
     /* 保证搜索框在窄屏下不会缩得太小，触发换行 */
     display: flex;
     margin-bottom: 0;
@@ -710,6 +711,10 @@ onUnmounted(() => {
 .filter-label {
   color: var(--text-secondary);
   transition: color 0.3s ease;
+
+  white-space: nowrap;      /* 强制文本不换行 */
+  flex-shrink: 0;           /* 在 Flex 布局中禁止被压缩 */
+  display: inline-block;    /* 确保它作为一个整体块处理 */
 }
 
 .filter-value {
@@ -779,20 +784,6 @@ onUnmounted(() => {
     /* 填充剩余空间 */
     min-width: 260px;
     /* 触发换行的阈值 */
-  }
-
-  .filter-wrapper {
-    flex-shrink: 0;
-
-    /* 手机端让筛选按钮也占满一行（可选） */
-    @media (max-width: 480px) {
-      flex: 1;
-
-      .filter-trigger {
-        width: 100%;
-        justify-content: space-between;
-      }
-    }
   }
 }
 

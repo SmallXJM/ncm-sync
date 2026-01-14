@@ -27,7 +27,7 @@ const { isNarrow } = useSidebar()
 @use '@/assets/styles/variables.scss' as *;
 
 .layout {
-    min-height: 100vh;
+    min-height: 100dvh;
     width: 100%;
     background: var(--bg-base);
     transition: background-color 0.3s ease, border-color 0.3s ease;
@@ -36,7 +36,7 @@ const { isNarrow } = useSidebar()
 
 .layout__main {
     margin-left: $nav-width-sidebar-widen;
-    height: 100vh;
+    height: 100dvh;
     /* Changed from min-height to fixed height */
     display: flex;
     flex-direction: column;
