@@ -154,24 +154,31 @@ const toggleSidebar = () => {
     min-width: 0;
 }
 
+/* 基础面包屑项样式提取 */
 .breadcrumb-item {
     font-size: 1.1rem;
     font-weight: 600;
-    color: $text-strong;
-    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 40vw;
+    
+    /* 核心对齐属性 */
+    display: inline-flex;
+    align-items: center;
+    height: 32px;            /* 固定高度确保基准线一致 */
+    padding: 0 8px;          /* 左右间距保持一致 */
+    line-height: 1;          /* 消除行高带来的动态边距 */
+    border: 1px solid transparent; /* 关键：current 也要有透明边框占用空间 */
+    background: transparent;
+    box-sizing: border-box;  /* 确保边框不撑大盒子 */
 }
 
 .breadcrumb-link {
-    background: transparent;
-    border: 1px solid transparent;
     border-radius: $radius-sm;
-    padding: 4px 8px;
     cursor: pointer;
     color: var(--text-secondary);
+    transition: all 0.3s ease;
 
     &:hover {
         background: var(--bg-surface-hover);
@@ -181,21 +188,20 @@ const toggleSidebar = () => {
 }
 
 .breadcrumb-current {
-    // 对齐 breadcrumb-link
-    padding: 4px 8px;
-    margin-top: -2px;
-    margin-left: 1px;
-    // padding: 4px 0;
+    /* 移除之前的 margin-top 和 margin-left */
     color: var(--text-primary);
+    cursor: default;
+    transition: all 0.3s ease;
+
 }
 
 .breadcrumb-sep {
-    // 调整位置到最底下 
-    line-height: 1;
+    display: inline-flex;
+    align-items: center;
     color: var(--text-tertiary);
-
-    // font-weight: 500;
     user-select: none;
+    /* 确保分隔符也居中 */
+    height: 32px; 
 }
 
 .app-header__left {

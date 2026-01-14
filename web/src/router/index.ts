@@ -17,7 +17,7 @@ const router = createRouter({
       name: 'account',
       component: () => import('../views/AccountView.vue'),
       meta: {
-        title: '账号管理',
+        title: '登录态',
       },
     },
     {
@@ -41,7 +41,7 @@ const router = createRouter({
       name: 'music',
       component: () => import('../views/MusicView.vue'),
       meta: {
-        title: '音乐管理',
+        title: '音乐',
       },
     },
     {
@@ -50,7 +50,7 @@ const router = createRouter({
       component: () => import('../views/MusicDetailView.vue'),
       meta: {
         title: '音乐详情',
-        parent: { title: '音乐管理', to: '/music' },
+        parent: { title: '音乐', to: '/music' },
       },
     },
     {
@@ -58,7 +58,7 @@ const router = createRouter({
       name: 'subscription',
       component: () => import('../views/SubscriptionView.vue'),
       meta: {
-        title: '订阅管理',
+        title: '订阅',
       },
     },
   ],

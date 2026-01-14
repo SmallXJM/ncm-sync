@@ -11,7 +11,7 @@
           <div class="glass-card detail-card">
             <div class="detail-header">
               <div class="detail-cover">
-                <img v-if="!coverError" :src="coverSrc" alt="cover" loading="lazy" @error="coverError = true" />
+                <img v-if="!coverError" :src="coverSrc" alt="cover" loading="lazy" @error="coverError = true" class="image-filter-brightness" />
                 <div v-else class="default-cover">
                   <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -229,9 +229,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-
 .detail-card {
   padding: var(--spacing-lg);
+
 }
 
 .detail-header {
@@ -246,6 +246,7 @@ onMounted(() => {
   overflow: hidden;
   background: var(--bg-surface-hover);
   flex-shrink: 0;
+  transition: all 0.3s ease;
 
   img {
     width: 100%;
@@ -261,6 +262,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
+  transition: all 0.3s ease;
 }
 
 .detail-meta {
@@ -287,6 +289,7 @@ onMounted(() => {
   height: 1px;
   background: var(--border-color);
   margin: var(--spacing-lg) 0;
+  transition: all 0.3s ease;
 }
 
 .detail-section {
@@ -345,6 +348,7 @@ onMounted(() => {
   padding: var(--spacing-md);
   max-height: 320px;
   overflow: auto;
+  transition: all 0.3s ease;
 
   pre {
     margin: 0;

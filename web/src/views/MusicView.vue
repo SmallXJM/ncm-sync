@@ -152,7 +152,8 @@
               <div class="card-main">
                 <div class="card-cover">
                   <img v-if="task.status === 'completed' && task.file_path && !coverErrorTaskIds.has(task.id)"
-                    :src="getCoverSrc(task.id)" alt="cover" loading="lazy" @error="handleCoverError(task.id)" />
+                    :src="getCoverSrc(task.id)" alt="cover" loading="lazy" @error="handleCoverError(task.id)"
+                    class="image-filter-brightness" />
                   <div v-else class="default-cover">
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -163,7 +164,11 @@
                   </div>
 
                   <!-- Status Overlay on Cover -->
-                  <div class="status-overlay" :class="getStatusClass(task.status)">
+                  <!-- <div class="status-overlay" :class="getStatusClass(task.status)">
+                    <span>{{ getStatusText(task.status) }}</span>
+                  </div> -->
+                  <div class="status-badge status-overlay" >
+                    <div class="status-dot" :class="getStatusClass(task.status)"></div>
                     <span>{{ getStatusText(task.status) }}</span>
                   </div>
                 </div>
@@ -191,7 +196,7 @@
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                   </svg>
                   <span class="text-error text-sm text-truncate" style="max-width: 120px;">{{ task.error_message
-                  }}</span>
+                    }}</span>
                 </div>
                 <div v-else></div> <!-- Spacer -->
 
@@ -200,7 +205,11 @@
                     @click.stop="resetTask(task)" :disabled="isProcessing(task.id)">
                     {{ isProcessing(task.id) ? '处理中...' : '重试' }}
                   </button>
-                  <button class="btn btn-sm btn-primary ml-sm" @click="goDetail(task)">
+                  <button class="btn btn-sm btn-secondary ml-sm" @click="goDetail(task)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                      <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                        stroke-width="2" d="M4 6h16M4 12h16M4 18h12" />
+                    </svg>
                     详情
                   </button>
                 </div>
@@ -501,13 +510,22 @@ const formatSize = (bytes?: number) => {
   return `${size.toFixed(1)} ${units[unitIndex]}`
 }
 
-const getStatusClass = (status: string) => {
+// const getStatusClass = (status: string) => {
+//   switch (status) {
+//     case 'completed': return 'badge-success'
+//     case 'downloading': return 'badge-primary'
+//     case 'failed': return 'badge-error'
+//     case 'cancelled': return 'badge-warning'
+//     default: return 'badge-secondary'
+//   }
+// }
+
+function getStatusClass(status: string): string {
   switch (status) {
-    case 'completed': return 'badge-success'
-    case 'downloading': return 'badge-primary'
-    case 'failed': return 'badge-error'
-    case 'cancelled': return 'badge-warning'
-    default: return 'badge-secondary'
+    case 'completed': return 'status-online'
+    case 'failed': 
+    case 'cancelled': return 'status-offline'
+    default: return 'status-pending'
   }
 }
 
@@ -732,6 +750,11 @@ onUnmounted(() => {
 
 .filter-value-muted {
   color: var(--text-tertiary);
+  padding: 4px 8px;
+  background: var(--bg-surface-hover);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 .filter-text {
@@ -994,6 +1017,7 @@ onUnmounted(() => {
   justify-content: center;
   background: var(--bg-surface-hover);
   color: var(--text-tertiary);
+  transition: color 0.3s ease, background-color 0.3s ease;
 
   &.large {
     width: 120px;
@@ -1004,34 +1028,34 @@ onUnmounted(() => {
 
 .status-overlay {
   position: absolute;
-  bottom: 4px;
-  right: 4px;
+  bottom: 0px;
+  right: 0px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: white;
-  backdrop-filter: blur(4px);
+  // color: white;
+  // backdrop-filter: blur(4px);
 
-  &.badge-success {
-    background: rgba(var(--color-success-rgb), 0.8);
-  }
+  // &.badge-success {
+  //   background: color-mix(in srgb, var(--color-success), transparent 70%);
+  // }
 
-  &.badge-primary {
-    background: rgba(var(--color-primary-rgb), 0.8);
-  }
+  // &.badge-primary {
+  //   background: color-mix(in srgb, var(--color-primary), transparent 70%);
+  // }
 
-  &.badge-error {
-    background: rgba(var(--color-error-rgb), 0.8);
-  }
+  // &.badge-error {
+  //   background: color-mix(in srgb, var(--color-error), transparent 70%);
+  // }
 
-  &.badge-warning {
-    background: rgba(var(--color-warning-rgb), 0.8);
-  }
+  // &.badge-warning {
+  //   background: color-mix(in srgb, var(--color-warning), transparent 70%);
+  // }
 
-  &.badge-secondary {
-    background: rgba(0, 0, 0, 0.6);
-  }
+  // &.badge-secondary {
+  //   background: rgba(0, 0, 0, 0.3);
+  // }
 }
 
 .card-footer {

@@ -406,3 +406,8 @@
     padding: var(--spacing-md) 0;
   }
 }
+
+.image-filter-brightness {
+  transition: filter 0.3s ease;
+  filter: var(--img-filter-brightness);
+}

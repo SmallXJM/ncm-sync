@@ -52,7 +52,7 @@ const toSingleValue = (value: unknown) => {
 }
 
 export const parseMusicQuery = (query: RouteLocationNormalizedLoaded['query']): MusicQueryParsed => {
-  const rawJobId = toSingleValue(query.job_id)
+  const rawJobId = toSingleValue(query.subscription)
   const jobIdNumber =
     typeof rawJobId === 'string' || typeof rawJobId === 'number' ? Number(rawJobId) : NaN
   const jobId = Number.isFinite(jobIdNumber) && jobIdNumber >= 0 ? jobIdNumber : 0
@@ -84,9 +84,9 @@ export const buildMusicQueryFromState = (
   const query: RouteLocationNormalizedLoaded['query'] = { ...baseQuery }
 
   if (state.jobId === 0) {
-    delete query.job_id
+    delete query.subscription
   } else {
-    query.job_id = String(state.jobId)
+    query.subscription = String(state.jobId)
   }
 
   if (!state.keyword) {
