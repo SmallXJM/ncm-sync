@@ -1,10 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import DownloadTasksView from '@/views/DownloadTasksView.vue'
+import MusicView from '@/views/MusicView.vue'
+import AppHeader from '@/layout/AppHeader.vue'
 import api from '@/api'
-import { createRouter, createMemoryHistory } from 'vue-router'
+import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 
-// Mock API
+if (!window.matchMedia) {
+  window.matchMedia = ((query: string) => {
+    const mql = {
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    } as unknown as MediaQueryList
+    return mql
+  }) as unknown as typeof window.matchMedia
+}
+
 vi.mock('@/api', () => ({
   default: {
     download: {
@@ -15,14 +31,13 @@ vi.mock('@/api', () => ({
   },
 }))
 
-// Mock Toast
 vi.mock('@/utils/toast', () => ({
   toast: {
     show: vi.fn(),
   },
 }))
 
-describe('DownloadTasksView.vue', () => {
+describe('MusicView.vue + AppHeader breadcrumb', () => {
   const mockJobs = [
     { id: 1, job_name: 'Job 1', playlist_id: '123' },
     { id: 2, job_name: 'Job 2', playlist_id: '456' },
@@ -31,165 +46,129 @@ describe('DownloadTasksView.vue', () => {
   const mockTasks = [
     {
       id: 1,
+      music_id: '1001',
       music_title: 'Song 1',
       music_artist: 'Artist 1',
+      music_album: 'Album 1',
       status: 'completed',
+      file_path: 'E:\\Music\\Song1.mp3',
       job_id: 1,
+      progress_flags: 0,
     },
     {
       id: 2,
+      music_id: '1002',
       music_title: 'Song 2',
       music_artist: 'Artist 2',
+      music_album: 'Album 2',
       status: 'failed',
       error_message: 'Download error',
       job_id: 1,
+      progress_flags: 0,
     },
   ]
 
-  let router: any
+  let router: Router
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    
-    // Setup default API responses
-    ;(api.download.getJobList as any).mockResolvedValue({
+
+    const mockedApi = api as unknown as {
+      download: {
+        getJobList: ReturnType<typeof vi.fn>
+        getTaskList: ReturnType<typeof vi.fn>
+        resetTask: ReturnType<typeof vi.fn>
+      }
+    }
+
+    mockedApi.download.getJobList.mockResolvedValue({
       success: true,
       data: { code: 200, data: { jobs: mockJobs } },
     })
-    ;(api.download.getTaskList as any).mockResolvedValue({
+    mockedApi.download.getTaskList.mockResolvedValue({
       success: true,
-      data: { code: 200, data: { tasks: mockTasks, total: 2 } },
+      data: { code: 200, data: { tasks: mockTasks, total: 40 } },
     })
-    ;(api.download.resetTask as any).mockResolvedValue({
+    mockedApi.download.resetTask.mockResolvedValue({
       success: true,
       data: { code: 200 },
     })
 
-    // Setup Router
     router = createRouter({
       history: createMemoryHistory(),
       routes: [
-        { path: '/download/tasks', component: DownloadTasksView },
+        { path: '/music', name: 'music', component: MusicView, meta: { title: '音乐管理' } },
+        {
+          path: '/music/:taskId',
+          name: 'music-detail',
+          component: { template: '<div />' },
+          meta: { title: '音乐详情', parent: { title: '音乐管理', to: '/music' } },
+        },
       ],
     })
-    router.push('/download/tasks')
+    router.push('/music')
     await router.isReady()
   })
 
-  it('renders correctly and fetches initial data', async () => {
-    const wrapper = mount(DownloadTasksView, {
+  it('renders cards and fetches initial data', async () => {
+    const wrapper = mount(MusicView, {
       global: {
         plugins: [router],
       },
     })
-    
+
     expect(api.download.getJobList).toHaveBeenCalled()
-    expect(api.download.getTaskList).toHaveBeenCalledWith(expect.objectContaining({
-      page: 1,
-      limit: 20,
-    }))
+    expect(api.download.getTaskList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        page: 1,
+        limit: 20,
+      }),
+    )
 
     await flushPromises()
 
-    // Check rendered jobs in sidebar
-    const jobItems = wrapper.findAll('.config-nav-item')
-    expect(jobItems.length).toBe(mockJobs.length + 1)
-    expect(wrapper.text()).toContain('Job 1')
-    expect(wrapper.text()).toContain('Job 2')
-
-    // Check rendered tasks
-    const taskItems = wrapper.findAll('.result-item')
-    expect(taskItems.length).toBe(mockTasks.length)
+    const cards = wrapper.findAll('.playlist-card')
+    expect(cards.length).toBe(mockTasks.length)
     expect(wrapper.text()).toContain('Song 1')
     expect(wrapper.text()).toContain('Song 2')
   })
 
-  it('handles search and filtering', async () => {
-    const wrapper = mount(DownloadTasksView, {
+  it('navigates to detail route when clicking 详情', async () => {
+    const wrapper = mount(MusicView, {
       global: {
         plugins: [router],
       },
     })
     await flushPromises()
 
-    const searchInput = wrapper.find('input.search-input')
-    await searchInput.setValue('test keyword')
-    
-    const searchButton = wrapper.find('button.btn-primary')
-    await searchButton.trigger('click')
-    
-    // Wait for router and watchers
+    const firstCard = wrapper.findAll('.playlist-card')[0]
+    const detailBtn = firstCard.find('button.btn-primary')
+    await detailBtn.trigger('click')
     await flushPromises()
 
-    expect(api.download.getTaskList).toHaveBeenLastCalledWith(expect.objectContaining({
-      keyword: 'test keyword',
-    }))
-    expect(router.currentRoute.value.query.keyword).toBe('test keyword')
+    expect(router.currentRoute.value.name).toBe('music-detail')
+    expect(router.currentRoute.value.params.taskId).toBe('1')
   })
 
-  it('handles status filtering', async () => {
-    const wrapper = mount(DownloadTasksView, {
+  it('renders breadcrumb and allows clicking parent to navigate back', async () => {
+    await router.push('/music/1')
+    await router.isReady()
+
+    const wrapper = mount(AppHeader, {
       global: {
         plugins: [router],
       },
     })
+
+    expect(wrapper.text()).toContain('音乐管理')
+    expect(wrapper.text()).toContain('音乐详情')
+
+    const parentLink = wrapper.find('button.breadcrumb-link')
+    expect(parentLink.exists()).toBe(true)
+
+    await parentLink.trigger('click')
     await flushPromises()
 
-    const select = wrapper.find('select.input')
-    await select.setValue('failed')
-    await select.trigger('change')
-    
-    await flushPromises()
-
-    expect(api.download.getTaskList).toHaveBeenLastCalledWith(expect.objectContaining({
-      status: 'failed',
-    }))
-  })
-
-  it('handles job selection', async () => {
-    const wrapper = mount(DownloadTasksView, {
-      global: {
-        plugins: [router],
-      },
-    })
-    await flushPromises()
-
-    // Click on the first job (Job 1)
-    const jobButtons = wrapper.findAll('.config-nav-item')
-    await jobButtons[1].trigger('click')
-    
-    await flushPromises()
-
-    expect(api.download.getTaskList).toHaveBeenLastCalledWith(expect.objectContaining({
-      job_id: 1, // activeJobId.value is set to job.id which is 1
-    }))
-    expect(Number(router.currentRoute.value.query.job_id)).toBe(1)
-  })
-  
-  it('resets task status', async () => {
-    const wrapper = mount(DownloadTasksView, {
-      global: {
-        plugins: [router],
-      },
-    })
-    await flushPromises()
-
-    const failedTask = mockTasks.find(t => t.status === 'failed')
-    const taskItems = wrapper.findAll('.result-item')
-    // Find the task item that corresponds to the failed task
-    // mockTasks order: [completed, failed]
-    // index 1
-    const failedTaskItem = taskItems[1]
-    const resetButton = failedTaskItem.find('button.btn-secondary')
-    
-    expect(resetButton.exists()).toBe(true)
-
-    await resetButton.trigger('click')
-
-    expect(api.download.resetTask).toHaveBeenCalledWith(failedTask?.id)
-    await flushPromises()
-    
-    expect(failedTask?.status).toBe('pending')
+    expect(router.currentRoute.value.name).toBe('music')
   })
 })
-

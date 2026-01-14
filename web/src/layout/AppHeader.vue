@@ -11,7 +11,16 @@
                     </svg>
                 </button>
                 <slot name="left">
-                    <span class="app-header__title">{{ title }}</span>
+                    <nav class="breadcrumb" aria-label="Breadcrumb">
+                        <template v-for="(item, idx) in breadcrumbs" :key="`${idx}-${item.title}`">
+                            <button v-if="item.to && idx < breadcrumbs.length - 1" type="button"
+                                class="breadcrumb-item breadcrumb-link" @click="goBreadcrumb(item.to)">
+                                {{ item.title }}
+                            </button>
+                            <span v-else class="breadcrumb-item breadcrumb-current">{{ item.title }}</span>
+                            <span v-if="idx < breadcrumbs.length - 1" class="breadcrumb-sep">/</span>
+                        </template>
+                    </nav>
                 </slot>
             </div>
 
@@ -27,14 +36,37 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
+const router = useRouter()
 
-const title = computed(() => {
-    return route.meta.title ?? 'ncm-sync'
+const title = computed<string>(() => String(route.meta.title ?? 'ncm-sync'))
+
+type BreadcrumbItem = { title: string; to?: string }
+
+// 说明：在导航栏提供多级标题导览；点击上一级标题即为“返回上一页/上一级页面”的路由跳转。
+const breadcrumbs = computed<BreadcrumbItem[]>(() => {
+    const currentTitle = String(title.value ?? 'ncm-sync')
+    const parent = route.meta.parent as BreadcrumbItem | undefined
+
+    if (parent && parent.title) {
+        return [
+            { title: parent.title, to: parent.to },
+            { title: currentTitle },
+        ]
+    }
+    return [{ title: currentTitle }]
 })
+
+const goBreadcrumb = (to?: string) => {
+    if (to) {
+        router.push(to)
+        return
+    }
+    router.back()
+}
 
 const { isNarrow, isMobileOpen } = useSidebar()
 
@@ -94,6 +126,50 @@ const toggleSidebar = () => {
     font-weight: 600;
     color: $text-strong;
     transition: color 0.3s ease;
+}
+
+.breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.breadcrumb-item {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $text-strong;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 40vw;
+}
+
+.breadcrumb-link {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: $radius-sm;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+
+    &:hover {
+        background: var(--bg-surface-hover);
+        color: var(--text-primary);
+        border-color: var(--border-hover);
+    }
+}
+
+.breadcrumb-current {
+    padding: 4px 0;
+    color: var(--text-primary);
+}
+
+.breadcrumb-sep {
+    color: var(--text-tertiary);
+    font-weight: 500;
+    user-select: none;
 }
 
 .app-header__left {

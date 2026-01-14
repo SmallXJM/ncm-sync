@@ -38,10 +38,19 @@ const router = createRouter({
     },
     {
       path: '/music',
-      name: 'download-tasks',
-      component: () => import('../views/DownloadTasksView.vue'),
+      name: 'music',
+      component: () => import('../views/MusicView.vue'),
       meta: {
         title: '音乐管理',
+      },
+    },
+    {
+      path: '/music/:taskId',
+      name: 'music-detail',
+      component: () => import('../views/MusicDetailView.vue'),
+      meta: {
+        title: '音乐详情',
+        parent: { title: '音乐管理', to: '/music' },
       },
     },
     {

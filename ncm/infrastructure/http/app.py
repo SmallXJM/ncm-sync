@@ -19,6 +19,7 @@ from .routing.auto_router import (
     register_health_check,
 )
 from .routing.vue_router import register_vue_routes
+from .routing.local_music_router import register_local_music_routes
 from ncm.infrastructure.db.async_session import dispose_async_engine
 from ncm.infrastructure.db.engine import close_engine
 from ncm.core.session import close_session
@@ -161,8 +162,12 @@ def create_app() -> FastAPI:
     # Automatically register all ncm routes
     auto_register_services(app, "ncm.api.ncm")
     
+    # Local music file routes (no NCM external requests)
+    register_local_music_routes(app)
+    
     # Vue SPA mount
     register_vue_routes(app)
+
 
     return app
 

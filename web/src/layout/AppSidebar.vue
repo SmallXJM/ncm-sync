@@ -31,10 +31,11 @@
         </div>
 
         <div class="sidebar__footer">
-            <button class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到浅色模式' : '切换到深色模式'">
+            <button class="theme-toggle" @click="cycleTheme" :title="'当前模式: ' + themeMode">
                 <!-- Sun Icon -->
-                <svg v-if="!isDark" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="themeMode === 'light'" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <circle cx="12" cy="12" r="5"></circle>
                     <line x1="12" y1="1" x2="12" y2="3"></line>
                     <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -46,9 +47,17 @@
                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                 </svg>
                 <!-- Moon Icon -->
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-else-if="themeMode === 'dark'" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                    <text x="7" y="13" font-size="8" font-weight="bold" fill="currentColor" stroke-width="0">A</text>
                 </svg>
             </button>
         </div>
@@ -58,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
+import { ref, onMounted, onUnmounted, computed, h, type Component } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
 
 const { isNarrow, isMobileOpen } = useSidebar()
@@ -242,34 +251,99 @@ const menus: MenuItem[] = [
     // { title: '设置', path: '/config', icon: SettingsIcon }
 ]
 
-const isDark = ref(false)
+// const isDark = ref(false)
 
-const toggleTheme = () => {
-    isDark.value = !isDark.value
-    const html = document.documentElement
+// const toggleTheme = () => {
+//     isDark.value = !isDark.value
+//     const html = document.documentElement
 
-    if (isDark.value) {
-        html.classList.add('dark')
-        html.classList.remove('light')
-        localStorage.setItem('theme', 'dark')
-    } else {
-        html.classList.add('light')
-        html.classList.remove('dark')
-        localStorage.setItem('theme', 'light')
+//     if (isDark.value) {
+//         html.classList.add('dark')
+//         html.classList.remove('light')
+//         localStorage.setItem('theme', 'dark')
+//     } else {
+//         html.classList.add('light')
+//         html.classList.remove('dark')
+//         localStorage.setItem('theme', 'light')
+//     }
+// }
+
+// onMounted(() => {
+//     const savedTheme = localStorage.getItem('theme')
+//     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+//     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+//         isDark.value = true
+//         document.documentElement.classList.add('dark')
+//     } else {
+//         isDark.value = false
+//         document.documentElement.classList.add('light')
+//     }
+// })
+
+
+// 1. 定义三态类型
+type ThemeMode = 'light' | 'dark' | 'system'
+const themeMode = ref<ThemeMode>('system')
+
+// 2. 媒体查询对象 (匹配深色模式)
+const colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
+
+// 3. 计算当前视觉上应该是深色还是浅色
+const isActualDark = computed(() => {
+    if (themeMode.value === 'system') {
+        return colorSchemeMq.matches
+    }
+    return themeMode.value === 'dark'
+})
+
+// 4. 核心渲染函数：根据计算结果修改 HTML 类名
+const applyTheme = () => {
+  const html = document.documentElement;
+  
+  if (themeMode.value === 'system') {
+    html.classList.remove('dark', 'light');
+  } else if (themeMode.value === 'dark') {
+    html.classList.add('dark');
+    html.classList.remove('light');
+  } else {
+    html.classList.add('light');
+    html.classList.remove('dark');
+  }
+};
+
+// 5. 监听器回调：当浏览器/系统主题改变时自动执行
+const handleSystemThemeChange = () => {
+    console.log("handleSystemThemeChange: "+themeMode.value)
+    if (themeMode.value === 'system') {
+        applyTheme()
     }
 }
 
-onMounted(() => {
-    const savedTheme = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+// 6. 三态切换逻辑
+const cycleTheme = () => {
+    if (themeMode.value === 'light') themeMode.value = 'dark'
+    else if (themeMode.value === 'dark') themeMode.value = 'system'
+    else themeMode.value = 'light'
+    
+    localStorage.setItem('theme-preference', themeMode.value)
+    applyTheme() // 切换模式后立即生效
+}
 
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        isDark.value = true
-        document.documentElement.classList.add('dark')
-    } else {
-        isDark.value = false
-        document.documentElement.classList.add('light')
-    }
+onMounted(() => {
+    // 初始化模式
+    const saved = localStorage.getItem('theme-preference') as ThemeMode
+    if (saved) themeMode.value = saved
+    
+    applyTheme()
+
+    // 【关键】注册监听器，实时捕获浏览器/系统配色变化
+    colorSchemeMq.addEventListener('change', handleSystemThemeChange)
+})
+
+onUnmounted(() => {
+    // 清理监听器
+    colorSchemeMq.removeEventListener('change', handleSystemThemeChange)
 })
 </script>
 
