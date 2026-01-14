@@ -76,49 +76,12 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination">
-          <div class="btn-group">
-            <button class="btn btn-secondary btn-sm icon-btn" :disabled="currentPage === 1" @click="currentPage = 1">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <polyline points="11 17 6 12 11 7"></polyline>
-                <polyline points="18 17 13 12 18 7"></polyline>
-              </svg>
-            </button>
-
-            <button class="btn btn-secondary btn-sm icon-btn" :disabled="currentPage === 1" @click="currentPage--">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-            </button>
-
-            <template v-for="page in visiblePages" :key="page">
-              <span v-if="page === '...'" class="pagination-ellipsis">...</span>
-              <button v-else class="btn btn-sm" :class="currentPage === page ? 'btn-primary' : 'btn-secondary'"
-                @click="currentPage = Number(page)">
-                {{ page }}
-              </button>
-            </template>
-
-            <button class="btn btn-secondary btn-sm icon-btn" :disabled="currentPage === totalPages"
-              @click="currentPage++">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
-
-            <button class="btn btn-secondary btn-sm icon-btn" :disabled="currentPage === totalPages"
-              @click="currentPage = totalPages">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <polyline points="13 17 18 12 13 7"></polyline>
-                <polyline points="6 17 11 12 6 7"></polyline>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <AppPagination 
+          :total-items="showPlaylists.length" 
+          :current-page="currentPage" 
+          :page-size="pageSize" 
+          @page-change="(page) => currentPage = page" 
+        />
       </div>
     </main>
 
@@ -237,6 +200,7 @@ import type { NcmConfig } from '@/api/ncm/config'
 import { useRoute, useRouter } from 'vue-router'
 import { nextTick } from 'vue'
 import { toast } from '@/utils/toast'
+import AppPagination from '@/components/AppPagination.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -296,52 +260,6 @@ const displayPlaylists = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return showPlaylists.value.slice(start, start + pageSize)
 })
-
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  const windowSize = 5
-
-  // 总页数不够 5，全部显示
-  if (total <= windowSize) {
-    return Array.from({ length: total }, (_, i) => i + 1)
-  }
-
-  let start = current - Math.floor(windowSize / 2)
-  let end = current + Math.floor(windowSize / 2)
-
-  // 左边越界
-  if (start < 1) {
-    start = 1
-    end = windowSize
-  }
-
-  // 右边越界
-  if (end > total) {
-    end = total
-    start = total - windowSize + 1
-  }
-
-  const pages = []
-
-  // 左边省略号
-  if (start > 1) {
-    pages.push("...")   // 省略
-  }
-
-  // 中间页码
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-
-  // 右边省略号
-  if (end < total) {
-    pages.push("...")   // 省略
-  }
-
-  return pages
-})
-
 
 
 // Methods
@@ -595,51 +513,6 @@ function sanitizeFilename(name: string): string {
     font-weight: 500;
   }
 }
-
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: var(--spacing-lg);
-}
-
-.btn-group {
-  display: flex;
-  gap: var(--spacing-sm);
-  /* 按钮之间的间距 */
-
-  .btn {
-    width: 36px;
-    height: 36px;
-  }
-
-  /* 让按钮支持 Flex 布局以对齐 SVG */
-  .icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    /* 移除默认内边距，手动控制宽高 */
-  }
-
-  /* 控制 SVG 的粗细和大小 */
-  .icon-btn svg {
-    width: 16px;
-    height: 16px;
-    stroke-width: 2.5px;
-    /* 可以根据喜好调整线条粗细 */
-  }
-}
-
-
-
-.pagination-ellipsis {
-  padding: 0 0.5rem;
-  color: var(--text-muted);
-  line-height: 2;
-}
-
 
 
 /* Drawer Styles - assuming these are not in components.scss or need to be local */
