@@ -18,7 +18,12 @@
                                 {{ item.title }}
                             </button>
                             <span v-else class="breadcrumb-item breadcrumb-current">{{ item.title }}</span>
-                            <span v-if="idx < breadcrumbs.length - 1" class="breadcrumb-sep">/</span>
+                            <span v-if="idx < breadcrumbs.length - 1" class="breadcrumb-sep">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </span>
                         </template>
                     </nav>
                 </slot>
@@ -36,31 +41,45 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { useSidebar } from '@/composables/useSidebar'
+import { getStoredMusicQuery } from '@/composables/useMusicQuery'
 
 const route = useRoute()
 const router = useRouter()
 
 const title = computed<string>(() => String(route.meta.title ?? 'ncm-sync'))
 
-type BreadcrumbItem = { title: string; to?: string }
+type BreadcrumbItem = { title: string; to?: RouteLocationRaw }
 
-// 说明：在导航栏提供多级标题导览；点击上一级标题即为“返回上一页/上一级页面”的路由跳转。
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const currentTitle = String(title.value ?? 'ncm-sync')
     const parent = route.meta.parent as BreadcrumbItem | undefined
 
     if (parent && parent.title) {
+        let parentTo: RouteLocationRaw = parent.to ?? { path: route.matched[0]?.path || '/' }
+
+        if (route.name === 'music-detail') {
+            const storedQuery = getStoredMusicQuery()
+            if (storedQuery) {
+                if (typeof parentTo === 'string') {
+                    parentTo = { path: parentTo, query: storedQuery }
+                } else {
+                    const { query, ...rest } = parentTo
+                    parentTo = { ...rest, query: storedQuery }
+                }
+            }
+        }
+
         return [
-            { title: parent.title, to: parent.to },
+            { title: parent.title, to: parentTo },
             { title: currentTitle },
         ]
     }
     return [{ title: currentTitle }]
 })
 
-const goBreadcrumb = (to?: string) => {
+const goBreadcrumb = (to?: RouteLocationRaw) => {
     if (to) {
         router.push(to)
         return
@@ -162,13 +181,20 @@ const toggleSidebar = () => {
 }
 
 .breadcrumb-current {
-    padding: 4px 0;
+    // 对齐 breadcrumb-link
+    padding: 4px 8px;
+    margin-top: -2px;
+    margin-left: 1px;
+    // padding: 4px 0;
     color: var(--text-primary);
 }
 
 .breadcrumb-sep {
+    // 调整位置到最底下 
+    line-height: 1;
     color: var(--text-tertiary);
-    font-weight: 500;
+
+    // font-weight: 500;
     user-select: none;
 }
 
@@ -205,7 +231,7 @@ const toggleSidebar = () => {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all $ts-quick,  border-color 0.3s ease;
+    transition: all $ts-quick, border-color 0.3s ease;
 
     &:hover {
         background: var(--bg-surface-hover);

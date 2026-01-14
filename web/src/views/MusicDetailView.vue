@@ -96,9 +96,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { http } from '@/api'
 import type { ApiEnvelope } from '@/api/request'
 import { toast } from '@/utils/toast'
-
-// 说明：本详情页仅面向本地已下载文件；不再依赖任何 NCM(song/detail、lyric) 网络请求。
-//      音频播放、封面与文件管理均通过本地文件接口完成。
+import { getStoredMusicQuery } from '@/composables/useMusicQuery'
 
 type LocalMusicDetail = {
   id: number
@@ -182,7 +180,12 @@ const handleDelete = async () => {
     })
     if (res.success && res.data.code === 200) {
       toast.show('已删除本地文件', 'success')
-      router.push({ name: 'music' })
+      const storedQuery = getStoredMusicQuery()
+      if (storedQuery) {
+        router.push({ name: 'music', query: storedQuery })
+      } else {
+        router.push({ name: 'music' })
+      }
     } else {
       toast.show('删除失败', 'error')
     }
@@ -226,9 +229,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.detail-layout {
-  margin-top: var(--spacing-lg);
-}
 
 .detail-card {
   padding: var(--spacing-lg);

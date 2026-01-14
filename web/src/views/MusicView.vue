@@ -141,35 +141,39 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '@/api'
 import type { DownloadJobItem, DownloadTaskItem } from '@/api/ncm/download'
 import { toast } from '@/utils/toast'
 import AppPagination from '@/components/AppPagination.vue'
+import { useMusicQuery } from '@/composables/useMusicQuery'
 
-// 说明：该页面只展示并管理本地已下载文件；不再发起 NCM(song/detail、lyric) 等网络请求
-
-const route = useRoute()
 const router = useRouter()
 
-// State
 const jobs = ref<DownloadJobItem[]>([])
 const tasks = ref<DownloadTaskItem[]>([])
-const activeJobId = ref(Number(route.query.job_id) || 0)
-const searchKeyword = ref(route.query.keyword as string || '')
-const filterStatus = ref((route.query.status as string) || 'completed')
-const currentPage = ref(Number(route.query.page) || 1)
 const totalTasks = ref(0)
 const pageSize = ref(20)
 const isLoading = ref(false)
 const processingTasks = ref<Set<number>>(new Set())
 const coverErrorTaskIds = ref<Set<number>>(new Set())
 
-// Computed
+const {
+  activeJobId,
+  searchKeyword,
+  filterStatus,
+  currentPage,
+  updateUrl,
+  saveToStorage: saveMusicQueryToStorage,
+} = useMusicQuery({
+  onRouteQueryChange: () => {
+    fetchTasks()
+  },
+})
+
 const totalPages = computed(() => Math.ceil(totalTasks.value / pageSize.value))
 
-// Methods
 const fetchJobs = async () => {
   try {
     const res = await api.download.getJobList()
@@ -189,7 +193,7 @@ const fetchTasks = async () => {
       limit: pageSize.value,
       job_id: activeJobId.value || undefined,
       status: filterStatus.value || undefined,
-      keyword: searchKeyword.value || undefined
+      keyword: searchKeyword.value || undefined,
     }
     const res = await api.download.getTaskList(params)
     if (res.success && res.data.code === 200) {
@@ -206,24 +210,6 @@ const fetchTasks = async () => {
   } finally {
     isLoading.value = false
   }
-}
-
-const updateUrl = () => {
-  const query: any = { ...route.query }
-
-  if (activeJobId.value === 0) delete query.job_id
-  else query.job_id = activeJobId.value
-
-  if (!searchKeyword.value) delete query.keyword
-  else query.keyword = searchKeyword.value
-
-  if (!filterStatus.value) delete query.status
-  else query.status = filterStatus.value
-
-  if (currentPage.value === 1) delete query.page
-  else query.page = currentPage.value
-
-  router.push({ query })
 }
 
 const handleSearch = () => {
@@ -303,18 +289,19 @@ const getStatusClass = (status: string) => {
 }
 
 const getStatusText = (status: string) => {
-   const map: Record<string, string> = {
-      'pending': '等待中',
-      'downloading': '下载中',
-      'processing': '处理中',
-      'completed': '已完成',
-      'failed': '失败',
-      'cancelled': '已取消'
-   }
-   return map[status] || status
+  const map: Record<string, string> = {
+    pending: '等待中',
+    downloading: '下载中',
+    processing: '处理中',
+    completed: '已完成',
+    failed: '失败',
+    cancelled: '已取消',
+  }
+  return map[status] || status
 }
 
 const goDetail = (task: DownloadTaskItem) => {
+  saveMusicQueryToStorage()
   router.push({ name: 'music-detail', params: { taskId: String(task.id) } })
 }
 
@@ -323,15 +310,6 @@ const getCoverSrc = (taskId: number) => `/local/music/cover/${taskId}`
 const handleCoverError = (taskId: number) => {
   coverErrorTaskIds.value.add(taskId)
 }
-
-// Watchers
-watch(() => route.query, (newQuery) => {
-  activeJobId.value = Number(newQuery.job_id) || 0
-  searchKeyword.value = (newQuery.keyword as string) || ''
-  filterStatus.value = (newQuery.status as string) || 'completed'
-  currentPage.value = Number(newQuery.page) || 1
-  fetchTasks()
-}, { deep: true })
 
 onMounted(() => {
   fetchJobs()
