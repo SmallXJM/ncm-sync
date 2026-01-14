@@ -65,7 +65,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
                 if (typeof parentTo === 'string') {
                     parentTo = { path: parentTo, query: storedQuery }
                 } else {
-                    const { query, ...rest } = parentTo
+                    const { ...rest } = parentTo
                     parentTo = { ...rest, query: storedQuery }
                 }
             }

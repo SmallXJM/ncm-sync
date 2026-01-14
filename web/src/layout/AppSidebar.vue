@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, h, type Component } from 'vue'
+import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
 
 const { isNarrow, isMobileOpen } = useSidebar()

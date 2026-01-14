@@ -32,16 +32,16 @@ export interface UseMusicQueryOptions {
   onRouteQueryChange?: () => void
 }
 
-const allowedStatuses: MusicStatus[] = [
-  'pending',
-  'downloading',
-  'processing',
-  'completed',
-  'failed',
-  'cancelled',
-]
+// const allowedStatuses: MusicStatus[] = [
+//   'pending',
+//   'downloading',
+//   'processing',
+//   'completed',
+//   'failed',
+//   'cancelled',
+// ]
 
-const allowedStatusSet = new Set<MusicStatus>(allowedStatuses)
+// const allowedStatusSet = new Set<MusicStatus>(allowedStatuses)
 
 const toSingleValue = (value: unknown) => {
   if (Array.isArray(value)) {

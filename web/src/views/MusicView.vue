@@ -231,7 +231,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import type { DownloadJobItem, DownloadTaskItem } from '@/api/ncm/download'
@@ -300,11 +300,6 @@ const filteredJobs = computed<DownloadJobItem[]>(() => {
   return jobs.value.filter((job) => (job.job_name || '').toLowerCase().includes(keyword))
 })
 
-const highlightedJobId = computed(() => {
-  if (filterHighlightedIndex.value < 0 || filterHighlightedIndex.value >= filteredJobs.value.length) return 0
-  return filteredJobs.value[filterHighlightedIndex.value]?.id ?? 0
-})
-
 const fetchJobs = async () => {
   try {
     const res = await api.download.getJobList()
@@ -366,10 +361,10 @@ const handleSearch = () => {
   runSearch()
 }
 
-const handlePageSizeChange = () => {
-  currentPage.value = 1
-  runSearch()
-}
+// const handlePageSizeChange = () => {
+//   currentPage.value = 1
+//   runSearch()
+// }
 
 const selectJob = (id: number) => {
   activeJobId.value = id
@@ -429,34 +424,10 @@ const toggleFilterDropdown = () => {
   }
 }
 
-const moveFilterHighlight = (delta: number) => {
-  const total = filteredJobs.value.length
-  if (!total) return
-  if (filterHighlightedIndex.value < 0) {
-    filterHighlightedIndex.value = 0
-    return
-  }
-  const nextIndex = filterHighlightedIndex.value + delta
-  if (nextIndex < 0) {
-    filterHighlightedIndex.value = total - 1
-  } else if (nextIndex >= total) {
-    filterHighlightedIndex.value = 0
-  } else {
-    filterHighlightedIndex.value = nextIndex
-  }
-}
-
 const selectJobFromDropdown = (job: DownloadJobItem) => {
   selectJob(job.id)
   isFilterOpen.value = false
   jobSearchKeyword.value = ''
-}
-
-const selectHighlightedJob = () => {
-  if (filterHighlightedIndex.value < 0 || filterHighlightedIndex.value >= filteredJobs.value.length) return
-  const job = filteredJobs.value[filterHighlightedIndex.value]
-  if (!job) return
-  selectJobFromDropdown(job)
 }
 
 const filterContainerRef = ref<HTMLElement | null>(null) // 新增 container 引用
@@ -489,7 +460,7 @@ const resetTask = async (task: DownloadTaskItem) => {
     } else {
       toast.show('重置失败', 'error')
     }
-  } catch (e) {
+  } catch {
     toast.show('重置失败', 'error')
   } finally {
     processingTasks.value.delete(task.id)
