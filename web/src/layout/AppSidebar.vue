@@ -137,8 +137,8 @@ const PlaylistIcon = h(
     'svg',
     {
         xmlns: 'http://www.w3.org/2000/svg',
-        width: '24',
-        height: '24',
+        width: '20',
+        height: '20',
         viewBox: '0 0 24 24',
     },
     [
@@ -216,24 +216,24 @@ const BellIcon = h(
     ]
 )
 
-const TaskIcon = h(
-    'svg',
-    {
-        xmlns: 'http://www.w3.org/2000/svg',
-        width: '24',
-        height: '24',
-        viewBox: '0 0 24 24',
-        fill: 'none',
-        stroke: 'currentColor',
-        'stroke-width': '2',
-        'stroke-linecap': 'round',
-        'stroke-linejoin': 'round',
-    },
-    [
-        h('path', { d: 'M9 11l3 3L22 4' }),
-        h('path', { d: 'M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11' }),
-    ]
-)
+// const TaskIcon = h(
+//     'svg',
+//     {
+//         xmlns: 'http://www.w3.org/2000/svg',
+//         width: '24',
+//         height: '24',
+//         viewBox: '0 0 24 24',
+//         fill: 'none',
+//         stroke: 'currentColor',
+//         'stroke-width': '2',
+//         'stroke-linecap': 'round',
+//         'stroke-linejoin': 'round',
+//     },
+//     [
+//         h('path', { d: 'M9 11l3 3L22 4' }),
+//         h('path', { d: 'M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11' }),
+//     ]
+// )
 
 interface MenuItem {
     title: string
@@ -290,12 +290,12 @@ const themeMode = ref<ThemeMode>('system')
 const colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
 
 // 3. 计算当前视觉上应该是深色还是浅色
-const isActualDark = computed(() => {
-    if (themeMode.value === 'system') {
-        return colorSchemeMq.matches
-    }
-    return themeMode.value === 'dark'
-})
+// const isActualDark = computed(() => {
+//     if (themeMode.value === 'system') {
+//         return colorSchemeMq.matches
+//     }
+//     return themeMode.value === 'dark'
+// })
 
 // 4. 核心渲染函数：根据计算结果修改 HTML 类名
 const applyTheme = () => {
