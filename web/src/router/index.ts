@@ -17,7 +17,7 @@ const router = createRouter({
       name: 'account',
       component: () => import('../views/AccountView.vue'),
       meta: {
-        title: '账号管理',
+        title: '登录态',
       },
     },
     {
@@ -37,11 +37,28 @@ const router = createRouter({
       },
     },
     {
+      path: '/music',
+      name: 'music',
+      component: () => import('../views/MusicView.vue'),
+      meta: {
+        title: '音乐',
+      },
+    },
+    {
+      path: '/music/:taskId',
+      name: 'music-detail',
+      component: () => import('../views/MusicDetailView.vue'),
+      meta: {
+        title: '音乐详情',
+        parent: { title: '音乐', to: '/music' },
+      },
+    },
+    {
       path: '/subscription',
       name: 'subscription',
       component: () => import('../views/SubscriptionView.vue'),
       meta: {
-        title: '订阅管理',
+        title: '订阅',
       },
     },
   ],

@@ -140,6 +140,18 @@ class DownloadOrchestrator:
 
         return memory_cancelled
 
+    async def reset_task(self, task_id: int) -> bool:
+        """重置任务状态为 pending"""
+        async with self.uow_factory() as uow:
+            task = await self.task_repo.update_status(uow.session, task_id, "pending", error_message="")
+            if task:
+                # Clear progress flags related to completion
+                task.progress_flags = 0
+                await uow.session.flush()
+                logger.info(f"Reset task {task_id} to pending")
+                return True
+        return False
+
     async def list_active_tasks(self) -> Dict[int, DownloadTask]:
         """列出活跃任务"""
         async with self.uow_factory() as uow:
@@ -166,6 +178,29 @@ class DownloadOrchestrator:
             tasks += await self.task_repo.get_by_status(uow.session, "completed")
             tasks += await self.task_repo.get_by_status(uow.session, "failed")
             return {task.id: task for task in tasks}
+
+    async def search_tasks(self,
+                          job_id: Optional[int] = None,
+                          status: Optional[str] = None,
+                          keyword: Optional[str] = None,
+                          limit: int = 20,
+                          offset: int = 0) -> Dict[str, Any]:
+        """搜索任务 (支持分页)"""
+        async with self.uow_factory() as uow:
+            tasks, total = await self.task_repo.search(
+                uow.session,
+                job_id=job_id,
+                status=status,
+                keyword=keyword,
+                limit=limit,
+                offset=offset
+            )
+            return {
+                "tasks": [task.to_dict() for task in tasks],
+                "total": total,
+                "limit": limit,
+                "offset": offset
+            }
 
     async def create_download_job(self,
                                  job_name: str,

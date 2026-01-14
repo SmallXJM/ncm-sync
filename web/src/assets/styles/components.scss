@@ -447,25 +447,15 @@
 }
 
 .config-nav-item:hover {
-  background: rgba(120, 120, 128, 0.12);
+  background: var(--bg-surface-hover);
   color: var(--text-primary);
 }
 
 .config-nav-item.active {
-  background: rgba(120, 120, 128, 0.14);
-  border-color: rgba(60, 60, 67, 0.18);
+  background: var(--bg-surface-hover);
+  border-color: var(--border-hover);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   color: var(--text-primary);
-}
-
-.dark .config-nav-item:hover {
-  background: rgba(120, 120, 128, 0.2);
-}
-
-.dark .config-nav-item.active {
-  background: rgba(120, 120, 128, 0.22);
-  border-color: rgba(235, 235, 245, 0.16);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .config-nav-item-text {
@@ -543,7 +533,8 @@
 }
 
 .item-control {
-  width: 300px;
+  width: 40%;
+  min-width: 300px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -723,12 +714,10 @@
 .range-input {
   width: 80px !important;
   text-align: center;
-  color-scheme: light;
+  color-scheme: var(--color-scheme);
 }
 
-.dark .range-input {
-  color-scheme: dark;
-}
+
 
 @container configPanel (max-width: 560px) {
 
@@ -896,7 +885,6 @@
 .playlist-card:hover {
   border-color: var(--border-hover);
   box-shadow: var(--shadow-lg);
-
 }
 
 .card-main {
@@ -921,11 +909,8 @@
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s ease, filter 0.3s ease;
-}
+  filter: var(--img-filter-brightness);
 
-.dark .card-cover img {
-  filter: brightness(0.7);
-  /* 亮度降低到 70% */
 }
 
 
@@ -980,12 +965,9 @@
 
 .creator-info img {
   transition: filter 0.3s ease;
+  filter: var(--img-filter-brightness);
 }
 
-.dark .creator-info img {
-  filter: brightness(0.7);
-  /* 亮度降低到 70% */
-}
 
 .creator-avatar {
   width: 20px;

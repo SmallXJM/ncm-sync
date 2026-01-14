@@ -67,7 +67,7 @@
                     {{ job.enabled ? '已启用' : '未启用' }}
                   </span> -->
                 <label class="switch">
-                  <input type="checkbox" v-model="job.enabled" v-on:change="updateJobStatus(job)"/>
+                  <input type="checkbox" v-model="job.enabled" v-on:change="updateJobStatus(job)" />
                   <span class="switch-track"></span>
                   <span class="switch-handle"></span>
                 </label>
@@ -138,7 +138,7 @@
               <div class="form-group row">
                 <label>启用订阅</label>
                 <label class="switch">
-                  <input type="checkbox" v-model="editForm.enabled"/>
+                  <input type="checkbox" v-model="editForm.enabled" />
                   <span class="switch-track"></span>
                   <span class="switch-handle"></span>
                 </label>
@@ -328,7 +328,7 @@ async function fetchJobs() {
     }
   } catch (e) {
     const err = e as Error
-    toast.error('获取订阅列表失败: ' + err.message) 
+    toast.error('获取订阅列表失败: ' + err.message)
   } finally {
     isLoading.value = false
   }
@@ -378,7 +378,7 @@ async function submitDelete() {
   // const confirm = window.confirm(`确定要删除${job_name}吗？\n该操作<span style="color: red;">无法撤销</span>，请谨慎选择！`)
   // if (!confirm) return
   if (!deleteForm.job_id) {
-    toast.error('无效的订阅 ID')  
+    toast.error('无效的订阅 ID')
     return
   }
   isDeleting.value = true
@@ -445,7 +445,6 @@ async function updateJobStatus(params: DownloadJobItem) {
     const res = await api.download.updateJob(payload)
     if (res.success && res.data.code === 200) {
       if (res.data.data) {
-        if(res.data.data.enabled){}
         toast.show(`${job_name}已${res.data.data.enabled ? '启用' : '关闭'}`, res.data.data.enabled ? 'success' : 'info')
         await syncLocalJobs(res.data.data)
       }
@@ -575,7 +574,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 .job-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-sm);  
 
   /* 桌面端移除布局容器身份，使子元素直接参与父 Grid */
   @media (min-width: 769px) {
@@ -585,12 +584,14 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 
 .job-row {
   /* 基础样式 */
-  padding: var(--spacing-md) var(--spacing-lg);
-  transition: transform 0.2s, background-color 0.3s, color 0.3s, border-color 0.3s;
+  padding: var(--spacing-md);
+  transition: transform 0.2s, background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 
   &:hover {
     // transform: translateY(-2px);
-    background: var(--bg-surface-hover);
+    // background: var(--bg-surface-hover);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-md);
   }
 
   /* 通用列处理 */

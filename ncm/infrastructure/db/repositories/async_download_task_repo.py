@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional, List
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from ncm.infrastructure.db.models.download_task import DownloadTask
 from ncm.infrastructure.db.models.download_job import DownloadJob
@@ -144,3 +144,39 @@ class AsyncDownloadTaskRepository:
         )
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def search(
+        self,
+        session: AsyncSession,
+        job_id: Optional[int] = None,
+        status: Optional[str] = None,
+        keyword: Optional[str] = None,
+        limit: int = 20,
+        offset: int = 0
+    ) -> tuple[List[DownloadTask], int]:
+        stmt = select(DownloadTask)
+        
+        if job_id is not None:
+            stmt = stmt.where(DownloadTask.job_id == job_id)
+        if status:
+            stmt = stmt.where(DownloadTask.status == status)
+        if keyword:
+            keyword = f"%{keyword}%"
+            stmt = stmt.where(
+                or_(
+                    DownloadTask.music_title.ilike(keyword),
+                    DownloadTask.music_artist.ilike(keyword),
+                    DownloadTask.music_album.ilike(keyword),
+                    DownloadTask.music_id.ilike(keyword)
+                )
+            )
+            
+        # Count query
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = (await session.execute(count_stmt)).scalar_one()
+        
+        # Result query
+        stmt = stmt.order_by(DownloadTask.created_at.desc()).limit(limit).offset(offset)
+        result = await session.execute(stmt)
+        return list(result.scalars()), total
+

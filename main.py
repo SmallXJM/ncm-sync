@@ -20,41 +20,33 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def start_server():
     """Start the API http."""
-    try:
-        import uvicorn
-        from ncm.infrastructure.http import create_app
-        # import os as _os
-        # import platform as _platform
-        # import asyncio as _asyncio
-        # if _platform.system() == "Windows":
-        #     _asyncio.set_event_loop_policy(_asyncio.WindowsSelectorEventLoopPolicy())
-        #     _os.environ.setdefault("UVICORN_RELOAD_ENGINE", "watchgod")
-        
-        print("启动 NCM API 服务器...")
-        print("API 文档: http://localhost:8000/docs")
-        print("健康检查: http://localhost:8000/health")
-        print("按 Ctrl+C 停止服务器\n")
-        
-        uvicorn.run(
-            "ncm.infrastructure.http.app:create_app",
-            factory=True,
-            host="0.0.0.0",
-            port=8000,
-            reload=True,
-            use_colors=False,
-            http="h11",
-            # reload_dirs=["ncm"],
-            # reload_excludes=["**/__pycache__/**", "**/*.pyc"],
-            # reload_delay=0.5,
-            log_level="debug"
-        )
-    except ImportError:
-        print("缺少 FastAPI 依赖，请运行: pip install -r requirements.txt")
-    except KeyboardInterrupt:
-        print("\n 服务器已停止")
-    finally:
-        # Additional cleanup if needed within start_server context
-        pass
+    import uvicorn
+    from ncm.infrastructure.http import create_app
+    # import os as _os
+    # import platform as _platform
+    # import asyncio as _asyncio
+    # if _platform.system() == "Windows":
+    #     _asyncio.set_event_loop_policy(_asyncio.WindowsSelectorEventLoopPolicy())
+    #     _os.environ.setdefault("UVICORN_RELOAD_ENGINE", "watchgod")
+    
+    print("启动 NCM API 服务器...")
+    print("API 文档: http://localhost:8000/docs")
+    print("健康检查: http://localhost:8000/health")
+    print("按 Ctrl+C 停止服务器\n")
+    
+    uvicorn.run(
+        "ncm.infrastructure.http.app:create_app",
+        factory=True,
+        host="0.0.0.0",
+        port=8000,
+        reload=False,
+        use_colors=False,
+        http="h11",
+        # reload_dirs=["ncm"],
+        # reload_excludes=["**/__pycache__/**", "**/*.pyc"],
+        # reload_delay=0.5,
+        log_level="debug"
+    )
 
 
 

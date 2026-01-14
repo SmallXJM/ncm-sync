@@ -11,7 +11,21 @@
                     </svg>
                 </button>
                 <slot name="left">
-                    <span class="app-header__title">{{ title }}</span>
+                    <nav class="breadcrumb" aria-label="Breadcrumb">
+                        <template v-for="(item, idx) in breadcrumbs" :key="`${idx}-${item.title}`">
+                            <button v-if="item.to && idx < breadcrumbs.length - 1" type="button"
+                                class="breadcrumb-item breadcrumb-link" @click="goBreadcrumb(item.to)">
+                                {{ item.title }}
+                            </button>
+                            <span v-else class="breadcrumb-item breadcrumb-current">{{ item.title }}</span>
+                            <span v-if="idx < breadcrumbs.length - 1" class="breadcrumb-sep">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </span>
+                        </template>
+                    </nav>
                 </slot>
             </div>
 
@@ -27,14 +41,51 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { useSidebar } from '@/composables/useSidebar'
+import { getStoredMusicQuery } from '@/composables/useMusicQuery'
 
 const route = useRoute()
+const router = useRouter()
 
-const title = computed(() => {
-    return route.meta.title ?? 'ncm-sync'
+const title = computed<string>(() => String(route.meta.title ?? 'ncm-sync'))
+
+type BreadcrumbItem = { title: string; to?: RouteLocationRaw }
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => {
+    const currentTitle = String(title.value ?? 'ncm-sync')
+    const parent = route.meta.parent as BreadcrumbItem | undefined
+
+    if (parent && parent.title) {
+        let parentTo: RouteLocationRaw = parent.to ?? { path: route.matched[0]?.path || '/' }
+
+        if (route.name === 'music-detail') {
+            const storedQuery = getStoredMusicQuery()
+            if (storedQuery) {
+                if (typeof parentTo === 'string') {
+                    parentTo = { path: parentTo, query: storedQuery }
+                } else {
+                    const { ...rest } = parentTo
+                    parentTo = { ...rest, query: storedQuery }
+                }
+            }
+        }
+
+        return [
+            { title: parent.title, to: parentTo },
+            { title: currentTitle },
+        ]
+    }
+    return [{ title: currentTitle }]
 })
+
+const goBreadcrumb = (to?: RouteLocationRaw) => {
+    if (to) {
+        router.push(to)
+        return
+    }
+    router.back()
+}
 
 const { isNarrow, isMobileOpen } = useSidebar()
 
@@ -71,7 +122,7 @@ const toggleSidebar = () => {
     /* Changed from sticky to relative since outer container is fixed */
     /* top: 0; */
     // z-index: 144;
-    height: 60px;
+    height: 50px;
     background: var(--bg-base);
     /* Use base color */
     /* border-bottom: 1px solid $border; */
@@ -94,6 +145,63 @@ const toggleSidebar = () => {
     font-weight: 600;
     color: $text-strong;
     transition: color 0.3s ease;
+}
+
+.breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* 基础面包屑项样式提取 */
+.breadcrumb-item {
+    font-size: 1.1rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 40vw;
+    
+    /* 核心对齐属性 */
+    display: inline-flex;
+    align-items: center;
+    height: 32px;            /* 固定高度确保基准线一致 */
+    padding: 0 8px;          /* 左右间距保持一致 */
+    line-height: 1;          /* 消除行高带来的动态边距 */
+    border: 1px solid transparent; /* 关键：current 也要有透明边框占用空间 */
+    background: transparent;
+    box-sizing: border-box;  /* 确保边框不撑大盒子 */
+}
+
+.breadcrumb-link {
+    border-radius: $radius-sm;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+
+    &:hover {
+        background: var(--bg-surface-hover);
+        color: var(--text-primary);
+        border-color: var(--border-hover);
+    }
+}
+
+.breadcrumb-current {
+    /* 移除之前的 margin-top 和 margin-left */
+    color: var(--text-primary);
+    cursor: default;
+    transition: all 0.3s ease;
+
+}
+
+.breadcrumb-sep {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-tertiary);
+    user-select: none;
+    /* 确保分隔符也居中 */
+    height: 32px; 
 }
 
 .app-header__left {
@@ -123,13 +231,13 @@ const toggleSidebar = () => {
     height: 36px;
     border-radius: $radius-lg;
     border: 1px solid var(--border-color);
-    background: var(--bg-surface);
+    background: transparent;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all $ts-quick, background-color 0.3s ease;
+    transition: all $ts-quick, border-color 0.3s ease;
 
     &:hover {
         background: var(--bg-surface-hover);
