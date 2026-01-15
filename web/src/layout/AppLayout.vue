@@ -81,13 +81,13 @@ const { isNarrow } = useSidebar()
 @media (max-width: 768px) {
     .layout__main {
         margin-left: 0 !important;
+        /* 确保主容器包含安全区域的缩进，防止底部被遮挡 */
+        height: calc(100dvh - env(safe-area-inset-bottom));
     }
 
     .layout__content-wrapper {
-        border-radius: 0;
-        margin: 0 0 0 0;
-
-
+        // border-radius: 0;
+        margin: 0;
     }
 }
 

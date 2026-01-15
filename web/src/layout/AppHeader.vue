@@ -118,28 +118,35 @@ const toggleSidebar = () => {
 @use '@/assets/styles/variables' as *;
 
 .app-header {
-    position: relative;
-    /* Changed from sticky to relative since outer container is fixed */
-    /* top: 0; */
-    // z-index: 144;
-    height: 50px;
+    /* 1. 核心修复：增加顶部安全区域内边距 */
+    padding-top: env(safe-area-inset-top); 
+    
+    /* 2. 修改高度计算：原本高度 + 安全区高度 */
+    /* 不要写死 height: 50px，改用 min-height 或 content-box */
+    height: calc(50px + env(safe-area-inset-top)); 
+    
+    position: sticky; // 建议用 sticky 或保持 relative，取决于父容器
+    top: 0;
+    z-index: 100;
+    
     background: var(--bg-base);
-    /* Use base color */
-    /* border-bottom: 1px solid $border; */
     backdrop-filter: blur(20px);
+    
+    /* 3. 防止点击时出现系统默认的灰色高亮方块 */
+    -webkit-tap-highlight-color: transparent; 
+
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    
 }
 
 .app-header__inner {
-    // max-width: 1200px;
-    height: 100%;
-    margin: 0 auto;
+    /* 保持内容在 50px 的正中间，不受安全区 padding 影响 */
+    height: 50px; 
     padding: 0 $space-md;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
-
 .app-header__title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -239,14 +246,17 @@ const toggleSidebar = () => {
     cursor: pointer;
     transition: all $ts-quick, border-color 0.3s ease;
 
+    touch-action: manipulation;
+
     &:hover {
         background: var(--bg-surface-hover);
         color: var(--text-primary);
         border-color: var(--text-secondary);
     }
 
-    &:active {
-        transform: scale(0.95);
+&:active {
+        background: var(--bg-surface-active); // 增加按下时的视觉反馈
+        transform: scale(0.92);
     }
 }
 </style>

@@ -279,7 +279,7 @@
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 1rem;
-  transition: 0.2s ease;
+  transition: color 0.3s ease;
 }
 
 .search-input::placeholder {
@@ -397,7 +397,7 @@
 /* 配置管理 - 新版卡片式布局 */
 .config-layout {
   display: flex;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-sm);
   align-items: flex-start;
   flex-direction: column;
 }
@@ -628,21 +628,23 @@
   --range-fill: var(--control-active-bg);
   --range-track: var(--border-hover);
   transition: transform $ts-quick, height $ts-quick , --range-fill 0.3s ease, --range-track 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 
   &:active {
     transform: scale(0.98); // 模拟物理按下感
     height: 12px; // 按住时变粗，增加无级调节的视觉面积
   }
 
-  &::-webkit-slider-runnable-track {
-    height: 100%;
-    background: transparent;
-  }
-
-
 }
 
+.range-slider:focus {
+  outline: none;
+}
 
+/* 部分安卓浏览器需要清除这个伪元素的背景 */
+.range-slider::-moz-focus-outer {
+  border: 0;
+}
 
 .range-slider:hover {
   filter: brightness(1.02);
@@ -844,7 +846,7 @@
 }
 
 /* 2. 轨道禁用样式 */
-.switch input:disabled + .switch-track {
+.switch input:disabled+.switch-track {
   // 降低轨道透明度
   opacity: 0.6;
   // background: var(--bg-secondary) !important; /* 使用更灰暗的背景 */

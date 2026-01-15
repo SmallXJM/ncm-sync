@@ -11,6 +11,16 @@ from ncm.service.download.service.async_task_service import AsyncTaskService
 
 logger = get_logger(__name__)
 
+def guess_audio_mime(path: Path) -> str:
+    suffix = path.suffix.lower()
+    return {
+        ".mp3": "audio/mpeg",
+        ".m4a": "audio/mp4",
+        ".mp4": "audio/mp4",
+        ".aac": "audio/aac",
+        ".wav": "audio/wav",
+        ".flac": "audio/flac",
+    }.get(suffix, "application/octet-stream")
 
 def _is_within(child: Path, parent: Path) -> bool:
     try:
@@ -184,7 +194,18 @@ def register_local_music_routes(app: FastAPI) -> None:
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="not found")
 
-        return FileResponse(path=str(file_path), filename=file_path.name)
+        media_type = guess_audio_mime(file_path)
+
+        return FileResponse(
+            path=str(file_path),
+            filename=file_path.name,
+            media_type=media_type,              
+            headers={
+                "Accept-Ranges": "bytes",        
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
 
     @app.post("/local/music/delete", include_in_schema=False)
     async def local_music_delete(payload: dict):
