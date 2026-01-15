@@ -297,43 +297,78 @@ const isInitial = ref(true) // 新增：标记是否为页面初始化状态
 const currentTime = ref(0)
 const duration = ref(0)
 
+/**
+ * Android MediaSession 节流时间戳
+ * 必须是普通变量，不能是 ref
+ */
+let lastMediaUpdate = 0
+
+
 // 播放/暂停切换
 const togglePlay = () => {
   if (!audioRef.value) return
 
-  // 第一次点击播放按钮后，将初始化状态设为 false
   if (isInitial.value) {
     isInitial.value = false
   }
 
   if (isPlaying.value) {
     audioRef.value.pause()
+    isPlaying.value = false
   } else {
     audioRef.value.play()
-    // 播放时同步给系统控制中心
+    isPlaying.value = true
+
+    // ⭐ 只在真正开始播放时初始化 MediaSession
     updateMediaSession()
+    updateMediaSessionPosition()
   }
-  isPlaying.value = !isPlaying.value
 }
 
 // 更新进度条位置
 const onTimeUpdate = () => {
-  if (audioRef.value && !isDragging.value) {
-    currentTime.value = audioRef.value.currentTime
-  }
+  if (!audioRef.value || isDragging.value) return
+
+  currentTime.value = audioRef.value.currentTime
+
+  // ⭐ 核心：持续向 Android 汇报播放位置
+  // const now = Date.now()
+  // if (now - lastMediaUpdate > 500) {
+  //   updateMediaSessionPosition()
+  //   lastMediaUpdate = now
+  // }
 }
+
+const updateMediaSessionPosition = () => {
+  if (
+    !('mediaSession' in navigator) ||
+    !audioRef.value ||
+    !isFinite(audioRef.value.duration)
+  ) return
+
+  navigator.mediaSession.setPositionState({
+    duration: audioRef.value.duration,
+    position: audioRef.value.currentTime,
+    playbackRate: audioRef.value.playbackRate || 1
+  })
+}
+
 
 // 获取歌曲总长度
 const onLoadedMetadata = () => {
-  if (audioRef.value) {
-    duration.value = audioRef.value.duration
-  }
+  if (!audioRef.value) return
+
+  duration.value = audioRef.value.duration
+
+  // ⭐ 拿到 duration 后立即告诉系统一次
+  updateMediaSessionPosition()
 }
 
 // 拖动进度条跳转
 const seekAudio = () => {
   if (audioRef.value) {
     audioRef.value.currentTime = currentTime.value
+    isInitial.value=false
     isPlaying.value = true
     audioRef.value.play()
     updateMediaSession()
@@ -362,32 +397,63 @@ const formatTime = (seconds: number) => {
 
 // 更新系统媒体信息
 const updateMediaSession = () => {
-  if ('mediaSession' in navigator && detail.value) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: detail.value.music_title || '未知标题',
-      artist: detail.value.music_artist || '未知艺术家',
-      album: detail.value.music_album || '未知专辑',
-      artwork: [
-        { src: coverSrc.value, sizes: '96x96', type: 'image/png' },
-        { src: coverSrc.value, sizes: '128x128', type: 'image/png' },
-        { src: coverSrc.value, sizes: '192x192', type: 'image/png' },
-        { src: coverSrc.value, sizes: '256x256', type: 'image/png' },
-        { src: coverSrc.value, sizes: '384x384', type: 'image/png' },
-        { src: coverSrc.value, sizes: '512x512', type: 'image/png' },
-      ]
+  if (!('mediaSession' in navigator) || !detail.value || !audioRef.value) return
+
+  // 1️⃣ 元数据（只设置一次）
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: detail.value.music_title || '未知标题',
+    artist: detail.value.music_artist || '未知艺术家',
+    album: detail.value.music_album || '未知专辑',
+    artwork: [
+      { src: coverSrc.value, sizes: '512x512', type: 'image/png' }
+    ]
+  })
+
+  try {
+    navigator.mediaSession.setActionHandler('play', () => {
+      audioRef.value?.play()
+      isPlaying.value = true
+    })
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioRef.value?.pause()
+      isPlaying.value = false
+    })
+
+    // 显式注销上一首/下一首，把位置留给快进快退
+    // 1. 将“上一首”拦截，改为“后退 10 秒”
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      if (audioRef.value) {
+        audioRef.value.currentTime = Math.max(audioRef.value.currentTime - 10, 0);
+        updateMediaSessionPosition(); // 立即同步进度给系统
+      }
     });
 
-    // 绑定系统控制按钮（如耳机线控或锁屏切歌）
-    navigator.mediaSession.setActionHandler('play', () => togglePlay());
-    navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+    // 2. 将“下一首”拦截，改为“前进 10 秒”
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      if (audioRef.value) {
+        audioRef.value.currentTime = Math.min(audioRef.value.currentTime + 10, audioRef.value.duration);
+        updateMediaSessionPosition(); // 立即同步进度给系统
+      }
+    });
+
     navigator.mediaSession.setActionHandler('seekbackward', () => {
-      if (audioRef.value) audioRef.value.currentTime -= 10;
-    });
+      if (audioRef.value) audioRef.value.currentTime -= 10
+    })
+
     navigator.mediaSession.setActionHandler('seekforward', () => {
-      if (audioRef.value) audioRef.value.currentTime += 10;
-    });
-  }
+      if (audioRef.value) audioRef.value.currentTime += 10
+    })
+
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+      if (details.seekTime !== undefined && audioRef.value) {
+        audioRef.value.currentTime = details.seekTime
+        updateMediaSessionPosition()
+      }
+    })
+  } catch { }
 }
+
 
 // 【修改】样式计算现在依赖 localSliderValues 里的浮点数
 function getRangeStyle(min: number, max: number, value: number): Record<string, string> {

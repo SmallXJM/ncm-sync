@@ -25,15 +25,25 @@ def ncm_service(path: str, methods: List[str] = None):
         methods = ["POST"]
     
     def decorator(func: Callable) -> Callable:
-        # Save route information to function attributes
         func._ncm_service_route = {
             "path": path,
             "methods": methods,
-            "original_func": func
+            "original_func": func,
+            "type": "http",
         }
-        
-        # Return the original function unchanged
-        # HTTP conversion will be handled by create_service_handler
+        return func
+    
+    return decorator
+
+
+def ncm_ws_service(path: str):
+    def decorator(func: Callable) -> Callable:
+        func._ncm_service_route = {
+            "path": path,
+            "methods": ["WS"],
+            "original_func": func,
+            "type": "ws",
+        }
         return func
     
     return decorator

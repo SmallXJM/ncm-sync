@@ -252,7 +252,7 @@ interface MenuItem {
 }
 
 const menus: MenuItem[] = [
-    { title: '首页', path: '/', icon: HomeIcon },
+    { title: '仪表盘', path: '/', icon: HomeIcon },
     { title: '登录态', path: '/account', icon: UserIcon },
     { title: '音乐', path: '/music', icon: FileMusicIcon },
     { title: '订阅', path: '/subscription', icon: BellIcon },
