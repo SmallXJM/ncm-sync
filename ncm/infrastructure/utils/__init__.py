@@ -6,6 +6,9 @@
 # =====================
 
 from .tools import *
+from .time import UTC_CLOCK
 
 __name__ = [
+    'tools',
+    'UTC_CLOCK',
 ]

@@ -1,11 +1,31 @@
 /* 将通用样式迁移为 SCSS，保留原 CSS 变量以兼容现有组件 */
 @use './variables' as *;
 
+/* 针对所有可交互元素 */
+button, 
+a, 
+input, 
+textarea, 
+div[onclick], 
+.range-slider {
+  /* 1. 移除移动端点击时的蓝色高亮遮罩 */
+  // -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+
+  /* 2. 移除点击/聚焦后的蓝色外边框 */
+  outline: none;
+}
+
+/* 如果只想在鼠标点击时隐藏，但在键盘操作时保留（推荐的做法） */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* 页面基础布局 */
 .page {
   height: auto;
   background: var(--bg-body);
-  padding: var(--spacing-lg) 0;
+  padding: var(--spacing-lg);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   width: 100%;
@@ -34,7 +54,7 @@
 .container {
   // max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--spacing-lg);
+  // padding: 0 var(--spacing-md);
 }
 
 /* 卡片样式 */
@@ -110,14 +130,17 @@
 /* 文字颜色工具类 */
 .text-primary {
   color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .text-secondary {
   color: var(--text-secondary);
+  transition: all 0.3s ease;
 }
 
 .text-tertiary {
   color: var(--text-tertiary);
+  transition: all 0.3s ease;
 }
 
 /* 按钮组件 */
@@ -297,13 +320,13 @@
 }
 
 .status-pending {
-  color: var(--color-warning);
+  color: var(--text-secondary);
 }
 
 .status-badge {
   position: absolute;
   bottom: -4px;
-  right: -4px;
+  right: -4px; 
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -398,12 +421,6 @@
     right: var(--spacing-md);
     left: var(--spacing-md);
     max-width: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .page {
-    padding: var(--spacing-md) 0;
   }
 }
 

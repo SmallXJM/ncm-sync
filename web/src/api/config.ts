@@ -42,6 +42,9 @@ export const NCM_API = {
     GET: '/ncm/config',
     UPDATE: '/ncm/config',
   },
+  DASHBOARD: {
+    AGGREGATE: '/ncm/dashboard/aggregate',
+  },
   DOWNLOAD: {
     CREATE_JOB: '/ncm/download/job/create',
     GET_JOB_LIST: '/ncm/download/job',
@@ -49,6 +52,6 @@ export const NCM_API = {
     DELETE_JOB: '/ncm/download/job/delete',
     TASK_LIST: '/ncm/download/task/list',
     TASK_RESET: '/ncm/download/task/reset',
+    DAEMON_CONTROL: '/ncm/download/daemon/control',
   },
 } as const
-

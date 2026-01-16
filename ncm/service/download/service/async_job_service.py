@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Optional
 from ncm.infrastructure.db.async_session import get_uow_factory
 from ncm.infrastructure.db.models import DownloadJob
 from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
 from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDownloadJobRepository
 from ncm.infrastructure.db.models.download_task import TaskProgress
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 class AsyncJobService:
     def __init__(self, db_url: Optional[str] = None):
@@ -17,9 +17,9 @@ class AsyncJobService:
     async def update_job_status(self, job_id: int, status: str):
         async with self.uow_factory() as uow:
             if status == "scanning":
-                await self.job_repo.update(uow.session, job_id, status=status, started_at=datetime.utcnow())
+                await self.job_repo.update(uow.session, job_id, status=status, started_at=UTC_CLOCK.now())
             if status in ["downloading", "failed"]:
-                await self.job_repo.update(uow.session, job_id, status=status, updated_at=datetime.utcnow())
+                await self.job_repo.update(uow.session, job_id, status=status, updated_at=UTC_CLOCK.now())
             else:
                 await self.job_repo.update(uow.session, job_id, status=status)
 

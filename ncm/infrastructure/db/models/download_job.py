@@ -3,6 +3,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, UniqueConstraint
 from ncm.infrastructure.db.engine import Base
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 
 class DownloadJob(Base):
@@ -45,8 +46,8 @@ class DownloadJob(Base):
     enabled = Column(Boolean, default=True, index=True)
     
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: UTC_CLOCK.now())
+    updated_at = Column(DateTime, default=lambda: UTC_CLOCK.now(), onupdate=lambda: UTC_CLOCK.now())
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
     

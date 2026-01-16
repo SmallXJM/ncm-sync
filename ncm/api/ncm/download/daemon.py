@@ -15,7 +15,6 @@ class DownloadControllerDaemon:
         self._scheduler = context.scheduler
         self.process = context.process
 
-    @ncm_service("/ncm/download/daemon/control", ["POST"])
     async def daemon_control(self, action: str, **kwargs) -> APIResponse:
         """
         Unified control endpoint.

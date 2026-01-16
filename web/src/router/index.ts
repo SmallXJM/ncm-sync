@@ -1,15 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-const HomeView = () => import('../views/HomeView.vue')
+// const DashboardView = () => import('../views/Dashboard.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'dashboard',
+      component: () => import('../views/Dashboard.vue'),
       meta: {
-        title: '首页',
+        title: '仪表盘',
       },
     },
     {

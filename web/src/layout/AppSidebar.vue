@@ -3,14 +3,15 @@
         :class="{ 'sidebar--narrow': isNarrow && !isMobile, 'sidebar--open': isMobileOpen }" role="navigation"
         :aria-hidden="isMobile && !isMobileOpen" :aria-modal="isMobile ? 'true' : 'false'" tabindex="-1">
         <div class="sidebar__brand">
-            <router-link to="/" class="brand-link" :title="isNarrow ? 'ncm-sync' : ''">
+            <router-link to="/" class="brand-link" :title="isNarrow ? 'ncm-sync' : ''" @click="handleMenuItemClick">
                 <span class="brand-icon">🎵</span>
                 <span class="brand-text">ncm-sync</span>
             </router-link>
         </div>
 
         <nav class="sidebar__menu">
-            <router-link v-for="item in menus" :key="item.path" :to="item.path" class="menu-item" :title="item.title">
+            <router-link v-for="item in menus" :key="item.path" :to="item.path" class="menu-item" :title="item.title"
+                @click="handleMenuItemClick">
                 <component :is="item.icon" class="menu-icon" />
                 <span class="menu-text">{{ item.title }}</span>
             </router-link>
@@ -57,7 +58,7 @@
             </button>
 
             <div class="sidebar__setting">
-                <router-link to="/config" class="menu-item" title="设置">
+                <router-link to="/config" class="menu-item" title="设置" @click="handleMenuItemClick">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                         <g fill="none" fill-rule="evenodd">
                             <path
@@ -78,6 +79,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
+import { updateThemeColor } from "@/utils/theme"
 
 const { isNarrow, isMobileOpen } = useSidebar()
 
@@ -101,6 +103,12 @@ function closeMobileSidebar() {
     isMobileOpen.value = false
 }
 
+function handleMenuItemClick() {
+    if (isMobile.value) {
+        isMobileOpen.value = false
+    }
+}
+
 onMounted(() => {
     mq.addEventListener('change', handleMqChange)
     window.addEventListener('keydown', handleKeydown)
@@ -112,20 +120,29 @@ onUnmounted(() => {
 })
 
 // 定义图标组件
-const HomeIcon = h('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    width: '20',
-    height: '20',
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': '2',
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round'
-}, [
-    h('path', { d: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' }),
-    h('polyline', { points: '9 22 9 12 15 12 15 22' })
-])
+const DashboardIcon = h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: 20,
+        height: 20,
+        viewBox: '0 0 24 24',
+    },
+    [
+        h(
+            'g',
+            { fill: 'currentColor' },
+            [
+                h('path', {
+                    d: 'M9.883 2.207a1.9 1.9 0 0 1 2.087 1.522l.025.167L12 4v7a1 1 0 0 0 .883.993L13 12h6.8a2 2 0 0 1 2 2a1 1 0 0 1-.026.226A10 10 0 1 1 9.504 2.293l.27-.067z',
+                }),
+                h('path', {
+                    d: 'M14 3.5V9a1 1 0 0 0 1 1h5.5a1 1 0 0 0 .943-1.332a10 10 0 0 0-6.11-6.111A1 1 0 0 0 14 3.5',
+                }),
+            ]
+        ),
+    ]
+)
 
 const UserIcon = h('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
@@ -251,7 +268,7 @@ interface MenuItem {
 }
 
 const menus: MenuItem[] = [
-    { title: '首页', path: '/', icon: HomeIcon },
+    { title: '仪表盘', path: '/', icon: DashboardIcon },
     { title: '登录态', path: '/account', icon: UserIcon },
     { title: '音乐', path: '/music', icon: FileMusicIcon },
     { title: '订阅', path: '/subscription', icon: BellIcon },
@@ -309,16 +326,24 @@ const colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
 // 4. 核心渲染函数：根据计算结果修改 HTML 类名
 const applyTheme = () => {
     const html = document.documentElement;
+    let targetIsDark: boolean;
 
     if (themeMode.value === 'system') {
+        // 1. 移除显式类名，让 CSS 的 @media (prefers-color-scheme) 生效
         html.classList.remove('dark', 'light');
-    } else if (themeMode.value === 'dark') {
-        html.classList.add('dark');
-        html.classList.remove('light');
+        // 2. 判定系统当前真实状态
+        targetIsDark = colorSchemeMq.matches;
     } else {
-        html.classList.add('light');
-        html.classList.remove('dark');
+        targetIsDark = themeMode.value === 'dark';
+        // 3. 显式添加类名
+        html.classList.toggle('dark', targetIsDark);
+        html.classList.toggle('light', !targetIsDark);
     }
+
+    // 4. 同步更新 iOS 状态栏颜色
+    // 这里的颜色值应与你 CSS 变量 --bg-base 的值保持绝对一致
+    const color = targetIsDark ? '#05070c' : '#f3f4f6';
+    updateThemeColor(color);
 };
 
 // 5. 监听器回调：当浏览器/系统主题改变时自动执行
@@ -544,30 +569,37 @@ onUnmounted(() => {
     /* 彻底重置按钮默认样式 */
     width: 100%;
     background: transparent;
-    border: none;        /* 移除之前那个明显的边框 */
+    border: none;
+    /* 移除之前那个明显的边框 */
     cursor: pointer;
     margin: 0;
-    font-family: inherit; /* 防止字体不一致导致宽度微差 */
-    
+    font-family: inherit;
+    /* 防止字体不一致导致宽度微差 */
+
     /* 核心：强制对齐方式 */
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* 确保靠左对齐，与菜单项一致 */
-    
+    justify-content: flex-start;
+    /* 确保靠左对齐，与菜单项一致 */
+
     /* 间距修正 */
-    padding: $space-sm $space-md; /* 必须与 .menu-item 的 padding 完全一致 */
-    gap: $space-lg;              /* 必须与 .menu-item 的 gap 完全一致 */
+    padding: $space-sm $space-md;
+    /* 必须与 .menu-item 的 padding 完全一致 */
+    gap: $space-lg;
+    /* 必须与 .menu-item 的 gap 完全一致 */
 
     // 针对收起状态的修正
     .sidebar--narrow & {
-        padding-inline: calc(50% - 10px); /* 10px 是图标半径，确保图标居中 */
+        padding-inline: calc(50% - 10px);
+        /* 10px 是图标半径，确保图标居中 */
         gap: 0;
     }
 }
 
 /* 确保 menu-icon-wrapper 内部的 svg 大小一致 */
 /* 统一图标占位 */
-.menu-icon-wrapper, .menu-icon {
+.menu-icon-wrapper,
+.menu-icon {
     width: 20px;
     height: 20px;
     display: flex;

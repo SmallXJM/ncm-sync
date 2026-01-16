@@ -2,9 +2,9 @@
 
 import uuid
 from typing import List, Optional, Dict, Any
-from datetime import datetime
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
+from ncm.infrastructure.utils.time import UTC_CLOCK
 from ..models.account import Account
 from ..models.account_session import AccountSession
 
@@ -88,8 +88,8 @@ class AccountRepository:
             login_type=login_type,
             is_valid=True,
             fail_count=0,
-            last_selected_at=datetime.now(),  # Set as current immediately
-            last_success_at=datetime.now()
+            last_selected_at=UTC_CLOCK.now(),  # Set as current immediately
+            last_success_at=UTC_CLOCK.now()
         )
         
         session.add(account_session)
@@ -169,8 +169,7 @@ class AccountRepository:
         
         if not account_session:
             return False
-        
-        account_session.last_selected_at = datetime.now()
+        account_session.last_selected_at = UTC_CLOCK.now()
         return True
     
     def select_session(self, session: Session, session_id: str) -> bool:
@@ -181,8 +180,7 @@ class AccountRepository:
         
         if not account_session:
             return False
-        
-        account_session.last_selected_at = datetime.now()
+        account_session.last_selected_at = UTC_CLOCK.now()
         return True
     
     def mark_session_success(self, session: Session, session_id: str) -> bool:
@@ -191,8 +189,7 @@ class AccountRepository:
         
         if not account_session:
             return False
-        
-        account_session.last_success_at = datetime.now()
+        account_session.last_success_at = UTC_CLOCK.now()
         account_session.fail_count = 0
         return True
     

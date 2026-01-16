@@ -3,6 +3,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, ForeignKey
 from ncm.infrastructure.db.engine import Base
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 
 class DownloadTask(Base):
@@ -49,8 +50,8 @@ class DownloadTask(Base):
     error_message = Column(String)
     
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: UTC_CLOCK.now())
+    updated_at = Column(DateTime, default=lambda: UTC_CLOCK.now(), onupdate=lambda: UTC_CLOCK.now())
     started_at = Column(DateTime)  # Download start time
     completed_at = Column(DateTime)  # Completion time
     

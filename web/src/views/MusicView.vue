@@ -66,7 +66,8 @@
               <transition name="dropdown-fade">
                 <div v-if="isFilterOpen" class="filter-dropdown glass-card" role="menu">
                   <!-- 菜单项：状态 -->
-                  <div class="menu-item" @mouseenter="activeSubMenu = 'status'" @mouseleave="handleSubMenuLeave">
+                  <div class="menu-item" @click.stop="toggleSubMenu('status')" @mouseenter="activeSubMenu = 'status'"
+                    @mouseleave="handleSubMenuLeave">
                     <span class="menu-label">状态</span>
                     <span class="menu-arrow">
                       <svg width="12" height="12" viewBox="0 0 24 24">
@@ -89,7 +90,8 @@
                   </div>
 
                   <!-- 菜单项：订阅 -->
-                  <div class="menu-item" @mouseenter="activeSubMenu = 'job'" @mouseleave="handleSubMenuLeave">
+                  <div class="menu-item" @click.stop="toggleSubMenu('job')" @mouseenter="activeSubMenu = 'job'"
+                    @mouseleave="handleSubMenuLeave">
                     <span class="menu-label">订阅</span>
                     <span class="menu-arrow">
                       <svg width="12" height="12" viewBox="0 0 24 24">
@@ -167,7 +169,7 @@
                   <!-- <div class="status-overlay" :class="getStatusClass(task.status)">
                     <span>{{ getStatusText(task.status) }}</span>
                   </div> -->
-                  <div class="status-badge status-overlay" >
+                  <div class="status-badge status-overlay">
                     <div class="status-dot" :class="getStatusClass(task.status)"></div>
                     <span>{{ getStatusText(task.status) }}</span>
                   </div>
@@ -196,7 +198,7 @@
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                   </svg>
                   <span class="text-error text-sm text-truncate" style="max-width: 120px;">{{ task.error_message
-                    }}</span>
+                  }}</span>
                 </div>
                 <div v-else></div> <!-- Spacer -->
 
@@ -231,7 +233,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import type { DownloadJobItem, DownloadTaskItem } from '@/api/ncm/download'
@@ -394,10 +396,28 @@ const selectStatusFilter = (value: TaskStatusFilter) => {
 }
 
 const handleSubMenuLeave = () => {
-  if (activeSubMenu.value === 'job' && filterSearchInputRef.value && document.activeElement === filterSearchInputRef.value) {
-    return
+  // 桌面端鼠标离开关闭，移动端靠点击切换，不触发 leave 关闭
+  if (window.innerWidth <= 768) return;
+
+  if (activeSubMenu.value === 'job' &&
+    filterSearchInputRef.value &&
+    document.activeElement === filterSearchInputRef.value) {
+    return;
   }
-  activeSubMenu.value = 'none'
+  activeSubMenu.value = 'none';
+}
+
+// 菜单项点击逻辑
+const toggleSubMenu = (menu: 'status' | 'job') => {
+  if (activeSubMenu.value === menu) {
+  // 如果是 job 菜单且在桌面端，自动聚焦搜索框
+    if (menu === 'job' && window.innerWidth > 768) {
+      nextTick(() => filterSearchInputRef.value?.focus());
+      return;
+    }
+  } else {
+    activeSubMenu.value = menu;
+  }
 }
 
 const openFilterDropdown = async () => {
@@ -494,7 +514,7 @@ const formatSize = (bytes?: number) => {
 function getStatusClass(status: string): string {
   switch (status) {
     case 'completed': return 'status-online'
-    case 'failed': 
+    case 'failed':
     case 'cancelled': return 'status-offline'
     default: return 'status-pending'
   }
@@ -540,7 +560,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-  
 .main-content {
   flex: 1;
   min-width: 0;
@@ -712,9 +731,12 @@ onUnmounted(() => {
   color: var(--text-secondary);
   transition: color 0.3s ease;
 
-  white-space: nowrap;      /* 强制文本不换行 */
-  flex-shrink: 0;           /* 在 Flex 布局中禁止被压缩 */
-  display: inline-block;    /* 确保它作为一个整体块处理 */
+  white-space: nowrap;
+  /* 强制文本不换行 */
+  flex-shrink: 0;
+  /* 在 Flex 布局中禁止被压缩 */
+  display: inline-block;
+  /* 确保它作为一个整体块处理 */
 }
 
 .filter-value {

@@ -96,3 +96,9 @@ export const getTaskList = async (params: ListTasksParams): Promise<ApiResult<Ap
 export const resetTask = async (task_id: number): Promise<ApiResult<ApiEnvelope<unknown>>> => {
   return http.post<ApiEnvelope<unknown>>(DOWNLOAD.TASK_RESET, { task_id })
 }
+
+export const daemonControl = async (
+  action: 'start' | 'stop' | 'trigger_now',
+): Promise<ApiResult<ApiEnvelope<unknown>>> => {
+  return http.post<ApiEnvelope<unknown>>(DOWNLOAD.DAEMON_CONTROL, { action })
+}

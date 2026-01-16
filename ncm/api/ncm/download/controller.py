@@ -1,20 +1,18 @@
 """Music download controller with new task-driven architecture."""
 
-import asyncio
-from typing import Dict, Any, List, Optional
-from pathlib import Path
+from fastapi import WebSocket
 
 from ncm.api.ncm.download import DownloadContext
+from ncm.api.ncm.ws import DownloadWsContext, WsRouter
 from ncm.api.ncm.download.daemon import DownloadControllerDaemon
+from ncm.api.ncm.download.dashboard import DownloadControllerDashboard
 from ncm.api.ncm.download.job import DownloadControllerJob
 from ncm.api.ncm.download.system import DownloadControllerSystem
 from ncm.api.ncm.download.task import DownloadControllerTask
 from ncm.service.download.orchestrator import DownloadOrchestrator, DownloadProcess
-from ncm.infrastructure.db.models.download_task import DownloadTask, TaskProgress
-from ncm.infrastructure.db.models.download_job import DownloadJob
 from ncm.core.options import APIResponse
 from ncm.core.logging import get_logger
-from ncm.infrastructure.http import ncm_service
+from ncm.infrastructure.http import ncm_service, ncm_ws_service
 from ncm.infrastructure.config import get_config_manager
 
 logger = get_logger(__name__)
@@ -55,6 +53,7 @@ class DownloadController:
         self.tasks = DownloadControllerTask(context)
         self.daemon = DownloadControllerDaemon(context)
         self.system = DownloadControllerSystem(context)
+        self.dashboard = DownloadControllerDashboard(context)
 
         # 5. 初始设置 Cron
         if self._current_cron:
@@ -197,3 +196,17 @@ class DownloadController:
     @ncm_service("/ncm/download/daemon/control", ["POST"])
     async def daemon_control(self, **kwargs) -> APIResponse:
         return await self.daemon.daemon_control(**kwargs)
+
+    @ncm_service("/ncm/dashboard/aggregate", ["GET", "POST"])
+    async def dashboard_aggregate(self, **kwargs) -> APIResponse:
+        return await self.dashboard.aggregate(**kwargs)
+
+    @ncm_ws_service("/ws/ncm")
+    async def download_ws(self, websocket: WebSocket):
+        context = DownloadWsContext(
+            orchestrator=self.orchestrator,
+            process=self.process,
+            scheduler=self._scheduler,
+        )
+        router = WsRouter(context)
+        await router.handle(websocket)

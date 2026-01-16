@@ -32,6 +32,8 @@ class AudioDownloader:
         self.max_threads = max_threads
         self._download_semaphore = asyncio.Semaphore(max_concurrent)
         self.task_service = AsyncTaskService()
+        self._speed_samples = []
+        self._speed_window = 3.0
         
         # HTTP客户端配置
         self._client = httpx.AsyncClient(
@@ -169,6 +171,7 @@ class AudioDownloader:
                 with open(temp_path, 'wb') as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         f.write(chunk)
+                        self._record_speed_sample(len(chunk))
                 
                 logger.info(f"Simple download completed for task {task_id}")
                 return True
@@ -273,12 +276,50 @@ class AudioDownloader:
                 with open(segment['file_path'], 'wb') as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         f.write(chunk)
+                        self._record_speed_sample(len(chunk))
 
                 return True
                 
         except Exception as e:
             logger.exception(f"Segment download error: {str(e)}")
             return False
+    
+    def _record_speed_sample(self, byte_count: int) -> None:
+        """Record a download progress sample for speed calculation."""
+        try:
+            if byte_count <= 0:
+                return
+            now = time.monotonic()
+            cutoff = now - self._speed_window
+            self._speed_samples.append((now, int(byte_count)))
+            while self._speed_samples and self._speed_samples[0][0] < cutoff:
+                self._speed_samples.pop(0)
+        except Exception as e:
+            logger.warning(f"Failed to record speed sample: {e}")
+    
+    def get_current_speed(self) -> int:
+        """
+        获取当前下载速度（字节/秒）。
+        
+        Returns:
+            当前下载速度，单位为 byte/s。
+        """
+        try:
+            if not self._speed_samples:
+                return 0
+            now = time.monotonic()
+            cutoff = now - self._speed_window
+            samples = [(ts, size) for ts, size in self._speed_samples if ts >= cutoff]
+            if not samples:
+                self._speed_samples = []
+                return 0
+            total_bytes = sum(size for _, size in samples)
+            duration = max(now - samples[0][0], 0.001)
+            speed = int(total_bytes / duration)
+            return max(speed, 0)
+        except Exception as e:
+            logger.warning(f"Failed to calculate current speed: {e}")
+            return 0
     
     async def close(self):
         """关闭下载器并清理资源"""

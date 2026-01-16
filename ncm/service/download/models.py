@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 import asyncio
 from ncm.core.logging import get_logger
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 logger = get_logger(__name__)
 
@@ -94,7 +95,7 @@ class DownloadDataCache:
                 if not songs:
                     raise RuntimeError("song_detail invalid")
                 self.song_detail = songs[0]
-                self._detail_ts = datetime.utcnow()
+                self._detail_ts = UTC_CLOCK.now()
             return self.song_detail
 
     async def ensure_play_url(self, loader, level: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
@@ -114,7 +115,7 @@ class DownloadDataCache:
                 if not item.get("url") or item.get("code") != 200:
                     raise RuntimeError("play_url invalid")
                 self.play_url = item
-                self._url_ts = datetime.utcnow()
+                self._url_ts = UTC_CLOCK.now()
             return self.play_url
 
     def clear(self):

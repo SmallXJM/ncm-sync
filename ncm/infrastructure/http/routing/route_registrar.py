@@ -77,8 +77,11 @@ class RouteRegistrar:
         seen_instances = set()
 
         for modname, class_name, method_name, method, route_info in services:
-            # Create FastAPI route handler for ncm method
-            handler = create_service_handler(method)
+            route_type = route_info.get("type", "http")
+            if route_type == "http":
+                handler = create_service_handler(method)
+            else:
+                handler = method
             
             # Track bound instance if available
             inst = getattr(method, "__self__", None)
@@ -87,19 +90,25 @@ class RouteRegistrar:
                     self.app.state.service_instances.append(inst)
                     seen_instances.add(id(inst))
             
-            # Register route for each HTTP method
-            for http_method in route_info['methods']:
-                self.app.add_api_route(
-                    path=route_info['path'],
+            if route_type == "http":
+                for http_method in route_info["methods"]:
+                    self.app.add_api_route(
+                        path=route_info["path"],
+                        endpoint=handler,
+                        methods=[http_method.upper()],
+                        name=f"controller_{modname}_{method_name}_{http_method.lower()}",
+                        tags=[f"Controller - {class_name}"],
+                    )
+            elif route_type == "ws":
+                self.app.add_api_websocket_route(
+                    path=route_info["path"],
                     endpoint=handler,
-                    methods=[http_method.upper()],
-                    name=f"controller_{modname}_{method_name}_{http_method.lower()}",
-                    tags=[f"Controller - {class_name}"]
+                    name=f"ws_controller_{modname}_{method_name}",
                 )
             
             registered_count += 1
-            # methods_str = ", ".join(route_info['methods'])
-            # print(f"✓ Registered Controller: [{methods_str}] {route_info['path']} -> {class_name}.{method_name}")
+            methods_str = ", ".join(route_info['methods'])
+            print(f"✓ Registered Controller: [{methods_str}] {route_info['path']} -> {class_name}.{method_name}")
         
         if registered_count > 0:
             print(f"✅ Successfully registered {registered_count} ncm controllers")
