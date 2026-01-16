@@ -1,4 +1,5 @@
 import { ref, readonly, type Ref } from 'vue'
+import { toast } from '@/utils/toast'
 
 /**
  * WebSocket 连接状态
@@ -46,6 +47,16 @@ export interface WebSocketServiceState {
    * 当前重连次数
    */
   reconnectAttempts: Ref<number>
+
+  /**
+   * 面向用户的状态提示文案
+   */
+  userMessage: Ref<string | null>
+
+  /**
+   * 是否可以通过按钮手动发起重连
+   */
+  canManualReconnect: Ref<boolean>
 
   /**
    * 最近一次收到消息的时间戳（毫秒）
@@ -98,9 +109,9 @@ class WebSocketClientService {
    * 后端 WebSocket 路径
    *
    * 对应后端：
-   *   @ncm_ws_service("/ncm/download/ws")
+   *   @ncm_ws_service('/ws/ncm')
    */
-  private readonly endpointPath = '/ws/ncm/download'
+  private readonly endpointPath = '/ws/ncm'
 
   private socket: WebSocket | null = null
 
@@ -109,13 +120,26 @@ class WebSocketClientService {
   private reconnectAttemptsRef = ref(0)
   private lastMessageAtRef = ref<number | null>(null)
 
+  private userMessageRef = ref<string | null>(null)
+  private canManualReconnectRef = ref(false)
+
   private heartbeatTimer: number | null = null
   private reconnectTimer: number | null = null
   private manualClose = false
 
-  private readonly maxReconnectAttempts = 3
-  private readonly reconnectDelayMs = 5000
+  private readonly maxReconnectAttempts = 10
   private readonly heartbeatIntervalMs = 30000
+
+  /**
+   * 不可恢复的关闭代码（需要用户干预，例如鉴权失败）
+   */
+  private readonly unrecoverableCloseCodes = new Set<number>([4001, 1008])
+
+  constructor() {
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('online', this.handleOnline)
+    }
+  }
 
   /**
    * 当前已生效的订阅集合（去重后结果）
@@ -145,6 +169,8 @@ class WebSocketClientService {
     lastError: this.lastErrorRef,
     reconnectAttempts: this.reconnectAttemptsRef,
     lastMessageAt: this.lastMessageAtRef,
+    userMessage: this.userMessageRef,
+    canManualReconnect: this.canManualReconnectRef,
     data: {
       tasks: ref<unknown | null>(null),
       sysInfo: ref<unknown | null>(null),
@@ -162,6 +188,8 @@ class WebSocketClientService {
       lastError: readonly(this.lastErrorRef),
       reconnectAttempts: readonly(this.reconnectAttemptsRef),
       lastMessageAt: readonly(this.lastMessageAtRef),
+      userMessage: readonly(this.userMessageRef),
+      canManualReconnect: readonly(this.canManualReconnectRef),
       data: {
         tasks: readonly(this.state.data.tasks),
         sysInfo: readonly(this.state.data.sysInfo),
@@ -232,17 +260,21 @@ class WebSocketClientService {
     }
 
     this.socket.onopen = () => {
+      const wasReconnecting = this.reconnectAttemptsRef.value > 0
+
       this.connectionStateRef.value = 'open'
       this.reconnectAttemptsRef.value = 0
       this.lastErrorRef.value = null
+      this.userMessageRef.value = null
+      this.canManualReconnectRef.value = false
 
       this.flushPendingMessages()
 
-      // if (this.activeSubscriptions.size > 0) {
-      //   for (const ch of this.activeSubscriptions) {
-      //     this.send({ subscribe: ch })
-      //   }
-      // }
+      if (wasReconnecting && this.activeSubscriptions.size > 0) {
+        this.activeSubscriptions.forEach((ch) => {
+          this.send({ subscribe: ch })
+        })
+      }
 
       this.startHeartbeat()
     }
@@ -256,12 +288,27 @@ class WebSocketClientService {
       this.notifyError(new Error('WebSocket error'))
     }
 
-    this.socket.onclose = () => {
+    this.socket.onclose = (event) => {
       this.stopHeartbeat()
       this.connectionStateRef.value = 'closed'
-      if (!this.manualClose) {
-        this.scheduleReconnect()
+
+      if (this.manualClose) {
+        this.reconnectAttemptsRef.value = 0
+        this.canManualReconnectRef.value = false
+        return
       }
+
+      const code = (event && (event as CloseEvent).code) || 1005
+      if (this.unrecoverableCloseCodes.has(code)) {
+        this.connectionStateRef.value = 'error'
+        // this.userMessageRef.value = '连接鉴权失败，请检查登录状态'
+        this.canManualReconnectRef.value = true
+        toast.error('连接鉴权失败，请检查登录状态')
+        return
+      }
+
+      // this.userMessageRef.value = '连接断开，正在尝试重连...'
+      this.scheduleReconnect()
     }
   }
 
@@ -328,18 +375,74 @@ class WebSocketClientService {
    */
   private scheduleReconnect() {
     if (typeof window === 'undefined') return
+    if (this.manualClose) return
     if (this.reconnectAttemptsRef.value >= this.maxReconnectAttempts) {
+      this.userMessageRef.value = '连接已断开'
+      this.canManualReconnectRef.value = true
+      // toast.error('连接重连失败，请重试')
       return
     }
     if (this.reconnectTimer != null) {
       return
     }
 
-    this.reconnectAttemptsRef.value += 1
+    // this.userMessageRef.value = '连接失败'
+
+    const nextAttempt = this.reconnectAttemptsRef.value + 1
+    this.reconnectAttemptsRef.value = nextAttempt
+    const delay = this.getReconnectDelayMs(nextAttempt)
+
     this.reconnectTimer = window.setTimeout(() => {
+      // this.userMessageRef.value = `尝试重连中`
       this.reconnectTimer = null
       this.connect()
-    }, this.reconnectDelayMs)
+    }, delay)
+  }
+
+  /**
+   * 根据不同阶段返回重连间隔
+   */
+  private getReconnectDelayMs(attempt: number): number {
+    if (attempt <= 3) return 2000
+    if (attempt <= 6) return 5000
+    return 15000
+  }
+
+  /**
+   * 网络恢复时尝试重连
+   */
+  private handleOnline = () => {
+    if (typeof window === 'undefined') return
+    if (this.manualClose) return
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      return
+    }
+    if (this.connectionStateRef.value === 'open' || this.connectionStateRef.value === 'connecting') {
+      return
+    }
+
+    this.reconnectAttemptsRef.value = 0
+    this.userMessageRef.value = null
+    this.canManualReconnectRef.value = false
+
+    this.connect()
+  }
+
+  /**
+   * 用户手动触发重连
+   */
+  retryConnect(): void {
+    if (typeof window === 'undefined') return
+    this.manualClose = false
+    this.reconnectAttemptsRef.value = 0
+    this.userMessageRef.value = '尝试重连中'
+    this.canManualReconnectRef.value = false
+
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      return
+    }
+
+    this.connect()
   }
 
   /**

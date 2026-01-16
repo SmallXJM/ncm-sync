@@ -201,7 +201,7 @@ class DownloadController:
     async def dashboard_aggregate(self, **kwargs) -> APIResponse:
         return await self.dashboard.aggregate(**kwargs)
 
-    @ncm_ws_service("/ws/ncm/download")
+    @ncm_ws_service("/ws/ncm")
     async def download_ws(self, websocket: WebSocket):
         context = DownloadWsContext(
             orchestrator=self.orchestrator,

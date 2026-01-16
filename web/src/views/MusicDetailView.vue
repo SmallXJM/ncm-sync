@@ -297,13 +297,6 @@ const isInitial = ref(true) // 新增：标记是否为页面初始化状态
 const currentTime = ref(0)
 const duration = ref(0)
 
-/**
- * Android MediaSession 节流时间戳
- * 必须是普通变量，不能是 ref
- */
-let lastMediaUpdate = 0
-
-
 // 播放/暂停切换
 const togglePlay = () => {
   if (!audioRef.value) return

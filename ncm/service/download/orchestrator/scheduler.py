@@ -2,12 +2,14 @@ import asyncio
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from datetime import timezone
+from ncm.infrastructure.utils.time import TIMEZONE_SYSTEM
 
 
 class ProcessScheduler:
     def __init__(self, process):
         self.process = process
-        self._scheduler = AsyncIOScheduler()
+        self._scheduler = AsyncIOScheduler(timezone=TIMEZONE_SYSTEM.get())  # 确保使用系统时区
         self._lock = asyncio.Lock()
         self._job = None
         self._cron_expr: Optional[str] = None
@@ -37,11 +39,20 @@ class ProcessScheduler:
         parts = cron_expr.split()
         try:
             if len(parts) == 5:
-                trigger = CronTrigger.from_crontab(cron_expr)  # 五字段标准 crontab
+                trigger = CronTrigger.from_crontab(
+                    cron_expr, timezone=TIMEZONE_SYSTEM.get()
+                )  # 五字段标准 crontab
             else:
                 # 六字段秒级 cron
-                trigger = CronTrigger(second=parts[0], minute=parts[1], hour=parts[2],
-                                      day=parts[3], month=parts[4], day_of_week=parts[5])
+                trigger = CronTrigger(
+                    second=parts[0],
+                    minute=parts[1],
+                    hour=parts[2],
+                    day=parts[3],
+                    month=parts[4],
+                    day_of_week=parts[5],
+                    timezone=TIMEZONE_SYSTEM.get(),  # 使用系统时区
+                )
         except Exception as e:
             raise ValueError(f"cron_expr 无效: {e}")
         self._job = self._scheduler.add_job(
@@ -81,7 +92,7 @@ class ProcessScheduler:
     def get_stats(self) -> dict:
         return {
             "is_running": self._scheduler.running,
-            "next_run_time": self.next_run_time()
+            "next_run_time": self.next_run_time(),
         }
 
     def set_batch_size(self, batch_size: int):
@@ -92,7 +103,7 @@ class ProcessScheduler:
         return {
             "cron_expr": self._cron_expr,
             "batch_size": self._batch_size,
-            "next_run_time": self.next_run_time()
+            "next_run_time": self.next_run_time(),
         }
 
     async def cleanup(self):

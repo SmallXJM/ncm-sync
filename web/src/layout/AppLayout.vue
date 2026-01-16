@@ -16,11 +16,17 @@
 
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import { useSidebar } from '@/composables/useSidebar'
+import { wsClient } from '@/stores/wsClient'
 
 const { isNarrow } = useSidebar()
+
+onMounted(() => {
+    wsClient.connect()
+})
 </script>
 
 <style lang="scss" scoped>

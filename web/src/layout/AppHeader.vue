@@ -19,8 +19,8 @@
                             </button>
                             <span v-else class="breadcrumb-item breadcrumb-current">{{ item.title }}</span>
                             <span v-if="idx < breadcrumbs.length - 1" class="breadcrumb-sep">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="9 18 15 12 9 6"></polyline>
                                 </svg>
                             </span>
@@ -30,20 +30,28 @@
             </div>
 
             <div class="app-header__right">
-                <!-- <slot name="right">
-                    <button class="header-btn">设置</button>
-                    <button class="header-btn">退出</button>
-                </slot> -->
+                <Transition name="header-status" mode="out-in">
+                    <div v-if="showStatusBadge" :key="statusText" class="status-badge connection-status-badge"
+                        :class="{ 'status-action': canManualReconnect }" @click="handleBadgeClick">
+                        <span class="status-dot" :class="{
+                            'status-offline': isWsDisconnected && !canManualReconnect,
+                            'status-warning': canManualReconnect,
+                            'status-online': !isWsDisconnected
+                        }"></span>
+                        <span class="status-text">{{ statusText }}</span>
+                    </div>
+                </Transition>
             </div>
         </div>
     </header>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { useSidebar } from '@/composables/useSidebar'
 import { getStoredMusicQuery } from '@/composables/useMusicQuery'
+import { wsClient } from '@/stores/wsClient'
 
 const route = useRoute()
 const router = useRouter()
@@ -111,6 +119,45 @@ const toggleSidebar = () => {
         isNarrow.value = !isNarrow.value
     }
 }
+
+const { connectionState, userMessage, canManualReconnect } = wsClient.reactiveState
+
+const isWsDisconnected = computed(() => connectionState.value !== 'open')
+const showStatusBadge = ref(isWsDisconnected.value);
+
+const statusText = computed(() => {
+    if (userMessage.value) {
+        return userMessage.value
+    }
+    return isWsDisconnected.value ? '连接已断开' : '已连接'
+})
+
+const handleBadgeClick = () => {
+    if (canManualReconnect.value) {
+        wsClient.retryConnect()
+    }
+}
+
+// 新增：专门控制 UI 显示的变量
+// 1. 显式定义 timer 的类型
+// ReturnType<typeof setTimeout> 会自动根据当前环境获取正确的定时器类型
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+watch(isWsDisconnected, (newVal) => {
+    if (newVal) {
+        if (timer) clearTimeout(timer);
+        showStatusBadge.value = true;
+    } else {
+        showStatusBadge.value = true;
+
+        if (timer) clearTimeout(timer);
+
+        // 2. 这里的赋值现在是类型安全的
+        timer = setTimeout(() => {
+            showStatusBadge.value = false;
+        }, 1000);
+    }
+}, { immediate: true });
 </script>
 
 
@@ -119,34 +166,35 @@ const toggleSidebar = () => {
 
 .app-header {
     /* 1. 核心修复：增加顶部安全区域内边距 */
-    padding-top: env(safe-area-inset-top); 
-    
+    padding-top: env(safe-area-inset-top);
+
     /* 2. 修改高度计算：原本高度 + 安全区高度 */
     /* 不要写死 height: 50px，改用 min-height 或 content-box */
-    height: calc(50px + env(safe-area-inset-top)); 
-    
+    height: calc(50px + env(safe-area-inset-top));
+
     position: sticky; // 建议用 sticky 或保持 relative，取决于父容器
     top: 0;
     z-index: 100;
-    
+
     background: var(--bg-base);
     backdrop-filter: blur(20px);
-    
+
     /* 3. 防止点击时出现系统默认的灰色高亮方块 */
-    -webkit-tap-highlight-color: transparent; 
+    -webkit-tap-highlight-color: transparent;
 
     transition: background-color 0.3s ease, border-color 0.3s ease;
-    
+
 }
 
 .app-header__inner {
     /* 保持内容在 50px 的正中间，不受安全区 padding 影响 */
-    height: 50px; 
+    height: 50px;
     padding: 0 $space-md;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
+
 .app-header__title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -169,16 +217,21 @@ const toggleSidebar = () => {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 40dvw;
-    
+
     /* 核心对齐属性 */
     display: inline-flex;
     align-items: center;
-    height: 32px;            /* 固定高度确保基准线一致 */
-    padding: 0 8px;          /* 左右间距保持一致 */
-    line-height: 1;          /* 消除行高带来的动态边距 */
-    border: 1px solid transparent; /* 关键：current 也要有透明边框占用空间 */
+    height: 32px;
+    /* 固定高度确保基准线一致 */
+    padding: 0 8px;
+    /* 左右间距保持一致 */
+    line-height: 1;
+    /* 消除行高带来的动态边距 */
+    border: 1px solid transparent;
+    /* 关键：current 也要有透明边框占用空间 */
     background: transparent;
-    box-sizing: border-box;  /* 确保边框不撑大盒子 */
+    box-sizing: border-box;
+    /* 确保边框不撑大盒子 */
 }
 
 .breadcrumb-link {
@@ -208,13 +261,19 @@ const toggleSidebar = () => {
     color: var(--text-tertiary);
     user-select: none;
     /* 确保分隔符也居中 */
-    height: 32px; 
+    height: 32px;
 }
 
 .app-header__left {
     display: flex;
     align-items: center;
     gap: 12px; // 控制 sidebar-toggle 和 title 的间距
+}
+
+.app-header__right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 }
 
 .header-btn {
@@ -254,9 +313,59 @@ const toggleSidebar = () => {
         border-color: var(--text-secondary);
     }
 
-&:active {
+    &:active {
         background: var(--bg-surface-active); // 增加按下时的视觉反馈
         transform: scale(0.92);
     }
+}
+
+.connection-status-badge {
+    position: sticky;
+    bottom: 0px;
+    right: 0px;
+    font-size: auto;
+    font-weight: auto;
+    margin-left: $space-md;
+}
+
+.status-action {
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background-color: var(--bg-surface-hover);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.status-warning {
+    background-color: #faad14;
+    box-shadow: 0 0 0 2px rgba(250, 173, 20, 0.2);
+}
+
+.status-text {
+    white-space: nowrap;
+}
+
+/* 1. 定义过渡的时间和曲线，只针对 opacity */
+.header-status-enter-active,
+.header-status-leave-active {
+    transition: opacity 0.25s ease;
+}
+
+/* 2. 定义隐藏状态：透明度为 0 */
+.header-status-enter-from,
+.header-status-leave-to {
+    opacity: 0;
+}
+
+/* 3. 定义显示状态：透明度为 1 */
+.header-status-enter-to,
+.header-status-leave-from {
+    opacity: 1;
 }
 </style>

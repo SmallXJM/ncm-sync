@@ -3,14 +3,15 @@
         :class="{ 'sidebar--narrow': isNarrow && !isMobile, 'sidebar--open': isMobileOpen }" role="navigation"
         :aria-hidden="isMobile && !isMobileOpen" :aria-modal="isMobile ? 'true' : 'false'" tabindex="-1">
         <div class="sidebar__brand">
-            <router-link to="/" class="brand-link" :title="isNarrow ? 'ncm-sync' : ''">
+            <router-link to="/" class="brand-link" :title="isNarrow ? 'ncm-sync' : ''" @click="handleMenuItemClick">
                 <span class="brand-icon">🎵</span>
                 <span class="brand-text">ncm-sync</span>
             </router-link>
         </div>
 
         <nav class="sidebar__menu">
-            <router-link v-for="item in menus" :key="item.path" :to="item.path" class="menu-item" :title="item.title">
+            <router-link v-for="item in menus" :key="item.path" :to="item.path" class="menu-item" :title="item.title"
+                @click="handleMenuItemClick">
                 <component :is="item.icon" class="menu-icon" />
                 <span class="menu-text">{{ item.title }}</span>
             </router-link>
@@ -57,7 +58,7 @@
             </button>
 
             <div class="sidebar__setting">
-                <router-link to="/config" class="menu-item" title="设置">
+                <router-link to="/config" class="menu-item" title="设置" @click="handleMenuItemClick">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                         <g fill="none" fill-rule="evenodd">
                             <path
@@ -102,6 +103,12 @@ function closeMobileSidebar() {
     isMobileOpen.value = false
 }
 
+function handleMenuItemClick() {
+    if (isMobile.value) {
+        isMobileOpen.value = false
+    }
+}
+
 onMounted(() => {
     mq.addEventListener('change', handleMqChange)
     window.addEventListener('keydown', handleKeydown)
@@ -113,20 +120,29 @@ onUnmounted(() => {
 })
 
 // 定义图标组件
-const HomeIcon = h('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    width: '20',
-    height: '20',
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': '2',
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round'
-}, [
-    h('path', { d: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' }),
-    h('polyline', { points: '9 22 9 12 15 12 15 22' })
-])
+const DashboardIcon = h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: 20,
+        height: 20,
+        viewBox: '0 0 24 24',
+    },
+    [
+        h(
+            'g',
+            { fill: 'currentColor' },
+            [
+                h('path', {
+                    d: 'M9.883 2.207a1.9 1.9 0 0 1 2.087 1.522l.025.167L12 4v7a1 1 0 0 0 .883.993L13 12h6.8a2 2 0 0 1 2 2a1 1 0 0 1-.026.226A10 10 0 1 1 9.504 2.293l.27-.067z',
+                }),
+                h('path', {
+                    d: 'M14 3.5V9a1 1 0 0 0 1 1h5.5a1 1 0 0 0 .943-1.332a10 10 0 0 0-6.11-6.111A1 1 0 0 0 14 3.5',
+                }),
+            ]
+        ),
+    ]
+)
 
 const UserIcon = h('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
@@ -252,7 +268,7 @@ interface MenuItem {
 }
 
 const menus: MenuItem[] = [
-    { title: '仪表盘', path: '/', icon: HomeIcon },
+    { title: '仪表盘', path: '/', icon: DashboardIcon },
     { title: '登录态', path: '/account', icon: UserIcon },
     { title: '音乐', path: '/music', icon: FileMusicIcon },
     { title: '订阅', path: '/subscription', icon: BellIcon },

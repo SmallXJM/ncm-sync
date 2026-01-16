@@ -43,7 +43,7 @@
             <div class="action-area">
               <button class="btn btn-primary w-full" :disabled="isRunning || isStarting" @click="handleRunNow">
                 <span v-if="isStarting" class="loading-spinner"></span>
-                <span>{{ isRunning ? '任务进行中' : '立即执行一次' }}</span>
+                <span>{{ isRunning ? '下载进行中' : '立即运行一次' }}</span>
               </button>
             </div>
           </div>
