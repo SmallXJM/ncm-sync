@@ -15,6 +15,7 @@ from ncm.infrastructure.db import AccountRepository
 from ncm.infrastructure.db.session import get_session
 from ncm.infrastructure.db.async_session import get_uow_factory
 from ncm.infrastructure.db.repositories.async_account_repo import AsyncAccountRepository
+from ncm.infrastructure.utils.time import UTC_CLOCK
 from ncm.service.cookie.models import SessionInfo
 
 logger = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ class CookieManager:
 
     def _set_current_session(self, session_info: SessionInfo, *, update_selected_time: bool):
         self._current_session = session_info
-        self._last_check_time = datetime.now()
+        self._last_check_time = UTC_CLOCK.now()
 
         if update_selected_time:
             with get_session() as db_session:

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime
 from sqlalchemy import select, desc, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from ncm.infrastructure.db.models.account import Account
 from ncm.infrastructure.db.models.account_session import AccountSession
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 
 class AsyncAccountRepository:
@@ -26,7 +26,7 @@ class AsyncAccountRepository:
         account_session = result.scalar_one_or_none()
         if not account_session:
             return False
-        account_session.last_selected_at = datetime.now()
+        account_session.last_selected_at = UTC_CLOCK.now()
         await session.flush()
         await session.refresh(account_session)
         return True
@@ -36,7 +36,7 @@ class AsyncAccountRepository:
         account_session = result.scalar_one_or_none()
         if not account_session:
             return False
-        account_session.last_success_at = datetime.now()
+        account_session.last_success_at = UTC_CLOCK.now()
         account_session.fail_count = 0
         await session.flush()
         await session.refresh(account_session)

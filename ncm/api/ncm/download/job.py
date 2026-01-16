@@ -12,7 +12,7 @@ from ncm.core.options import APIResponse
 from ncm.core.logging import get_logger
 from ncm.infrastructure.http import ncm_service
 from ncm.infrastructure.config import get_config_manager
-from datetime import datetime
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 logger = get_logger(__name__)
 
@@ -157,7 +157,7 @@ class DownloadControllerJob:
         try:
             job_id = int(job_id)
 
-            update_fields: Dict[str, Any] = {"updated_at": datetime.utcnow()}
+            update_fields: Dict[str, Any] = {"updated_at": UTC_CLOCK.now()}
             if job_name is not None:
                 update_fields["job_name"] = job_name
             if storage_path is not None:

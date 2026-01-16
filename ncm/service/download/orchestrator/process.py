@@ -13,7 +13,6 @@ import asyncio
 import json
 import os
 import shutil
-from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
 from ncm.api.ncm.music.playlist import PlaylistController
@@ -27,6 +26,7 @@ from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDow
 from ncm.service.download.models import get_task_cache_registry
 from ncm.service.download.service import AsyncJobService
 from ncm.service.download.storage.manager import StorageManager
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 logger = get_logger(__name__)
 
@@ -101,7 +101,7 @@ class DownloadProcess:
         async with self._run_lock:
             self._status.update({
                 "running": True,
-                "started_at": datetime.utcnow().isoformat(),
+                "started_at": UTC_CLOCK.now().isoformat(),
                 "finished_at": None,
                 "processed_jobs": 0,
                 "submitted_tasks": 0,
@@ -116,7 +116,7 @@ class DownloadProcess:
             if not jobs:
                 self._status.update({
                     "running": False,
-                    "finished_at": datetime.utcnow().isoformat()
+                    "finished_at": UTC_CLOCK.now().isoformat()
                 })
                 return self.get_status()
             for job in jobs:
@@ -156,7 +156,7 @@ class DownloadProcess:
                     self._status["failed_jobs"] = int(self._status.get("failed_jobs", 0)) + 1
             self._status.update({
                 "running": False,
-                "finished_at": datetime.utcnow().isoformat(),
+                "finished_at": UTC_CLOCK.now().isoformat(),
                 "current_job_id": None,
                 "current_batch_index": 0,
             })

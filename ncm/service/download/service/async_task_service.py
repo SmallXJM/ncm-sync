@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
-# from turtle import st
 from typing import Optional
 from ncm.infrastructure.db.async_session import get_uow_factory
 from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
@@ -9,6 +7,7 @@ from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDown
 from ncm.infrastructure.db.models.download_task import TaskProgress
 from ncm.infrastructure.db.models.download_job import DownloadJob
 from ncm.infrastructure.db.models.download_task import DownloadTask
+from ncm.infrastructure.utils.time import UTC_CLOCK
 
 
 
@@ -39,7 +38,7 @@ class AsyncTaskService:
     async def update_job_status(self, job_id: int, status: str):
         async with self.uow_factory() as uow:
             if status == "scanning":
-                await self.job_repo.update(uow.session, job_id, status=status, started_at=datetime.utcnow())
+                await self.job_repo.update(uow.session, job_id, status=status, started_at=UTC_CLOCK.now())
             else:
                 await self.job_repo.update(uow.session, job_id, status=status)
 

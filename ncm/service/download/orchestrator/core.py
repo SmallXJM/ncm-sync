@@ -2,7 +2,6 @@
 
 import asyncio
 import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
 
@@ -13,6 +12,7 @@ from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDown
 from ncm.service.download.service import AsyncJobService
 from ncm.infrastructure.db.async_session import get_uow_factory
 from ncm.service.download.models import get_task_cache_registry
+from ncm.infrastructure.utils.time import UTC_CLOCK
 from ..downloader import AudioDownloader
 from ..metadata import MetadataProcessor
 from ..storage import StorageManager
@@ -489,7 +489,7 @@ class DownloadOrchestrator:
             async with self.uow_factory() as uow:
                 task = await self.task_repo.get_by_id(uow.session, task_id)
                 if task:
-                    await self.task_repo.update(uow.session, task_id, completed_at=datetime.utcnow())
+                    await self.task_repo.update(uow.session, task_id, completed_at=UTC_CLOCK.now())
 
             get_task_cache_registry().clear(task_id)
             self.task_manager.mark_completed(task_id)
@@ -516,7 +516,7 @@ class DownloadOrchestrator:
                 music_title=title,
                 music_artist=artist,
                 music_album=song_info.get("al", {}).get("name", "Unknown Album"),
-                started_at=datetime.utcnow()
+                started_at=UTC_CLOCK.now()
             )
 
         async with self.uow_factory() as uow:
