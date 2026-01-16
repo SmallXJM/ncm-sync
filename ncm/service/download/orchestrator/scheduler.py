@@ -102,8 +102,6 @@ class ProcessScheduler:
 
     def set_batch_size(self, batch_size: int):
         self._batch_size = int(batch_size)
-        logger.debug(f"设置批次大小为 {self._batch_size}")
-        
         return True
 
     def get_config(self) -> dict:

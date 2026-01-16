@@ -46,9 +46,6 @@ class DownloadController:
         self._scheduler = ProcessScheduler(self.process)
         
         # 5. 初始设置 Cron
-        logger.debug(f"设置批次大小为 {self._current_batch_size}")
-        logger.debug(f"设置 Cron 表达式为 {self._current_cron}")
-        
         self._scheduler.set_batch_size(self._current_batch_size)
         if self._current_cron:
             self._scheduler.set_cron(self._current_cron)
@@ -134,7 +131,7 @@ class DownloadController:
                     self._current_cron = new_cron
                     self._current_batch_size = new_batch_size
                     # 应用新配置
-                    self._scheduler.set_cron(new_cron, batch_size=new_batch_size)
+                    self._scheduler.set_cron(new_cron)
                     # 如果之前调度器是开启的，可能需要逻辑判断是否要重启/刷新
                 else:
                     # 如果新配置把 cron 删了，可能需要停止调度

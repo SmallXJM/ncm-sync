@@ -174,7 +174,7 @@ class AudioDownloader:
                         f.write(chunk)
                         self._record_speed_sample(len(chunk))
                 
-                # logger.debug(f"Simple download completed for task {task_id}")
+                logger.debug(f"Simple download completed for task {task_id}")
                 return True
                 
         except Exception as e:
@@ -210,7 +210,7 @@ class AudioDownloader:
                 })
                 start = end + 1
             
-            # logger.debug(f"Created {len(segments)} segments for task {task_id} in {cache_dir}")
+            logger.debug(f"Created {len(segments)} segments for task {task_id} in {cache_dir}")
             
             # 并发下载分段
             semaphore = asyncio.Semaphore(self.max_threads)
@@ -255,7 +255,7 @@ class AudioDownloader:
             except Exception as e:
                 logger.warning(f"Failed to cleanup cache for task {task_id}: {e}")
             
-            # logger.debug(f"Segmented download completed for task {task_id}")
+            logger.debug(f"Segmented download completed for task {task_id}")
             return True
             
         except Exception as e:

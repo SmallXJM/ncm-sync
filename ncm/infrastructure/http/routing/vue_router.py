@@ -39,7 +39,6 @@ def register_vue_routes(app: FastAPI):
     VUE_ASSETS = VUE_DIST / "assets"
     
     # Log paths for debugging
-    # logger.debug(f"📂 Project Root: {PROJECT_ROOT}")
     logger.debug(f"📂 Vue Dist Path: {VUE_DIST}")
 
     if VUE_DIST.exists():

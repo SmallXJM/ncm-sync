@@ -52,8 +52,8 @@ class RouteRegistrar:
                 )
             
             registered_count += 1
-            # methods_str = ", ".join(route_info['methods'])
-            # logger.debug(f"✓ Registered Module: [{methods_str}] {route_info['path']} -> {module_path}.{func_name}")
+            methods_str = ", ".join(route_info['methods'])
+            logger.debug(f"✓ Registered Module: [{methods_str}] {route_info['path']} -> {module_path}.{func_name}")
         
         if registered_count > 0:
             logger.info(f"✅ Successfully registered {registered_count} module endpoints")
