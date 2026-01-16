@@ -11,7 +11,7 @@ class DownloadJob(Base):
     __tablename__ = 'download_job'
     
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     
     # Job information
     job_name = Column(String, nullable=False)
@@ -50,6 +50,23 @@ class DownloadJob(Base):
     updated_at = Column(DateTime, default=lambda: UTC_CLOCK.now(), onupdate=lambda: UTC_CLOCK.now())
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
+    
+    @property
+    def get_source_type_name(self) -> str:
+        """Get source type name."""
+        if self.source_type == 'playlist':
+            return '歌单'
+        elif self.source_type == 'album':
+            return '专辑'
+        elif self.source_type == 'artist':
+            return '艺术家'
+        else:
+            return self.source_type.replace('_', ' ').title()
+        
+    @property
+    def get_job_name(self) -> str:
+        """Get job name."""
+        return f"{self.get_source_type_name}\"{self.job_name}\""
     
     def to_dict(self):
         """Convert model to dictionary."""

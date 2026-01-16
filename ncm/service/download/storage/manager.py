@@ -30,7 +30,7 @@ class StorageManager:
             最终化是否成功
         """
         try:
-            logger.info(f"Starting file finalization for task {task_id}")
+            logger.debug(f"Starting file finalization for task {task_id}")
 
             task = await self.task_service.get_task(task_id)
             if not task:
@@ -63,7 +63,7 @@ class StorageManager:
                 , file_path=str(final_path)
                 , file_name=final_path.name
             )
-            logger.info(f"File finalized successfully: {final_path}")
+            logger.debug(f"File finalized successfully: {final_path}")
             return True
 
         except Exception as e:

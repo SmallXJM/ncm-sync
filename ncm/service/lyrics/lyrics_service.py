@@ -141,13 +141,13 @@ def extract_lrc_content(lyrics_data: Dict[str, Any], song_metadata: Dict[str, An
         artist = song_metadata.get('artist', 'Unknown')
         album = song_metadata.get('album', 'Unknown Album')
 
-        logger.info(f"Extracting LRC content for: {title}")
+        logger.debug(f"Extracting LRC content for: {title}")
 
         # Extract main LRC lyrics only (no translation)
         lrc_data = lyrics_data.get("lrc", {})
         lrc_lyric = lrc_data.get("lyric", "")
 
-        logger.info(f"Raw LRC lyric length: {len(lrc_lyric) if lrc_lyric else 0}")
+        logger.debug(f"Raw LRC lyric length: {len(lrc_lyric) if lrc_lyric else 0}")
 
         if not lrc_lyric:
             logger.warning("No LRC lyrics found in response")
@@ -174,7 +174,7 @@ def extract_lrc_content(lyrics_data: Dict[str, Any], song_metadata: Dict[str, An
 
         # Process main lyrics only
         main_lyrics = _parse_lrc_lines(lrc_lyric)
-        logger.info(f"Parsed main lyrics: {len(main_lyrics)} lines")
+        logger.debug(f"Parsed main lyrics: {len(main_lyrics)} lines")
 
         # Add lyrics to content (sorted by timestamp)
         for timestamp, content in sorted(main_lyrics.items()):
@@ -182,7 +182,7 @@ def extract_lrc_content(lyrics_data: Dict[str, Any], song_metadata: Dict[str, An
                 lrc_lines.append(f"[{timestamp}]{content}")
 
         final_content = "\n".join(lrc_lines)
-        logger.info(f"Final LRC content length: {len(final_content)}")
+        logger.debug(f"Final LRC content length: {len(final_content)}")
 
         return final_content
 
@@ -218,7 +218,7 @@ class LyricsService:
             Lyrics data dictionary or None if failed
         """
         try:
-            logger.info(f"Fetching lyrics for music ID: {music_id}")
+            logger.debug(f"Fetching lyrics for music ID: {music_id}")
             response = await self.song_controller.song_lyric(id=music_id)
             
             if not response.success:
@@ -255,7 +255,7 @@ class LyricsService:
                 logger.warning(f"No valid LRC content for music ID: {music_id}")
                 return None
             
-            logger.info(f"Successfully formatted lyrics for music ID: {music_id}")
+            logger.debug(f"Successfully formatted lyrics for music ID: {music_id}")
             return lrc_content
             
         except Exception as e:

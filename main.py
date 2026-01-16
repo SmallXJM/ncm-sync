@@ -1,89 +1,89 @@
 #!/usr/bin/env python3
 """
 NCM Python API - Main Entry Point
-
-网易云音乐 Python API 主程序入口
 """
 
 import asyncio
-import logging
 import platform
 import sys
 import os
-from ncm.core.logging import setup_logging
+import logging
+from ncm.core.logging import setup_logging, get_logger
 
-setup_logging(logging.DEBUG)
+logger = get_logger(__name__)
+log_level = logging.INFO
+os.environ["NCM_LOG_LEVEL"] = str(log_level)  # 字符串形式
 
-# Add current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+def setup_environment():
+    """Prepare system environment."""
+    # Add current directory to Python path
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+    # Fix Windows event loop policy
+    if platform.system() == "Windows":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
+def ensure_config():
+    """Ensure default configuration exists."""
+    from ncm.infrastructure.config import get_config_manager
+
+    cfgm = get_config_manager()
+    cfgm.ensure_loaded_sync()
+    cfg_path = cfgm.path()
+    import os
+
+    if not os.path.exists(cfg_path):
+        ok = cfgm.save_sync()
+        if ok:
+            logger.info("已生成默认配置: %s", cfg_path)
+
+
+def init_database():
+    """Initialize database session and engine."""
+    from ncm.infrastructure.db.session import initialize_session_manager
+    initialize_session_manager()
+
+
+def close_database():
+    """Close database engine."""
+    from ncm.infrastructure.db.engine import close_engine
+    try:
+        close_engine()
+        logger.info("主进程资源已释放")
+    except Exception as e:
+        logger.error("主进程资源释放失败: %s", e)
 
 
 def start_server():
-    """Start the API http."""
+    """Start the API server via uvicorn."""
     import uvicorn
-    from ncm.infrastructure.http import create_app
-    # import os as _os
-    # import platform as _platform
-    # import asyncio as _asyncio
-    # if _platform.system() == "Windows":
-    #     _asyncio.set_event_loop_policy(_asyncio.WindowsSelectorEventLoopPolicy())
-    #     _os.environ.setdefault("UVICORN_RELOAD_ENGINE", "watchgod")
-    
-    print("启动 NCM API 服务器...")
-    print("API 文档: http://localhost:8000/docs")
-    print("健康检查: http://localhost:8000/health")
-    print("按 Ctrl+C 停止服务器\n")
-    
+
     uvicorn.run(
         "ncm.infrastructure.http.app:create_app",
         factory=True,
         host="0.0.0.0",
         port=8000,
-        reload=False,
+        reload=False,  # 开发环境可改 True
         use_colors=False,
         http="h11",
-        # reload_dirs=["ncm"],
-        # reload_excludes=["**/__pycache__/**", "**/*.pyc"],
-        # reload_delay=0.5,
-        log_level="debug"
+        log_config=None,
     )
-
 
 
 def main():
     """Main entry point."""
-    # Fix Windows event loop policy
-    if platform.system() == "Windows":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    
-    # Ensure default config exists
-    from ncm.infrastructure.config import get_config_manager
-    cfgm = get_config_manager()
-    cfgm.ensure_loaded_sync()
-    import os as _os
-    cfg_path = cfgm.path()
-    if not _os.path.exists(cfg_path):
-        ok = cfgm.save_sync()
-        if ok:
-            print(f"已生成默认配置: {cfg_path}")
-    
-    # Initialize database session manager
-    from ncm.infrastructure.db.session import initialize_session_manager
-    from ncm.infrastructure.db.engine import close_engine
-    
-    initialize_session_manager()
+    setup_environment()
+    setup_logging(log_level)
+    ensure_config()
+    init_database()
 
     try:
         start_server()
     except KeyboardInterrupt:
-        print("\n 程序已停止")
+        logger.info("程序已停止")
     finally:
-        # Ensure database resources are released in the main process
-        try:
-            close_engine()
-            print("主进程资源已释放")
-        except Exception as e:
-            print(f"主进程资源释放失败: {e}")
+        close_database()
 
 
 if __name__ == "__main__":

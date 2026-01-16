@@ -5,6 +5,8 @@ from pathlib import Path
 import asyncio
 import platform
 import threading
+import logging
+import os
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, Request
@@ -23,7 +25,7 @@ from .routing.local_music_router import register_local_music_routes
 from ncm.infrastructure.db.async_session import dispose_async_engine
 from ncm.infrastructure.db.engine import close_engine
 from ncm.core.session import close_session
-from ncm.core.logging import get_logger
+from ncm.core.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
@@ -121,13 +123,18 @@ async def lifespan(app: FastAPI):
         logger.info("Application shutdown complete.")
 
 
-def create_app() -> FastAPI:
+def create_app(log_level: int = None) -> FastAPI:
     """
     Create and configure FastAPI application.
     
     Returns:
         FastAPI: Configured FastAPI application instance
     """
+    # 从环境变量读取 log_level
+    log_level = int(os.environ.get("NCM_LOG_LEVEL", logging.INFO))
+    setup_logging(log_level)
+
+
     app = FastAPI(
         title="NCM Sync Server",
         description="NCM Sync - A Python implementation of Netease Cloud Music Sync Service",

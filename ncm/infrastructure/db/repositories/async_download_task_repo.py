@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import Optional, List
 from sqlalchemy import select, delete, func, or_
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from ncm.infrastructure.db.models.download_task import DownloadTask
 from ncm.infrastructure.db.models.download_job import DownloadJob
+
 
 class AsyncDownloadTaskRepository:
     async def get_by_id(self, session: AsyncSession, task_id: int) -> Optional[DownloadTask]:
@@ -46,14 +48,17 @@ class AsyncDownloadTaskRepository:
 
     async def create(self, session: AsyncSession, music_id: str, job_id: int,
                      music_title: Optional[str] = None, music_artist: Optional[str] = None,
-                     music_album: Optional[str] = None) -> Optional[DownloadTask]:
+                     music_album: Optional[str] = None, quality: Optional[str] = None,
+                     file_format: Optional[str] = None) -> Optional[DownloadTask]:
         task = DownloadTask(
             music_id=music_id,
             job_id=job_id,
             music_title=music_title,
             music_artist=music_artist,
             music_album=music_album,
-            status="pending"
+            status="pending",
+            quality=quality,
+            file_format=file_format
         )
         session.add(task)
         await session.flush()
@@ -77,6 +82,40 @@ class AsyncDownloadTaskRepository:
         for task in tasks:
             await session.refresh(task)
         return tasks
+
+    async def create_batch_ids_and_get_pending_music(
+        self, session: AsyncSession, job_id: int, music_ids: List[str]
+    ) -> List[DownloadTask]:
+        if not music_ids:
+            return []
+
+        # 1. 准备数据
+        data = [{"music_id": mid, "job_id": job_id, "progress_flags": 0, "status": "pending"} for mid in music_ids]
+
+        # 2. 执行 INSERT OR IGNORE
+        # 注意：index_elements 必须与数据库的 UNIQUE 约束完全一致
+        stmt = insert(DownloadTask).values(data).on_conflict_do_nothing(
+            index_elements=["job_id", "music_id"]
+        )
+
+        await session.execute(stmt)
+        # 使用 flush 确保数据进入数据库事务，但不提交
+        await session.flush()
+
+        # 3. 获取 status 为 pending 的 DownloadTask
+        query = (
+            select(DownloadTask)
+            .where(
+                DownloadTask.job_id == job_id,
+                DownloadTask.status == "pending",
+                # 不过滤，针对以前因为各种原因未完成的任务也执行下载
+                # DownloadTask.music_id.in_(music_ids),
+            )
+            .order_by(DownloadTask.id)
+        )
+
+        result = await session.execute(query)
+        return list(result.scalars().all())
 
     async def update(self, session: AsyncSession, task_id: int, **kwargs) -> Optional[DownloadTask]:
         task = await self.get_by_id(session, task_id)
@@ -130,7 +169,8 @@ class AsyncDownloadTaskRepository:
         result = await session.execute(delete(DownloadTask).where(DownloadTask.job_id == job_id))
         return result.rowcount or 0
 
-    async def find_completed_by_music_and_quality(self, session: AsyncSession, music_id: str, target_quality: str) -> Optional[DownloadTask]:
+    async def find_completed_by_music_and_quality(self, session: AsyncSession, music_id: str, target_quality: str) -> \
+            Optional[DownloadTask]:
         stmt = (
             select(DownloadTask)
             .join(DownloadJob, DownloadTask.job_id == DownloadJob.id)
@@ -146,16 +186,16 @@ class AsyncDownloadTaskRepository:
         return result.scalar_one_or_none()
 
     async def search(
-        self,
-        session: AsyncSession,
-        job_id: Optional[int] = None,
-        status: Optional[str] = None,
-        keyword: Optional[str] = None,
-        limit: int = 20,
-        offset: int = 0
+            self,
+            session: AsyncSession,
+            job_id: Optional[int] = None,
+            status: Optional[str] = None,
+            keyword: Optional[str] = None,
+            limit: int = 20,
+            offset: int = 0
     ) -> tuple[List[DownloadTask], int]:
         stmt = select(DownloadTask)
-        
+
         if job_id is not None:
             stmt = stmt.where(DownloadTask.job_id == job_id)
         if status:
@@ -170,13 +210,12 @@ class AsyncDownloadTaskRepository:
                     DownloadTask.music_id.ilike(keyword)
                 )
             )
-            
+
         # Count query
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await session.execute(count_stmt)).scalar_one()
-        
+
         # Result query
         stmt = stmt.order_by(DownloadTask.created_at.desc()).limit(limit).offset(offset)
         result = await session.execute(stmt)
         return list(result.scalars()), total
-

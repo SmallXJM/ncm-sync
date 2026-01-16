@@ -44,22 +44,23 @@ class DownloadController:
         # 4. 初始化调度器 (局部引用如果是为了避坑循环依赖)
         from ncm.service.download.orchestrator.scheduler import ProcessScheduler
         self._scheduler = ProcessScheduler(self.process)
+        
+        # 5. 初始设置 Cron
+        self._scheduler.set_batch_size(self._current_batch_size)
+        if self._current_cron:
+            self._scheduler.set_cron(self._current_cron)
 
-        # 2. 创建上下文对象
+        # 6. 创建上下文对象
         context = DownloadContext(self.orchestrator, self.process, self._scheduler)
 
-        # 3. 实例化子控制器 (组合模式)
+        # 7. 实例化子控制器 (组合模式)
         self.jobs = DownloadControllerJob(context)
         self.tasks = DownloadControllerTask(context)
         self.daemon = DownloadControllerDaemon(context)
         self.system = DownloadControllerSystem(context)
         self.dashboard = DownloadControllerDashboard(context)
 
-        # 5. 初始设置 Cron
-        if self._current_cron:
-            self._scheduler.set_cron(self._current_cron, batch_size=self._current_batch_size)
-
-        # 6. 监听配置变更
+        # 8. 监听配置变更
         cfgm.add_observer(self._on_config_update)
 
     # --- 统一的生命周期管理 ---
@@ -130,7 +131,7 @@ class DownloadController:
                     self._current_cron = new_cron
                     self._current_batch_size = new_batch_size
                     # 应用新配置
-                    self._scheduler.set_cron(new_cron, batch_size=new_batch_size)
+                    self._scheduler.set_cron(new_cron)
                     # 如果之前调度器是开启的，可能需要逻辑判断是否要重启/刷新
                 else:
                     # 如果新配置把 cron 删了，可能需要停止调度

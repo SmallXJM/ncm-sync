@@ -7,6 +7,11 @@ from ncm.core.options import CryptoType, APIResponse, _create_options
 from ncm.core.request import request
 from ncm.infrastructure.utils import generate_device_id, cookie_list_to_str
 from ncm.infrastructure.http.decorators import ncm_api
+from ncm.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+
 
 ID_XOR_KEY_1 = '3go8&$8*3*3h0k(2)2'
 
@@ -52,7 +57,7 @@ async def register_anonimous(
     """
     # 1. 生成 deviceId (与 JS 的 generateDeviceId 对应)
     device_id = generate_device_id()
-    print(f"device_id: {device_id}")
+    logger.debug(f"device_id: {device_id}")
 
     # 2. DLL 编码 ID
     encoded_dll_id = cloudmusic_dll_encode_id(device_id)

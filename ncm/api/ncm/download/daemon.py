@@ -49,7 +49,7 @@ class DownloadControllerDaemon:
                     }
                 )
             elif action == 'trigger_now':
-                results = await self.process.start()
+                results = await self.process.start(self._scheduler._batch_size)
                 return APIResponse(
                     status=202,
                     body={

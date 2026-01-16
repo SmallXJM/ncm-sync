@@ -534,7 +534,7 @@ class DownloadOrchestrator:
                 quality=url_data["level"],
                 file_path=temp_file_path,
                 file_name=filename,
-                file_format=file_format,
+                file_format=file_format.lower(),
                 file_size=url_data["size"],
             )
         logger.debug(f"Download info prepared for task {task_id}: {title} by {artist}, actual quality: {url_data['level']}")
