@@ -265,7 +265,7 @@ class DownloadProcess:
                     #     file_format=source_task.file_format,
                     # )
                     job_obj = await self.job_repo.get_by_id(uow.session, job.id)
-                    target_path = self.storage_manager._generate_final_path(new_task, job_obj)
+                    target_path = self.storage_manager._generate_final_path(source_task, job_obj)
                     target_path.parent.mkdir(parents=True, exist_ok=True)  # 确保目标目录存在
                     shutil.copy2(source_task.file_path, str(target_path))  # 保留元信息地复制文件
                     await self.task_repo.update(
