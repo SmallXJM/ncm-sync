@@ -3,6 +3,10 @@
 from fastapi import FastAPI
 from .module_scanner import ModuleScanner, ServiceScanner
 from .route_handlers import create_module_handler, create_service_handler
+from ncm.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 
 class RouteRegistrar:
@@ -49,10 +53,10 @@ class RouteRegistrar:
             
             registered_count += 1
             # methods_str = ", ".join(route_info['methods'])
-            # print(f"✓ Registered Module: [{methods_str}] {route_info['path']} -> {module_path}.{func_name}")
+            # logger.debug(f"✓ Registered Module: [{methods_str}] {route_info['path']} -> {module_path}.{func_name}")
         
         if registered_count > 0:
-            print(f"✅ Successfully registered {registered_count} module endpoints")
+            logger.info(f"✅ Successfully registered {registered_count} module endpoints")
         
         return registered_count
     
@@ -108,10 +112,10 @@ class RouteRegistrar:
             
             registered_count += 1
             methods_str = ", ".join(route_info['methods'])
-            print(f"✓ Registered Controller: [{methods_str}] {route_info['path']} -> {class_name}.{method_name}")
+            logger.debug(f"✓ Registered Controller: [{methods_str}] {route_info['path']} -> {class_name}.{method_name}")
         
         if registered_count > 0:
-            print(f"✅ Successfully registered {registered_count} ncm controllers")
+            logger.info(f"✅ Successfully registered {registered_count} ncm controllers")
         
         return registered_count
     
@@ -157,7 +161,7 @@ def auto_register_all_routes(app: FastAPI) -> dict:
     service_count = registrar.register_service_routes()
     
     total_count = module_count + service_count
-    print(f"🎉 Total registered endpoints: {total_count}")
+    logger.debug(f"🎉 Total registered endpoints: {total_count}")
     
     return {
         "modules": module_count,

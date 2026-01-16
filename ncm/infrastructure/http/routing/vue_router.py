@@ -4,6 +4,11 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import HTTPException
+from ncm.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+
 
 def get_vue_dist_path():
     if getattr(sys, "frozen", False):
@@ -34,8 +39,8 @@ def register_vue_routes(app: FastAPI):
     VUE_ASSETS = VUE_DIST / "assets"
     
     # Log paths for debugging
-    # print(f"📂 Project Root: {PROJECT_ROOT}")
-    print(f"📂 Vue Dist Path: {VUE_DIST}")
+    # logger.debug(f"📂 Project Root: {PROJECT_ROOT}")
+    logger.debug(f"📂 Vue Dist Path: {VUE_DIST}")
 
     if VUE_DIST.exists():
         # 1️⃣ 静态资源（Vite / Vue build）
@@ -45,7 +50,7 @@ def register_vue_routes(app: FastAPI):
                 StaticFiles(directory=VUE_ASSETS),
                 name="vue-assets",
             )
-            print(f"✅ Mounted /assets to {VUE_ASSETS}")
+            logger.debug(f"✅ Mounted /assets to {VUE_ASSETS}")
 
         # 2️⃣ Root Path Handler
         @app.get("/", include_in_schema=False)
@@ -88,7 +93,7 @@ def register_vue_routes(app: FastAPI):
 
             return {"detail": "Vue dist not found"}
     else:
-        print(f"⚠️ Vue dist folder not found at {VUE_DIST}")
+        logger.warning(f"⚠️ Vue dist folder not found at {VUE_DIST}")
         
         # Fallback for when dist is missing (e.g. dev mode without build)
         @app.get("/", include_in_schema=False)

@@ -71,6 +71,7 @@ class WorkflowEngine:
             
             if TaskProgress.is_fully_completed(task.progress_flags, job):
                 await self.task_service.update_status(task_id, "completed")
+                logger.info(f"{task.get_music_name} 下载完成")
                 logger.debug(f"Workflow completed successfully for task {task_id}")
             else:
                 await self.task_service.update_status(task_id, "failed", "Not all required steps completed")

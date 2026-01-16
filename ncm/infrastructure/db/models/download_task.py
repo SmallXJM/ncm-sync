@@ -11,7 +11,7 @@ class DownloadTask(Base):
     __tablename__ = 'download_task'
     
     # Primary key
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     
     # Music information (simple)
     music_id = Column(String, nullable=False, index=True)
@@ -59,6 +59,10 @@ class DownloadTask(Base):
     __table_args__ = (
         UniqueConstraint('job_id', 'music_id', name='uq_job_music'),
     )
+    
+    @property
+    def get_music_name(self) -> str:
+        return f"歌曲 \"{self.file_name}\""
     
     def to_dict(self):
         """Convert model to dictionary."""

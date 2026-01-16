@@ -28,6 +28,7 @@ from ncm.infrastructure.db.repositories.async_download_task_repo import (
     AsyncDownloadTaskRepository,
 )
 from ncm.service.download.models import get_task_cache_registry
+from ncm.service.download.orchestrator import DownloadOrchestrator
 from ncm.service.download.service import AsyncJobService
 from ncm.service.download.storage.manager import StorageManager
 from ncm.infrastructure.utils.time import UTC_CLOCK
@@ -38,7 +39,7 @@ logger = get_logger(__name__)
 class DownloadProcess:
     """下载流程服务；与核心编排器解耦，负责作业扫描、任务准备、复制优化与批次调度。"""
 
-    def __init__(self, orchestrator):
+    def __init__(self, orchestrator: DownloadOrchestrator):
         """初始化流程服务；自建数据库与控制器依赖，并持有编排器以执行下载工作流。"""
         self.orch = orchestrator
         self.uow_factory = get_uow_factory()  # 数据库单元工厂；用于管理事务与会话
@@ -58,7 +59,7 @@ class DownloadProcess:
             "finished_at": None,
             "processed_jobs": 0,
             "submitted_tasks": 0,
-            "skipped_existing": 0,
+            # "skipped_existing": 0,
             "skipped_in_library": 0,
             "failed_jobs": 0,
             "current_job_id": None,
@@ -93,200 +94,161 @@ class DownloadProcess:
         return self._playlist_controller
 
     async def run(self, batch_size: int = 10) -> Dict[str, Any]:
-        """
-        处理所有启用的下载作业
-
-        Args:
-            batch_size: 每批提交的任务数量
-
-        Returns:
-            当前状态快照（仅返回运行锁范围内的关键参数）
-        """
         if self._run_lock.locked():
             return self.get_status()
+
         async with self._run_lock:
-            self._status.update(
-                {
-                    "running": True,
-                    "started_at": UTC_CLOCK.now().isoformat(),
-                    "finished_at": None,
-                    "processed_jobs": 0,
-                    "submitted_tasks": 0,
-                    "skipped_existing": 0,
-                    "skipped_in_library": 0,
-                    "failed_jobs": 0,
-                    "current_job_id": None,
-                    "current_batch_index": 0,
-                }
-            )
-            # 获取所有启用的下载作业
+            await self._init_run_status()
+
             jobs = await self.job_service.get_job_all_enabled()
             if not jobs:
-                self._status.update(
-                    {"running": False, "finished_at": UTC_CLOCK.now().isoformat()}
-                )
-                return self.get_status()
+                return await self._finalize_run()
+
             for job in jobs:
                 try:
-                    # 标记作业进入扫描状态
-                    await self.job_service.set_job_status_scanning(job.id)
-
-                    self._status["current_job_id"] = job.id
-                    self._status["current_batch_index"] = 0
-
-                    # 根据作业类型选择曲目获取策略；目前仅支持歌单类型
-                    if job.job_type == "playlist" or job.source_type == "playlist":
-                        # 获取歌单曲目详情（带重试与作业内去重）
-                        fetch_result = await self._fetch_playlist_tracks(
-                            job.id, job.source_id
-                        )
-                    else:
-                        await self.job_service.set_job_status_failed(job.id)
-                        self._status["failed_jobs"] = (
-                            int(self._status.get("failed_jobs", 0)) + 1
-                        )
-                        continue
-
-                    # 任务准备阶段前置执行同音质复制优化；返回待下载任务与已复制任务
-                    tasks_data, detail_map, failed_ids, skipped_existing, copied_ids = (
-                        await self._prepare_job_tasks(job, fetch_result)
-                    )
-                    submitted_count = await self._handle_batches(
-                        job, tasks_data, detail_map, batch_size
-                    )
-
-                    # 更新作业状态为已完成
-                    await self.job_service.set_job_status_completed(job.id)
-                    self._status["processed_jobs"] = (
-                        int(self._status.get("processed_jobs", 0)) + 1
-                    )
-                    self._status["submitted_tasks"] = (
-                        int(self._status.get("submitted_tasks", 0))
-                        + submitted_count
-                        + len(copied_ids)
-                    )
-                    self._status["skipped_existing"] = int(
-                        self._status.get("skipped_existing", 0)
-                    ) + len(skipped_existing)
-
-                    if failed_ids:
-                        logger.warning(
-                            f"Playlist fetch detail failed for some ids in job {job.id}: {len(failed_ids)}"
-                        )
-
+                    await self._process_single_job(job, batch_size)
                 except Exception as e:
-                    logger.exception(f"Job processing failed for job {job.id}: {e}")
-                    await self.job_service.set_job_status_failed(job.id)
-                    self._status["failed_jobs"] = (
-                        int(self._status.get("failed_jobs", 0)) + 1
-                    )
-            self._status.update(
-                {
-                    "running": False,
-                    "finished_at": UTC_CLOCK.now().isoformat(),
-                    "current_job_id": None,
-                    "current_batch_index": 0,
-                }
+                    await self._handle_job_exception(job, e)
+
+            return await self._finalize_run()
+
+    async def _init_run_status(self) -> None:
+        """初始化运行状态。"""
+        self._status.update(
+            {
+                "running": True,
+                "started_at": UTC_CLOCK.now().isoformat(),
+                "finished_at": None,
+                "processed_jobs": 0,
+                "submitted_tasks": 0,
+                "skipped_in_library": 0,
+                "failed_jobs": 0,
+                "current_job_id": None,
+                "current_batch_index": 0,
+            }
+        )
+
+    async def _finalize_run(self) -> Dict[str, Any]:
+        """收尾运行状态并返回快照。"""
+        self._status.update(
+            {
+                "running": False,
+                "finished_at": UTC_CLOCK.now().isoformat(),
+                "current_job_id": None,
+                "current_batch_index": 0,
+            }
+        )
+        return self.get_status()
+
+    def _update_success_stats(self, submitted_count: int) -> None:
+        """更新成功统计数据。"""
+        self._status["processed_jobs"] = int(self._status.get("processed_jobs", 0)) + 1
+        self._status["submitted_tasks"] = (
+            int(self._status.get("submitted_tasks", 0)) + submitted_count
+        )
+
+    async def _process_single_job(
+        self, job: DownloadJob, batch_size: int
+    ) -> None:
+        """处理单个作业的核心流程。"""
+        self._status["current_job_id"] = job.id
+        self._status["current_batch_index"] = 0
+        logger.info(f"开始扫描{job.get_job_name}")
+        # logger.debug(f"--- Starting Job {job.id} ---")
+        await self.job_service.set_job_status_scanning(job.id)
+
+        if job.job_type == "playlist" or job.source_type == "playlist":
+            tasks, failed_ids = await self._prepare_playlist_tasks(job)
+        else:
+            raise ValueError(f"Unsupported job type: {job.job_type}")
+
+        logger.info(f"扫描{job.get_job_name}完成，获取到 {len(tasks)} 首新歌曲")  
+        if len(tasks) == 0:
+            return
+        submitted_count = await self._handle_batches(job, tasks, batch_size)
+        # logger.debug(f"--- Finished Job {job.id} ---")
+ 
+        await self.job_service.set_job_status_completed(job.id)
+        self._update_success_stats(submitted_count)
+        logger.info(f"{job.get_job_name}完成，成功下载 {submitted_count} 首新歌曲")
+
+        if failed_ids:
+            logger.warning(
+                f"Job {job.id}: {len(failed_ids)} tracks failed to fetch details."
             )
-            return self.get_status()
 
-    async def _prepare_job_tasks(
-        self, job: DownloadJob, fetch_result: dict
-    ) -> Tuple[List[dict], Dict[str, dict], List[str], List[str], List[int]]:
-        """准备任务数据与歌曲详情映射；在此阶段尝试同音质复制优化并过滤出待下载任务。"""
+    async def _handle_job_exception(
+        self, job: DownloadJob, exc: Exception
+    ) -> None:
+        """统一处理作业异常。"""
+        logger.exception(f"Job {job.id} failed: {exc}")
+        await self.job_service.set_job_status_failed(job.id)
+        self._status["failed_jobs"] = int(self._status.get("failed_jobs", 0)) + 1
 
-        detailed_tracks = fetch_result.get("tracks", [])  # 歌曲详情列表
-        effective_ids = fetch_result.get(
-            "effective_ids", []
-        )  # 过滤后的有效歌曲 ID（排除作业内已有任务）
-        failed_ids = fetch_result.get("failed_ids", [])  # 拉取详情失败的歌曲 ID
-        detail_map: Dict[str, dict] = {}  # music_id → 歌曲详情字典
+    async def _prepare_playlist_tasks(
+        self, job: DownloadJob
+    ) -> Tuple[List[DownloadTask], List[str]]:
+        """针对歌单作业准备 DownloadTask 列表并预注入 song_detail 缓存。"""
+        fetch_result = await self._fetch_playlist_tracks(job.id, job.source_id)
+
+        detailed_tracks = fetch_result.get("tracks", [])
+        failed_ids = fetch_result.get("failed_ids", [])
+
+        detail_map: Dict[str, dict] = {}
         for track in detailed_tracks:
             music_id = str(track.get("id"))
             if not music_id:
                 continue
             detail_map[music_id] = track
 
-        # 构造任务数据（从详细信息映射元数据）
-        tasks_data: List[dict] = []  # 待创建的下载任务数据列表
-        copied_task_ids: List[int] = []  # 已通过复制优化直接完成的任务 ID 列表
-        for music_id in effective_ids:
-            detail = detail_map.get(music_id, {})
-            title = detail.get("name") or ""
-            artists = [a.get("name") for a in detail.get("ar", []) if a.get("name")]
-            artist = ", ".join(artists) if artists else ""
-            album = (detail.get("al") or {}).get("name") or ""
-            data = {
-                "music_id": music_id,
-                "job_id": job.id,  # 当前作业 ID
-                "music_title": title,
-                "music_artist": artist,
-                "music_album": album,
-                "status": "pending",
-            }
-            copied_id = await self._try_copy_existing(job, data)  # 尝试同音质复制优化
-            if copied_id:
-                copied_task_ids.append(copied_id)
-            else:
-                tasks_data.append(data)
-        return (
-            tasks_data,
-            detail_map,
-            failed_ids,
-            fetch_result.get("skipped_existing_ids", []),
-            copied_task_ids,
-        )
+        async with self.uow_factory() as uow:
+            tasks = await self.task_repo.create_batch_ids_and_get_pending_music(
+                uow.session,
+                job.id,
+                fetch_result.get("effective_ids", []),
+            )
+
+        registry = get_task_cache_registry()
+        for task in tasks:
+            cache = await registry.get_or_create(task.id, task.music_id)
+            cache.song_detail = detail_map.get(task.music_id)
+
+        return tasks, failed_ids
 
     async def _handle_batches(
         self,
         job: DownloadJob,
-        tasks_data: List[dict],
-        detail_map: Dict[str, dict],
+        tasks: List[DownloadTask],
         batch_size: int,
     ) -> int:
-        """执行批次创建与调度；为每个批次创建任务、写入缓存并等待所有子流程完成。"""
-        submitted_ids: List[int] = []  # 已提交任务 ID 列表
+        """执行批次调度；针对已存在的 DownloadTask 列表按顺序分批调度。"""
+        submitted_ids: List[int] = []
         batch_index = 0
-        for i in range(0, len(tasks_data), batch_size):
-            batch = tasks_data[i : i + batch_size]
+
+        logger.info(f"开始分批下载{job.get_job_name}，每批大小: {batch_size}")
+        for i in range(0, len(tasks), batch_size):
+            batch = tasks[i : i + batch_size]
             if not batch:
                 continue
             batch_index += 1
             self._status["current_batch_index"] = batch_index
+            # logger.debug(
+            #     f"Starting batch {batch_index} for job {job.id} with {len(batch)} tasks"
+            # )
             logger.info(
-                f"Starting batch {batch_index} for job {job.id} with {len(batch)} tasks"
+                f"开始下载{job.get_job_name}的第 {batch_index} 批次"
             )
-            created = await self._create_pending_batch(job, batch)  # 创建待下载任务记录
+            await self._dispatch_and_wait_batch(job, batch)
+            submitted_ids.extend([t.id for t in batch])
 
-            # 预注入 song_detail 到缓存，避免后续重复请求
-            registry = get_task_cache_registry()
-            for task in created:
-                cache = await registry.get_or_create(task.id, task.music_id)
-                cache.song_detail = detail_map.get(task.music_id)
-
-            # 调度下载子流程并等待完成
-            await self._dispatch_and_wait_batch(job, created)
-            submitted_ids.extend([t.id for t in created])
         return len(submitted_ids)
-
-    async def _create_pending_batch(
-        self, job: DownloadJob, batch: List[dict]
-    ) -> List[DownloadTask]:
-        """批量创建待下载任务并更新作业统计。"""
-        created: List[DownloadTask] = []  # 创建后的任务列表
-        async with self.uow_factory() as uow:
-            created = await self.task_repo.create_batch(uow.session, batch)
-            await self.job_repo.update_statistics(
-                uow.session, job.id, total_tasks=(job.total_tasks or 0) + len(created)
-            )
-        return created
 
     async def _try_copy_existing(self, job: DownloadJob, data: dict) -> int | None:
         """尝试基于同音质来源任务进行文件复制并直接完成当前任务；失败则返回 None。"""
         source_task: DownloadTask | None = None  # 来源任务对象（若存在且音质匹配）
         async with self.uow_factory() as uow:
             source_task = await self.task_repo.find_completed_by_music_and_quality(
-                uow.session, data["music_id"], job.target_quality
+                uow.session, data["music_id"], job.target_quality,
             )
             if not source_task or not source_task.file_path:
                 return None
@@ -319,10 +281,8 @@ class DownloadProcess:
                         uow.session,
                         new_task.id,
                         status="completed",
-                        quality=source_task.quality,
                         file_path=str(target_path),
                         file_name=target_path.name,
-                        file_format=source_task.file_format,
                         progress_flags=source_task.progress_flags,
                         error_message=json.dumps(
                             {
@@ -340,7 +300,7 @@ class DownloadProcess:
                     # 回滚由 UnitOfWork 处理；确保删除已复制的文件
                     try:
                         if "target_path" in locals() and os.path.exists(
-                            str(target_path)
+                                str(target_path)
                         ):
                             os.remove(str(target_path))  # 清理失败复制的残留目标文件
                     except Exception:
@@ -351,7 +311,7 @@ class DownloadProcess:
                     return None
 
     async def _dispatch_and_wait_batch(
-        self, job: DownloadJob, created: List[DownloadTask]
+            self, job: DownloadJob, created: List[DownloadTask]
     ) -> None:
         """调度当前批次的下载工作流并等待所有子流程完成；收集异常并记录日志。"""
         # 调度执行工作流
@@ -368,14 +328,15 @@ class DownloadProcess:
             done = await asyncio.gather(*batch_futures, return_exceptions=True)
             # 记录异常但不影响后续批次
             for idx, res in enumerate(done):
+                task = created[idx]
                 if isinstance(res, Exception):
-                    logger.warning(f"Batch task future {created[idx].id} raised: {res}")
+                    logger.warning(f"{job.source_type}\"{job.job_name}\" 批次任务 {task.id} 引发异常: {res}")
 
     async def _fetch_playlist_tracks(
-        self, job_id: int, playlist_id: str, max_retries: int = 3
+            self, job_id: int, playlist_id: str, max_retries: int = 3
     ) -> dict:
-        """获取歌单曲目 ID 并批量拉取歌曲详情；包含退避重试与作业内去重。"""
-        delay = 1.0  # 初始退避延迟秒数
+        """获取歌单曲目 ID 并批量拉取歌曲详情；包含重试与歌曲ID去重。"""
+        delay = 1.0  # 初始重试延迟秒数
         all_ids: List[str] = []  # 歌单中的所有曲目 ID（去重前）
         for attempt in range(max_retries):
             try:
@@ -402,7 +363,7 @@ class DownloadProcess:
                     "tracks": [],
                     "effective_ids": [],
                     "failed_ids": [],
-                    "skipped_existing_ids": [],
+                    # "skipped_existing_ids": [],
                 }
             except Exception as e:
                 logger.warning(
@@ -411,25 +372,33 @@ class DownloadProcess:
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, 8.0)
 
-        # 作业内去重：排除已存在任务
-        existing_ids: set[str] = set()  # 当前作业已存在任务的 music_id 集合
+        # 上述代码会取到all_ids，已知歌单的tracks包含歌单完整id列表
+        # 作业内去重：排除已存在任务，仅保留 pending 状态
         async with self.uow_factory() as uow:
-            existing_tasks = await self.task_repo.list_by_job(uow.session, job_id)
-            for t in existing_tasks:
-                if t.music_id:
-                    existing_ids.add(str(t.music_id))
+            pending_tasks = await self.task_repo.create_batch_ids_and_get_pending_music(
+                uow.session, job_id, all_ids
+            )
+            effective_ids = [t.music_id for t in pending_tasks]
 
-        effective_ids = [
-            mid for mid in all_ids if mid not in existing_ids
-        ]  # 作业内新任务的歌曲 ID
-        skipped_existing_ids = [
-            mid for mid in all_ids if mid in existing_ids
-        ]  # 已存在任务的歌曲 ID
+        # existing_ids: set[str] = set()  # 当前作业已存在任务的 music_id 集合
+        # async with self.uow_factory() as uow:
+        #     existing_tasks = await self.task_repo.list_by_job(uow.session, job_id)
+        #     for t in existing_tasks:
+        #         if t.music_id:
+        #             existing_ids.add(str(t.music_id))
+        #
+        # effective_ids = [
+        #     mid for mid in all_ids if mid not in existing_ids
+        # ]  # 作业内新任务的歌曲 ID
+        # skipped_existing_ids = [
+        #     mid for mid in all_ids if mid in existing_ids
+        # ]  # 已存在任务的歌曲 ID
+
         detailed_tracks: List[dict] = []  # 拉取到的歌曲详情
         failed_ids: List[str] = []  # 拉取失败的歌曲 ID
         chunk_size = 300  # 详情拉取的分块大小；避免接口长度与频率限制
         for i in range(0, len(effective_ids), chunk_size):
-            chunk = effective_ids[i : i + chunk_size]
+            chunk = effective_ids[i: i + chunk_size]
             try:
                 resp = await self.song_controller.song_detail(ids=",".join(chunk))
                 if getattr(resp, "success", False):
@@ -447,7 +416,7 @@ class DownloadProcess:
             "tracks": detailed_tracks,
             "effective_ids": effective_ids,
             "failed_ids": failed_ids,
-            "skipped_existing_ids": skipped_existing_ids,
+            # "skipped_existing_ids": skipped_existing_ids,
         }
 
     async def cleanup(self):

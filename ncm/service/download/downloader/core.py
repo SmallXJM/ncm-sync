@@ -34,6 +34,7 @@ class AudioDownloader:
         self.task_service = AsyncTaskService()
         self._speed_samples = []
         self._speed_window = 3.0
+        self._default_segment_size = 10 * 1024 * 1024  # 10MB
         
         # HTTP客户端配置
         self._client = httpx.AsyncClient(
@@ -79,7 +80,7 @@ class AudioDownloader:
             if not task.file_path:
                 logger.error(f"No temporary file path for task: {task_id}")
                 return False
-            logger.info(f"Starting download for task {task_id}: {task.file_name}")
+            logger.debug(f"Starting download for task {task_id}: {task.file_name}")
             
             # 获取下载URL (需要从song controller获取)
             download_url = await self._get_download_url(task_id)
@@ -88,7 +89,7 @@ class AudioDownloader:
             
             # 执行下载
             success = await self._download_file(task_id, download_url)
-            
+    
             return success
             
         except Exception as e:
@@ -128,7 +129,7 @@ class AudioDownloader:
             temp_path = Path(task.file_path)
             temp_path.parent.mkdir(parents=True, exist_ok=True)
             # 检查文件大小以决定下载策略
-            if task.file_size and task.file_size > 10 * 1024 * 1024:  # 大于10MB使用分段下载
+            if task.file_size and task.file_size > self._default_segment_size:  # 大于10MB使用分段下载
                 return await self._download_with_segments(task_id, url)
             else:
                 return await self._download_simple(task_id, url)
@@ -173,7 +174,7 @@ class AudioDownloader:
                         f.write(chunk)
                         self._record_speed_sample(len(chunk))
                 
-                logger.info(f"Simple download completed for task {task_id}")
+                # logger.debug(f"Simple download completed for task {task_id}")
                 return True
                 
         except Exception as e:
@@ -209,7 +210,7 @@ class AudioDownloader:
                 })
                 start = end + 1
             
-            logger.info(f"Created {len(segments)} segments for task {task_id} in {cache_dir}")
+            # logger.debug(f"Created {len(segments)} segments for task {task_id} in {cache_dir}")
             
             # 并发下载分段
             semaphore = asyncio.Semaphore(self.max_threads)
@@ -220,12 +221,12 @@ class AudioDownloader:
                     current_size = segment['file_path'].stat().st_size
                     expected_size = segment['end'] - segment['start'] + 1
                     if current_size == expected_size:
-                        logger.debug(f"Segment {segment['start']}-{segment['end']} already downloaded, skipping")
+                        # logger.debug(f"Segment {segment['start']}-{segment['end']} already downloaded, skipping")
                         return True
                     
                 async with semaphore:
                     if await self._download_segment(url, segment):
-                        logger.info(f"Segment {index} download success for {segment['start']}-{segment['end']}")
+                        # logger.debug(f"Segment {index} download success for {segment['start']}-{segment['end']}")
                         return True
                     return False
             
@@ -235,7 +236,7 @@ class AudioDownloader:
             # 检查结果
             for i, result in enumerate(results):
                 if isinstance(result, Exception) or not result:
-                    logger.info(f"Segment {i} download failed for task {task_id}")
+                    logger.debug(f"Segment {i} download failed for task {task_id}")
                     return False
 
             # 合并分段
@@ -254,7 +255,7 @@ class AudioDownloader:
             except Exception as e:
                 logger.warning(f"Failed to cleanup cache for task {task_id}: {e}")
             
-            logger.info(f"Segmented download completed for task {task_id}")
+            # logger.debug(f"Segmented download completed for task {task_id}")
             return True
             
         except Exception as e:
@@ -324,4 +325,4 @@ class AudioDownloader:
     async def close(self):
         """关闭下载器并清理资源"""
         await self._client.aclose()
-        logger.info("Audio downloader closed")
+        logger.debug("Audio downloader closed")

@@ -32,7 +32,7 @@ class ModuleScanner:
             self._scan_package_recursive(package, self.package_name, results)
                     
         except Exception as e:
-            print(f"✗ Failed to scan package {self.package_name}: {e}")
+            logger.error(f"✗ Failed to scan package {self.package_name}: {e}")
         
         return results
     
@@ -56,7 +56,7 @@ class ModuleScanner:
                         sub_package = importlib.import_module(full_module_path)
                         self._scan_package_recursive(sub_package, full_module_path, results)
                     except Exception as e:
-                        print(f"✗ Failed to load sub-package {full_module_path}: {e}")
+                        logger.error(f"✗ Failed to load sub-package {full_module_path}: {e}")
                 else:
                     # It's a module, scan for decorated functions
                     try:
@@ -71,10 +71,10 @@ class ModuleScanner:
                                 results.append((relative_path, func_name, func, route_info))
                                 
                     except Exception as e:
-                        print(f"✗ Failed to load module {full_module_path}: {e}")
+                        logger.error(f"✗ Failed to load module {full_module_path}: {e}")
                         
         except Exception as e:
-            print(f"✗ Failed to scan package {package_path}: {e}")
+            logger.error(f"✗ Failed to scan package {package_path}: {e}")
 
 
 class ServiceScanner:
@@ -126,7 +126,7 @@ class ServiceScanner:
                         sub_package = importlib.import_module(full_module_path)
                         self._scan_service_package_recursive(sub_package, full_module_path, results)
                     except Exception as e:
-                        print(f"✗ Failed to load ncm sub-package {full_module_path}: {e}")
+                        logger.error(f"✗ Failed to load ncm sub-package {full_module_path}: {e}")
                 else:
                     # It's a module, scan for ncm classes
                     try:
@@ -148,10 +148,10 @@ class ServiceScanner:
                                             results.append((relative_path, class_name, method_name, method, route_info))
                                             
                                 except Exception as e:
-                                    print(f"✗ Failed to instantiate ncm {class_name}: {e}")
-                            
+                                    logger.error(f"✗ Failed to instantiate ncm {class_name}: {e}")
+                                
                     except Exception as e:
-                        print(f"✗ Failed to load ncm module {full_module_path}: {e}")
+                        logger.error(f"✗ Failed to load ncm module {full_module_path}: {e}")
                         
         except Exception as e:
-            print(f"✗ Failed to scan ncm package {package_path}: {e}")
+            logger.exception(f"✗ Failed to scan ncm package {package_path}: {e}")

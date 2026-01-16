@@ -4,10 +4,15 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import timezone
 from ncm.infrastructure.utils.time import TIMEZONE_SYSTEM
+from ncm.service.download.orchestrator.process import DownloadProcess
+
+from ncm.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class ProcessScheduler:
-    def __init__(self, process):
+    def __init__(self, process: DownloadProcess):
         self.process = process
         self._scheduler = AsyncIOScheduler(timezone=TIMEZONE_SYSTEM.get())  # 确保使用系统时区
         self._lock = asyncio.Lock()
@@ -19,15 +24,15 @@ class ProcessScheduler:
         if self._lock.locked():
             return
         async with self._lock:
+            logger.info(f"开始执行下载任务，批次大小: {self._batch_size}")
             await self.process.start(batch_size=self._batch_size)
 
     def start_scheduler(self):
         if not self._scheduler.running:
             self._scheduler.start()
 
-    def set_cron(self, cron_expr: str, batch_size: int = 10):
+    def set_cron(self, cron_expr: str):
         self._cron_expr = cron_expr
-        self._batch_size = batch_size
         self.start_scheduler()
         if self._job:
             try:
@@ -97,6 +102,8 @@ class ProcessScheduler:
 
     def set_batch_size(self, batch_size: int):
         self._batch_size = int(batch_size)
+        logger.debug(f"设置批次大小为 {self._batch_size}")
+        
         return True
 
     def get_config(self) -> dict:
