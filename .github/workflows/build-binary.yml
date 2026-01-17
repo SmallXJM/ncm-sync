@@ -1,0 +1,133 @@
+name: Build Binaries
+
+on:
+  workflow_call:
+  # push:
+  #   branches: [main]
+
+jobs:
+  # ---------------------------------------------------------
+  # 步骤 1: 编译前端
+  # ---------------------------------------------------------
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install & Build Frontend
+        working-directory: web
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      # 将前端产物（web/dist）上传，供后续后端打包使用
+      - name: Upload Frontend Assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/dist/ 
+          # retention-days: 1
+
+  # ---------------------------------------------------------
+  # 步骤 2: 跨平台打包后端 (Windows & Linux)
+  # ---------------------------------------------------------
+  build-backend:
+    name: Build Test (${{ matrix.os }})
+    needs: build-frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: Linux
+            arch: x86_64
+            archive_ext: tar.gz
+          - os: ubuntu-22.04-arm
+            platform: Linux
+            arch: aarch64
+            archive_ext: tar.gz
+          - os: windows-latest
+            platform: Windows
+            arch: x86_64
+            archive_ext: zip
+    runs-on: ${{ matrix.os }}
+    env:
+      TARGET_PLATFORM: ${{ matrix.platform }}
+      TARGET_ARCH: ${{ matrix.arch }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Build Context
+        run: |
+          echo "Target platform: ${{ env.TARGET_PLATFORM }}"
+          echo "Target arch: ${{ env.TARGET_ARCH }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner arch: ${{ runner.arch }}"
+
+      - name: Download Frontend Assets
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/dist/
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller -r requirements.txt
+
+      # ---------------------------------------------------------
+      # PR 阶段的核心：打包并简单验证
+      # ---------------------------------------------------------
+      - name: PyInstaller Build
+        run: python -m PyInstaller ncm-sync.spec
+
+      - name: Verify Binary (Linux ${{ matrix.arch }})
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          echo "Verifying Linux ${{ matrix.arch }} build artifacts"
+          ls -lh dist/
+          # 如果你的程序支持 --version 或类似命令，可以试运行一下
+          # chmod +x dist/ncm-sync
+          # ./dist/ncm-sync --version
+
+      - name: Verify Binary (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          dir dist/
+          # .\dist\ncm-sync.exe --version
+
+      # ---------------------------------------------------------
+      # 打包阶段
+      # ---------------------------------------------------------
+      - name: Package Binary (Linux ${{ matrix.arch }})
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          # 只压缩 ncm-sync 这个文件，压缩包放在根目录
+          tar -czf ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }} -C dist ncm-sync
+
+      - name: Package Binary (Windows x86_64)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # 只压缩 ncm-sync.exe，压缩包放在根目录
+          Compress-Archive -Path dist\ncm-sync.exe -DestinationPath ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.event_name == 'pull_request' && 'pr-test' || 'latest' }}
+          # 对应根目录下的压缩包
+          path: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
+          # retention-days: 1
