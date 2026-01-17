@@ -1,0 +1,100 @@
+name: Build Binaries
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main] # 在 PR 提交到 main 时触发
+
+jobs:
+  # ---------------------------------------------------------
+  # 步骤 1: 编译前端
+  # ---------------------------------------------------------
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install & Build Frontend
+        working-directory: web
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      # 将前端产物（假设在 web/dist）上传，供后续后端打包使用
+      - name: Upload Frontend Assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/dist/ # 请根据你实际的输出目录修改，例如可能是 web/build 或 web/dist
+          retention-days: 1
+
+  # ---------------------------------------------------------
+  # 步骤 2: 跨平台打包后端 (Windows & Linux)
+  # ---------------------------------------------------------
+  build-backend:
+    name: Build Test (${{ matrix.os }})
+    needs: build-frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            artifact_name: ncm-sync-linux
+          - os: windows-latest
+            artifact_name: ncm-sync-windows
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Frontend Assets
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/dist/
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller -r requirements.txt
+
+      # ---------------------------------------------------------
+      # PR 阶段的核心：打包并简单验证
+      # ---------------------------------------------------------
+      - name: PyInstaller Build
+        run: python -m PyInstaller ncm-sync.spec
+
+      - name: Verify Binary (Linux)
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          ls -lh dist/
+          # 如果你的程序支持 --version 或类似命令，可以试运行一下
+          # chmod +x dist/ncm-sync
+          # ./dist/ncm-sync --version
+
+      - name: Verify Binary (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          dir dist/
+          # .\dist\ncm-sync.exe --version
+
+      # 仅在 Push 到 main 时上传最终产物，PR 阶段可以跳过或减少保留时间
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ github.event_name == 'pull_request' && 'pr-test' || 'latest' }}
+          path: dist/
+          retention-days: 1 # PR 产物仅保留 1 天，节省空间
