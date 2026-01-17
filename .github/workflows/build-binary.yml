@@ -32,7 +32,7 @@ jobs:
         with:
           name: frontend-dist
           path: web/dist/ 
-          retention-days: 1
+          # retention-days: 1
 
   # ---------------------------------------------------------
   # 步骤 2: 跨平台打包后端 (Windows & Linux)
@@ -130,4 +130,4 @@ jobs:
           name: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.event_name == 'pull_request' && 'pr-test' || 'latest' }}
           # 对应根目录下的压缩包
           path: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
-          retention-days: 1
+          # retention-days: 1
