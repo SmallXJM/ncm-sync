@@ -44,11 +44,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-22.04
             platform: Linux
             arch: x86_64
             archive_ext: tar.gz
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-22.04-arm
             platform: Linux
             arch: aarch64
             archive_ext: tar.gz
