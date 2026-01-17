@@ -109,20 +109,25 @@ jobs:
           dir dist/
           # .\dist\ncm-sync.exe --version
 
+      # ---------------------------------------------------------
+      # 打包阶段
+      # ---------------------------------------------------------
       - name: Package Binary (Linux ${{ matrix.arch }})
         if: contains(matrix.os, 'ubuntu')
         run: |
-          tar -czf dist/ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }} -C dist .
+          # 只压缩 ncm-sync 这个文件，压缩包放在根目录
+          tar -czf ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }} -C dist ncm-sync
 
       - name: Package Binary (Windows x86_64)
         if: matrix.os == 'windows-latest'
         run: |
-          Compress-Archive -Path dist\* -DestinationPath dist\ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
+          # 只压缩 ncm-sync.exe，压缩包放在根目录
+          Compress-Archive -Path dist\ncm-sync.exe -DestinationPath ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
 
-      # 仅在 Push 到 main 时上传最终产物，PR 阶段可以跳过或减少保留时间
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
           name: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.event_name == 'pull_request' && 'pr-test' || 'latest' }}
-          path: dist/ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
-          retention-days: 1 # PR 产物仅保留 1 天，节省空间
+          # 对应根目录下的压缩包
+          path: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
+          retention-days: 1
