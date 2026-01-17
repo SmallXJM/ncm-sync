@@ -16,7 +16,7 @@ jobs:
   # ---------------------------------------------------------
   changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -47,34 +47,35 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: "3.9"
+          cache: "pip"
 
-      # 缓存 pip wheel
-      - name: Cache pip downloads
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-
-      # 缓存虚拟环境（安装后的 site-packages）
+      # 缓存虚拟环境
       - name: Cache Python venv
         uses: actions/cache@v3
         with:
           path: .venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
+          # 带上Python版本，避免不同版本的缓存冲突
+          key: ${{ runner.os }}-py3.9-venv-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-venv-
+            ${{ runner.os }}-py3.9-venv-
 
       - name: Install dependencies
         run: |
-          python -m venv .venv
+          if [ ! -d .venv ]; then
+            python -m venv .venv
+          fi
           source .venv/bin/activate
           pip install --upgrade pip
           pip install flake8 pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
 
+      # 仓库带.flake8配置，直接使用flake8检查
       - name: Backend Lint
         run: |
           source .venv/bin/activate
@@ -83,7 +84,11 @@ jobs:
       - name: Backend Tests
         run: |
           source .venv/bin/activate
-          if [ -d tests ]; then pytest -q; else echo "No tests found."; fi
+          if [ -d tests ]; then
+            pytest -q --disable-warnings --maxfail=1
+          else
+            echo "No tests found."
+          fi
 
   # ---------------------------------------------------------
   # 前端检查
@@ -101,27 +106,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # 安装 Bun 环境
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: 'yarn'
-          cache-dependency-path: web/yarn.lock
-
-      # 缓存 node_modules，加速安装
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: web/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('web/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
+          bun-version: latest 
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Frontend Lint
-        run: npm run | grep -q 'lint' && yarn lint || echo "Skip lint"
+        continue-on-error: true
+        run: bun run lint
 
       - name: Frontend Build
-        run: npm run | grep -q 'build' && yarn build || echo "Skip build"
+        run: bun run build
