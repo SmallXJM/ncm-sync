@@ -154,12 +154,14 @@
 </template>
 
 <script lang="ts" setup>
+// 暂时注释掉文件管理相关代码，等待后续完善
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+// import { useRoute, useRouter } from 'vue-router'
 import { http } from '@/api'
 import type { ApiEnvelope } from '@/api/request'
 import { toast } from '@/utils/toast'
-import { getStoredMusicQuery } from '@/composables/useMusicQuery'
+// import { getStoredMusicQuery } from '@/composables/useMusicQuery'
 
 type LocalMusicDetail = {
   id: number
@@ -178,11 +180,11 @@ type LocalMusicDetail = {
 }
 
 const route = useRoute()
-const router = useRouter()
+// const router = useRouter()
 
 const taskId = computed(() => Number(route.params.taskId))
 const isLoading = ref(false)
-const isWorking = ref(false)
+// const isWorking = ref(false)
 const coverError = ref(false)
 const detail = ref<LocalMusicDetail | null>(null)
 
@@ -206,58 +208,58 @@ const fetchDetail = async () => {
   }
 }
 
-const handleRename = async () => {
-  if (!detail.value) return
-  const newName = window.prompt('请输入新的文件名（包含扩展名）', detail.value.file_name || '')
-  if (!newName) return
+// const handleRename = async () => {
+//   if (!detail.value) return
+//   const newName = window.prompt('请输入新的文件名（包含扩展名）', detail.value.file_name || '')
+//   if (!newName) return
 
-  isWorking.value = true
-  try {
-    const res = await http.post<ApiEnvelope<LocalMusicDetail>>('/local/music/rename', {
-      task_id: detail.value.id,
-      new_name: newName,
-    })
-    if (res.success && res.data.code === 200 && res.data.data) {
-      detail.value = res.data.data
-      coverError.value = false
-      toast.show('重命名成功', 'success')
-    } else {
-      toast.show('重命名失败', 'error')
-    }
-  } catch {
-    toast.show('重命名失败', 'error')
-  } finally {
-    isWorking.value = false
-  }
-}
+//   isWorking.value = true
+//   try {
+//     const res = await http.post<ApiEnvelope<LocalMusicDetail>>('/local/music/rename', {
+//       task_id: detail.value.id,
+//       new_name: newName,
+//     })
+//     if (res.success && res.data.code === 200 && res.data.data) {
+//       detail.value = res.data.data
+//       coverError.value = false
+//       toast.show('重命名成功', 'success')
+//     } else {
+//       toast.show('重命名失败', 'error')
+//     }
+//   } catch {
+//     toast.show('重命名失败', 'error')
+//   } finally {
+//     isWorking.value = false
+//   }
+// }
 
-const handleDelete = async () => {
-  if (!detail.value) return
-  const ok = window.confirm('确认删除本地文件？该操作不可恢复。')
-  if (!ok) return
+// const handleDelete = async () => {
+//   if (!detail.value) return
+//   const ok = window.confirm('确认删除本地文件？该操作不可恢复。')
+//   if (!ok) return
 
-  isWorking.value = true
-  try {
-    const res = await http.post<ApiEnvelope<unknown>>('/local/music/delete', {
-      task_id: detail.value.id,
-    })
-    if (res.success && res.data.code === 200) {
-      toast.show('已删除本地文件', 'success')
-      const storedQuery = getStoredMusicQuery()
-      if (storedQuery) {
-        router.push({ name: 'music', query: storedQuery })
-      } else {
-        router.push({ name: 'music' })
-      }
-    } else {
-      toast.show('删除失败', 'error')
-    }
-  } catch {
-    toast.show('删除失败', 'error')
-  } finally {
-    isWorking.value = false
-  }
-}
+//   isWorking.value = true
+//   try {
+//     const res = await http.post<ApiEnvelope<unknown>>('/local/music/delete', {
+//       task_id: detail.value.id,
+//     })
+//     if (res.success && res.data.code === 200) {
+//       toast.show('已删除本地文件', 'success')
+//       const storedQuery = getStoredMusicQuery()
+//       if (storedQuery) {
+//         router.push({ name: 'music', query: storedQuery })
+//       } else {
+//         router.push({ name: 'music' })
+//       }
+//     } else {
+//       toast.show('删除失败', 'error')
+//     }
+//   } catch {
+//     toast.show('删除失败', 'error')
+//   } finally {
+//     isWorking.value = false
+//   }
+// }
 
 const formatSize = (bytes?: number) => {
   if (!bytes) return '-'

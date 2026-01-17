@@ -89,6 +89,11 @@ export interface ListTasksParams {
   keyword?: string
 }
 
+interface TaskStatusPayload {
+  is_running?: boolean
+  next_run_time?: string
+}
+
 export const getTaskList = async (params: ListTasksParams): Promise<ApiResult<ApiEnvelope<{ tasks: DownloadTaskItem[]; total: number; limit: number; offset: number }>>> => {
   return http.post<ApiEnvelope<{ tasks: DownloadTaskItem[]; total: number; limit: number; offset: number }>>(DOWNLOAD.TASK_LIST, params)
 }
@@ -99,6 +104,6 @@ export const resetTask = async (task_id: number): Promise<ApiResult<ApiEnvelope<
 
 export const daemonControl = async (
   action: 'start' | 'stop' | 'trigger_now',
-): Promise<ApiResult<ApiEnvelope<unknown>>> => {
-  return http.post<ApiEnvelope<unknown>>(DOWNLOAD.DAEMON_CONTROL, { action })
+): Promise<ApiResult<ApiEnvelope<TaskStatusPayload>>> => {
+  return http.post<ApiEnvelope<TaskStatusPayload>>(DOWNLOAD.DAEMON_CONTROL, { action })
 }
