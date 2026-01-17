@@ -147,7 +147,7 @@ const triggerNow = async () => {
       const message = res.data.message || '任务已触发'
       if (code === 200 || code === 202) {
         toast.success("开始执行下载任务")
-        const payload = (res.data as any).data || {}
+        const payload = (res.data).data || {}
         if (payload.is_running !== undefined) {
           isRunning.value = !!payload.is_running
         }
