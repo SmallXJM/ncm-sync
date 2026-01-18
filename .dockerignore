@@ -1,0 +1,27 @@
+**/node_modules/
+node_modules/
+web/node_modules/
+
+# 禁止拷贝版本控制信息
+.git/
+.gitignore
+.dockerignore
+
+# 禁止拷贝本地编译产物
+dist/
+web/dist/
+dev-dist/
+
+# 禁止拷贝本地 Python 环境和缓存
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# 忽略本地 IDE 配置
+.idea/
+.vscode/
+
+# 忽略日志和临时文件
+*.log
+tmp/
