@@ -1,22 +1,23 @@
 # =============================
-# Stage 1: 前端构建
+# Stage 1: 前端构建（Bun）
 # =============================
-FROM node:20-alpine AS frontend
+FROM oven/bun:1.1-alpine AS frontend
 
 # 设置工作目录
 WORKDIR /app/web
 
-# 先拷贝依赖描述文件，利用 Docker 缓存加速构建
-COPY web/package*.json ./
+# 先拷贝依赖描述文件（利用缓存）
+COPY web/package.json bun.lock* ./
 
-# 安装前端依赖（ci 更干净，锁定 package-lock.json）
-RUN npm ci
+# 使用 BuildKit 缓存 Bun 安装目录
+RUN --mount=type=cache,id=bun-cache,target=/root/.bun \
+    bun install --frozen-lockfile
 
 # 拷贝前端源码
 COPY web/ .
 
-# 构建前端产物，默认输出到 web/dist
-RUN npm run build
+# 构建前端产物
+RUN bun run build
 
 
 # =============================
@@ -40,7 +41,9 @@ WORKDIR /app
 
 # 拷贝 Python 依赖文件并安装
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN --mount=type=cache,id=pip-cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 # 拷贝后端源码
 COPY ncm ./ncm
