@@ -164,7 +164,7 @@ def create_app(log_level: int = None) -> FastAPI:
     register_health_check(app)
     
     # Automatically register all NCM API routes
-    auto_register_routes(app, "ncm.api.modules")
+    auto_register_routes(app, "ncm.client.apis")
     
     # Automatically register all ncm routes
     auto_register_services(app, "ncm.api.ncm")

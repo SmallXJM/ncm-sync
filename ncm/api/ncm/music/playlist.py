@@ -1,11 +1,11 @@
 """Playlist HTTP controller for music playlist functionality."""
 
 import logging
-from typing import List, Dict, Any, Union
+from typing import Union
 from ncm.core.options import APIResponse
 from ncm.infrastructure.http import ncm_service
 from ncm.service.cookie.decorators import with_cookie
-from ncm.api.modules import playlist
+from ncm.client.apis import playlist
 
 logger = logging.getLogger(__name__)
 

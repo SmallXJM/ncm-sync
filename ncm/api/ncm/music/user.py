@@ -2,11 +2,11 @@
 
 import logging
 import time
-from typing import List, Dict, Any, Union
+from typing import Union
 from ncm.core.options import APIResponse
 from ncm.infrastructure.http import ncm_service
 from ncm.service.cookie.decorators import with_cookie
-from ncm.api.modules import user
+from ncm.client.apis import user
 
 logger = logging.getLogger(__name__)
 

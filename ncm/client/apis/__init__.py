@@ -12,12 +12,10 @@ from . import search
 from . import playlist
 from . import song
 
-
 __all__ = [
     "user",
     "login",
     "register",
-
     "search",
     "playlist",
     "song",

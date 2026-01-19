@@ -16,7 +16,7 @@ class RouteRegistrar:
         """Initialize registrar with FastAPI app."""
         self.app = app
     
-    def register_module_routes(self, package_name: str = "ncm.api.modules") -> int:
+    def register_module_routes(self, package_name: str = "ncm.client.apis") -> int:
         """
         Register all module routes with @ncm_api decorator.
         

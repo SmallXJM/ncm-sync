@@ -33,7 +33,7 @@ class SearchController:
         """
         try:
             # Import modules here to avoid circular imports
-            from ...modules import search
+            from ncm.client.apis import search
 
             # Perform basic search
             search_response = await search.get(
@@ -98,7 +98,7 @@ class SearchController:
             # Get detailed info for top results (limit to avoid API overload)
             song_ids = [str(song["id"]) for song in songs[:20]]
 
-            from ...modules import song
+            from ncm.client.apis import song
             detail_response = await song.detail(ids=",".join(song_ids), **kwargs)
             
             if detail_response.success:

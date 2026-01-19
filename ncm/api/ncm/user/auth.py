@@ -1,13 +1,12 @@
 """Authentication HTTP controller - unified auth functionality."""
 
-import asyncio
 from typing import Dict, Any, Optional
 
 from ncm.service.auth import AuthenticationService
 from ncm.service.cookie import get_cookie_manager, with_cookie
 from ncm.infrastructure.db import AccountRepository
 from ncm.infrastructure.db.session import get_session
-from ncm.api.modules.user import login
+from ncm.client.apis.user import login
 from ncm.core.options import APIResponse
 from ncm.core.logging import get_logger
 from ncm.infrastructure.http import ncm_service

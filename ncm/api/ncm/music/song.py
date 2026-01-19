@@ -1,11 +1,11 @@
 """Song HTTP controller for music song functionality."""
 
 import logging
-from typing import List, Dict, Any, Union
+from typing import List, Union
 from ncm.core.options import APIResponse
 from ncm.infrastructure.http import ncm_service
 from ncm.service.cookie.decorators import with_cookie
-from ncm.api.modules import song
+from ncm.client.apis import song
 
 logger = logging.getLogger(__name__)
 

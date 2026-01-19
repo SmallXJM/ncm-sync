@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from .route_registrar import auto_register_all_routes
 
 
-def auto_register_routes(app: FastAPI, modules_package: str = "ncm.api.modules"):
+def auto_register_routes(app: FastAPI, modules_package: str = "ncm.client.apis"):
     """
     Automatically scan and register all functions with @ncm_api decorator.
     

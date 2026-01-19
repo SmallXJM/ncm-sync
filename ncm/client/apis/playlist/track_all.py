@@ -3,9 +3,9 @@
 from typing import Union
 from ncm.core.options import APIResponse
 from ncm.infrastructure.http.decorators import ncm_api
-from .. import playlist
+from ncm.client.apis import playlist
 
-from .. import song
+from ncm.client.apis import song
 
 
 @ncm_api("/api/playlist/track/all", ["GET", "POST"])
