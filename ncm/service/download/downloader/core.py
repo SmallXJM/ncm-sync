@@ -1,7 +1,6 @@
 """Core audio downloader implementation for new task-driven architecture."""
 
 import asyncio
-import hashlib
 import shutil
 import time
 from pathlib import Path
@@ -99,7 +98,7 @@ class AudioDownloader:
     
     async def _get_download_url(self, task_id: int) -> Optional[str]:
         try:
-            from ncm.api.ncm.music.song import SongController
+            from ncm.server.routers.music.song import SongController
             song_controller = SongController()
             
             task = await self.task_service.get_task(task_id)
@@ -155,7 +154,7 @@ class AudioDownloader:
                     registry = get_task_cache_registry()
                     cache = registry.get(task_id)
                     if cache:
-                        from ncm.api.ncm.music.song import SongController
+                        from ncm.server.routers.music.song import SongController
                         song_controller = SongController()
                         try:
                             new_data = await cache.ensure_play_url(song_controller.song_url_v1, level=task.quality or 'lossless', force=True)

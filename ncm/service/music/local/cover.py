@@ -1,7 +1,6 @@
 import asyncio
 import os
 import time
-import random
 from pathlib import Path
 from typing import Optional
 
@@ -11,7 +10,7 @@ from .base import BaseMusicService
 from ncm.service.music.utils import extract_cover_bytes, guess_image_mime
 from ncm.service.music.exceptions import LocalMusicNotFoundError, LocalMusicNoCoverError
 
-from ncm.infrastructure.utils.path import get_data_path, prepare_path
+from ncm.core.path import get_data_path, prepare_path
 
 logger = get_logger(__name__)
 

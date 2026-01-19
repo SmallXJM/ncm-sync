@@ -38,7 +38,7 @@ jobs:
   # 步骤 2: 跨平台打包后端 (Windows & Linux)
   # ---------------------------------------------------------
   build-backend:
-    name: Build Test (${{ matrix.os }})
+    name: Build (${{ matrix.platform }}-${{ matrix.arch }})
     needs: build-frontend
     strategy:
       fail-fast: false

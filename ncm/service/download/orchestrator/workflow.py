@@ -1,7 +1,7 @@
 """Workflow execution engine for download orchestrator."""
 
 from ncm.core.logging import get_logger
-from ncm.infrastructure.db.models.download_task import TaskProgress
+from ncm.data.models.download_task import TaskProgress
 from ncm.service.download.service.async_task_service import AsyncTaskService
 
 logger = get_logger(__name__)

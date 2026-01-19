@@ -1,8 +1,7 @@
 """Task management for download orchestrator."""
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, Optional, Set
+from typing import Dict, Set
 
 from ncm.core.logging import get_logger
 

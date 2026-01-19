@@ -1,9 +1,9 @@
 """Authentication business logic orchestration."""
 
 import asyncio
-from typing import Dict, Any, List
-from ncm.infrastructure.db import AccountRepository
-from ncm.api.modules.user import login
+from typing import Dict, Any
+from ncm.data import AccountRepository
+from ncm.client.apis.user import login
 from ncm.core.logging import get_logger
 from ncm.service.cookie import get_cookie_manager
 

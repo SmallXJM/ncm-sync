@@ -8,7 +8,7 @@ import functools
 import logging
 from typing import Callable, Optional
 from . import get_cookie_manager
-from ncm.core.exceptions import AuthenticationError
+from ncm.client.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
 

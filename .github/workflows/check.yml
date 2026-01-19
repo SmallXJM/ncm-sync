@@ -46,48 +46,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. 安装 uv (代替 setup-python + manual cache)
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          enable-cache: true
+          cache-dependency-glob: "requirements.txt"
+
+      # 2. 安装 Python (uv 会自动管理 Python 版本，也可以显式指定)
       - name: Set up Python
-        id: setup-python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.9"
-          cache: "pip"
+        run: uv python install 3.9
 
-      # 缓存虚拟环境
-      - name: Cache Python venv
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          # 带上Python版本，避免不同版本的缓存冲突
-          key: ${{ runner.os }}-py3.9-venv-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-py3.9-venv-
-
+      # 3. 极速安装依赖 (自动创建 .venv)
       - name: Install dependencies
         run: |
-          if [ ! -d .venv ]; then
-            python -m venv .venv
-          fi
-          source .venv/bin/activate
-          pip install --upgrade pip
-          pip install flake8 pytest
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
+          uv venv
+          # 将 flake8 pytest 也加入安装流程，或者建议加到 requirements-dev.txt
+          uv pip install flake8 pytest -r requirements.txt
 
-      # 仓库带.flake8配置，直接使用flake8检查
+      # 4. 运行检查 (直接用 run 运行，无需 source activate)
       - name: Backend Lint
-        run: |
-          source .venv/bin/activate
-          flake8 .
+        run: uv run flake8 .
 
       - name: Backend Tests
+        if: hashFiles('tests/') != '' # 简单的存在性检查优化
         run: |
-          source .venv/bin/activate
           if [ -d tests ]; then
-            pytest -q --disable-warnings --maxfail=1
-          else
-            echo "No tests found."
+             uv run pytest -q --disable-warnings --maxfail=1
           fi
 
   # ---------------------------------------------------------

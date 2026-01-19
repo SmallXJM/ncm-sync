@@ -1,6 +1,6 @@
 """Lyrics fetcher implementation."""
 import re
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from ncm.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -200,7 +200,7 @@ class LyricsFetcher:
     def song_controller(self):
         """懒加载歌词控制器"""
         if self._song_controller is None:
-            from ncm.api.ncm.music.song import SongController
+            from ncm.server.routers.music.song import SongController
             self._song_controller = SongController()
         return self._song_controller
 

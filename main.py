@@ -17,7 +17,7 @@ import argparse
 import re
 from pathlib import Path
 from ncm.core.logging import setup_logging, get_logger
-from ncm.infrastructure.utils.path import get_app_base
+from ncm.core.path import get_app_base
 
 logger = get_logger(__name__)
 
@@ -65,7 +65,7 @@ def setup_environment():
 
 def ensure_config():
     """Ensure default configuration exists."""
-    from ncm.infrastructure.config import get_config_manager
+    from ncm.core.config import get_config_manager
 
     cfgm = get_config_manager()
     cfgm.ensure_loaded_sync()
@@ -79,13 +79,13 @@ def ensure_config():
 
 def init_database():
     """Initialize database session and engine."""
-    from ncm.infrastructure.db.session import initialize_session_manager
+    from ncm.data.session import initialize_session_manager
     initialize_session_manager()
 
 
 def close_database():
     """Close database engine."""
-    from ncm.infrastructure.db.engine import close_engine
+    from ncm.data.engine import close_engine
     try:
         close_engine()
         logger.info("主进程资源已释放")
@@ -98,7 +98,7 @@ def start_server(host: str, port: int, debug: bool):
     import uvicorn
 
     uvicorn.run(
-        "ncm.infrastructure.http.app:create_app",
+        "ncm.server.app:create_app",
         factory=True,
         host=host,
         port=port,

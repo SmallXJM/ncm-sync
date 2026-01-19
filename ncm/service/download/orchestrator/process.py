@@ -15,23 +15,23 @@ import os
 import shutil
 from typing import Dict, Any, List, Tuple
 
-from ncm.api.ncm.music.playlist import PlaylistController
-from ncm.api.ncm.music.song import SongController
+from ncm.server.routers.music import PlaylistController
+from ncm.server.routers.music.song import SongController
 from ncm.core.logging import get_logger
-from ncm.infrastructure.db.async_session import get_uow_factory
-from ncm.infrastructure.db.models.download_job import DownloadJob
-from ncm.infrastructure.db.models.download_task import DownloadTask
-from ncm.infrastructure.db.repositories.async_download_job_repo import (
+from ncm.data.async_session import get_uow_factory
+from ncm.data.models.download_job import DownloadJob
+from ncm.data.models.download_task import DownloadTask
+from ncm.data.repositories.async_download_job_repo import (
     AsyncDownloadJobRepository,
 )
-from ncm.infrastructure.db.repositories.async_download_task_repo import (
+from ncm.data.repositories.async_download_task_repo import (
     AsyncDownloadTaskRepository,
 )
 from ncm.service.download.models import get_task_cache_registry
 from ncm.service.download.orchestrator import DownloadOrchestrator
 from ncm.service.download.service import AsyncJobService
 from ncm.service.download.storage.manager import StorageManager
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 
 logger = get_logger(__name__)
 
@@ -275,7 +275,7 @@ class DownloadProcess:
                     )
                     
                     # 确保目标目录存在
-                    from ncm.infrastructure.utils.path import prepare_path
+                    from ncm.core.path import prepare_path
                     prepare_path(target_path.parent)
                     
                     shutil.copy2(source_task.file_path, str(target_path))  # 复制文件

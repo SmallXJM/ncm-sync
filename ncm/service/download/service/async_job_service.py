@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from typing import Optional
-from ncm.infrastructure.db.async_session import get_uow_factory
-from ncm.infrastructure.db.models import DownloadJob
-from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
-from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDownloadJobRepository
-from ncm.infrastructure.db.models.download_task import TaskProgress
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.data.async_session import get_uow_factory
+from ncm.data.models import DownloadJob
+from ncm.data.repositories.async_download_task_repo import AsyncDownloadTaskRepository
+from ncm.data.repositories.async_download_job_repo import AsyncDownloadJobRepository
+from ncm.core.time import UTC_CLOCK
 
 class AsyncJobService:
     def __init__(self, db_url: Optional[str] = None):

@@ -1,8 +1,8 @@
 """User management business logic orchestration."""
 
-from typing import Dict, Any, List, Optional
-from ncm.infrastructure.db import AccountRepository
-from ncm.infrastructure.db.session import get_session
+from typing import Dict, Any
+from ncm.data import AccountRepository
+from ncm.data.session import get_session
 from ncm.service.cookie import get_cookie_manager
 from ncm.core.logging import get_logger
 

@@ -2,13 +2,12 @@
 
 import shutil
 from pathlib import Path
-from typing import Optional
 
 from ncm.core.logging import get_logger
 from ncm.service.download.service.async_task_service import AsyncTaskService
-from ncm.infrastructure.db.models.download_job import DownloadJob
-from ncm.infrastructure.db.models.download_task import DownloadTask
-from ncm.infrastructure.utils.path import prepare_path, sanitize_filename
+from ncm.data.models.download_job import DownloadJob
+from ncm.data.models.download_task import DownloadTask
+from ncm.core.path import prepare_path, sanitize_filename
 
 logger = get_logger(__name__)
 

@@ -1,7 +1,7 @@
 """Lyrics service for fetching and processing song lyrics."""
 
 import re
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 from ncm.core.logging import get_logger
 
@@ -203,7 +203,7 @@ class LyricsService:
     def song_controller(self):
         """Lazy import SongController to avoid circular imports."""
         if self._song_controller is None:
-            from ncm.api.ncm.music.song import SongController
+            from ncm.server.routers.music.song import SongController
             self._song_controller = SongController()
         return self._song_controller
     
