@@ -2,8 +2,6 @@ name: Build Binaries
 
 on:
   workflow_call:
-  # push:
-  #   branches: [main]
 
 jobs:
   # ---------------------------------------------------------
@@ -31,11 +29,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: web/dist/ 
-          # retention-days: 1
+          path: web/dist/
+          retention-days: 1
 
   # ---------------------------------------------------------
-  # 步骤 2: 跨平台打包后端 (Windows & Linux)
+  # 步骤 2: 跨平台打包后端 (Windows & Linux) (使用 uv 极速安装)
   # ---------------------------------------------------------
   build-backend:
     name: Build (${{ matrix.platform }}-${{ matrix.arch }})
@@ -48,86 +46,71 @@ jobs:
             platform: Linux
             arch: x86_64
             archive_ext: tar.gz
+            binary_name: ncm-sync
           - os: ubuntu-22.04-arm
             platform: Linux
             arch: aarch64
             archive_ext: tar.gz
+            binary_name: ncm-sync
           - os: windows-latest
             platform: Windows
             arch: x86_64
             archive_ext: zip
+            binary_name: ncm-sync.exe
     runs-on: ${{ matrix.os }}
-    env:
-      TARGET_PLATFORM: ${{ matrix.platform }}
-      TARGET_ARCH: ${{ matrix.arch }}
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Show Build Context
-        run: |
-          echo "Target platform: ${{ env.TARGET_PLATFORM }}"
-          echo "Target arch: ${{ env.TARGET_ARCH }}"
-          echo "Runner OS: ${{ runner.os }}"
-          echo "Runner arch: ${{ runner.arch }}"
 
       - name: Download Frontend Assets
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: web/dist/
+          path: web/dist/ # 对应 spec 文件中引用的前端路径
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v5
+      # 使用 uv 代替 setup-python 的 pip 缓存
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.9"
-          cache: "pip"
+          enable-cache: true
+          cache-dependency-glob: "requirements.txt"
+
+      - name: Set up Python
+        run: uv python install 3.9
 
       - name: Install Dependencies
+        # 使用 --system 或者 uv venv 均可，打包环境推荐直接使用 uv pip
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install pyinstaller -r requirements.txt
+          uv pip install pyinstaller
+          if [ -f requirements.txt ]; then
+            uv pip install -r requirements.txt
+          fi
+        shell: bash # 统一 shell 减少跨平台差异
 
       # ---------------------------------------------------------
-      # PR 阶段的核心：打包并简单验证
+      # 执行打包
       # ---------------------------------------------------------
       - name: PyInstaller Build
-        run: python -m PyInstaller ncm-sync.spec
-
-      - name: Verify Binary (Linux ${{ matrix.arch }})
-        if: contains(matrix.os, 'ubuntu')
-        run: |
-          echo "Verifying Linux ${{ matrix.arch }} build artifacts"
-          ls -lh dist/
-          # 如果你的程序支持 --version 或类似命令，可以试运行一下
-          # chmod +x dist/ncm-sync
-          # ./dist/ncm-sync --version
-
-      - name: Verify Binary (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          dir dist/
-          # .\dist\ncm-sync.exe --version
+        # 使用 uv run 确保环境隔离
+        run: uv run python -m PyInstaller ncm-sync.spec
 
       # ---------------------------------------------------------
-      # 打包阶段
+      # 跨平台通用打包逻辑
       # ---------------------------------------------------------
-      - name: Package Binary (Linux ${{ matrix.arch }})
-        if: contains(matrix.os, 'ubuntu')
+      - name: Package Binary (Linux)
+        if: runner.os == 'Linux'
         run: |
-          # 只压缩 ncm-sync 这个文件，压缩包放在根目录
-          tar -czf ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }} -C dist ncm-sync
+          tar -czf ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }} -C dist ${{ matrix.binary_name }}
 
-      - name: Package Binary (Windows x86_64)
-        if: matrix.os == 'windows-latest'
+      - name: Package Binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          # 只压缩 ncm-sync.exe，压缩包放在根目录
-          Compress-Archive -Path dist\ncm-sync.exe -DestinationPath ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
+          Compress-Archive -Path dist\${{ matrix.binary_name }} -DestinationPath ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
 
-      - name: Upload Binary
+      - name: Upload Binary Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.event_name == 'pull_request' && 'pr-test' || 'latest' }}
-          # 对应根目录下的压缩包
+          name: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}
           path: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
-          # retention-days: 1
+          retention-days: 7
