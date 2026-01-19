@@ -5,21 +5,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import HTTPException
 from ncm.core.logging import get_logger
+from ncm.infrastructure.utils.path import get_static_path
 
 logger = get_logger(__name__)
-
-
-
-def get_vue_dist_path():
-    if getattr(sys, "frozen", False):
-        # onefile exe 临时解压目录
-        base_dir = Path(sys._MEIPASS)
-        vue_dist = base_dir / "web" / "dist"
-    else:
-        # 开发环境
-        base_dir = Path(__file__).resolve().parent
-        vue_dist = base_dir.parents[3] / "web" / "dist"
-    return vue_dist
 
 
 def register_vue_routes(app: FastAPI):
@@ -35,7 +23,7 @@ def register_vue_routes(app: FastAPI):
 
     # PROJECT_ROOT = BASE_DIR.parents[3]  # routing -> http -> infrastructure -> ncm -> ncm-sync
     # VUE_DIST = PROJECT_ROOT / "web" / "dist"
-    VUE_DIST = get_vue_dist_path()
+    VUE_DIST = get_static_path("web/dist")
     VUE_ASSETS = VUE_DIST / "assets"
     
     # Log paths for debugging

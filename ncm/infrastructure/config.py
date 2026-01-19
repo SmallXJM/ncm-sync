@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
-import os
 import asyncio
+from pathlib import Path
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator
 
@@ -47,9 +47,14 @@ class NcmConfig(BaseModel):
     subscription: SubscriptionSettings = Field(default_factory=SubscriptionSettings)
 
 
+from ncm.infrastructure.utils.path import get_data_path, normalize_path
+
 class ConfigManager:
     def __init__(self, path: Optional[str] = None):
-        self._path = path or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "config.json")
+        if path:
+            self._path = path
+        else:
+            self._path = str(get_data_path("config.json"))
         self._lock = asyncio.Lock()
         self._config = NcmConfig()
         self._loaded = False
@@ -67,7 +72,7 @@ class ConfigManager:
             self._observers.remove(callback)
 
     def path(self) -> str:
-        return os.path.abspath(self._path)
+        return normalize_path(self._path)
 
     def get(self) -> Dict[str, Any]:
         return self._config.dict()
@@ -80,8 +85,9 @@ class ConfigManager:
             return self._config
         async with self._lock:
             try:
-                if os.path.exists(self.path()):
-                    with open(self.path(), "r", encoding="utf-8") as f:
+                config_path = Path(self.path())
+                if config_path.exists():
+                    with open(config_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
                         self._config = NcmConfig(**(data or {}))
                 self._loaded = True
@@ -94,8 +100,9 @@ class ConfigManager:
         if self._loaded:
             return self._config
         try:
-            if os.path.exists(self.path()):
-                with open(self.path(), "r", encoding="utf-8") as f:
+            config_path = Path(self.path())
+            if config_path.exists():
+                with open(config_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self._config = NcmConfig(**(data or {}))
             self._loaded = True

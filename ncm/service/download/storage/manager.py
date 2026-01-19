@@ -8,8 +8,10 @@ from ncm.core.logging import get_logger
 from ncm.service.download.service.async_task_service import AsyncTaskService
 from ncm.infrastructure.db.models.download_job import DownloadJob
 from ncm.infrastructure.db.models.download_task import DownloadTask
+from ncm.infrastructure.utils.path import prepare_path, sanitize_filename
 
 logger = get_logger(__name__)
+
 
 
 class StorageManager:
@@ -52,7 +54,7 @@ class StorageManager:
             final_path = self._generate_final_path(task, job)
 
             # 确保目标目录存在
-            final_path.parent.mkdir(parents=True, exist_ok=True)
+            prepare_path(final_path.parent)
 
             # 移动文件到最终位置
             temp_path = Path(task.file_path)
@@ -96,9 +98,9 @@ class StorageManager:
         # 准备模板变量
         template_vars = {
             'id': task.music_id or 'UnknownID',
-            'title': self._sanitize_filename(task.music_title or 'UnknownTitile'),
-            'artist': self._sanitize_filename(task.music_artist or 'UnknownArtist'),
-            'album': self._sanitize_filename(task.music_album or 'UnknownAlbum'),
+            'title': sanitize_filename(task.music_title or 'UnknownTitile'),
+            'artist': sanitize_filename(task.music_artist or 'UnknownArtist'),
+            'album': sanitize_filename(task.music_album or 'UnknownAlbum'),
             'quality': task.quality or 'UnknownQuality',
             'format': task.file_format or 'UnknownFormat'
         }
@@ -115,25 +117,6 @@ class StorageManager:
             filename = f"{filename}.{task.file_format}"
 
         return base_path / filename
-
-    def _sanitize_filename(self, filename: str) -> str:
-        """清理文件名中的非法字符"""
-        if not filename:
-            return "Unknown"
-
-        # 替换非法字符
-        invalid_chars = '<>:"/\\|?*'
-        for char in invalid_chars:
-            filename = filename.replace(char, '_')
-
-        # 清理首尾空格和点
-        filename = filename.strip(' .')
-
-        # 限制长度
-        if len(filename) > 100:
-            filename = filename[:100]
-
-        return filename or "Unknown"
 
     # 向后兼容方法 (用于旧的orchestrator调用)
     async def store(self, task_id: int) -> bool:

@@ -8,7 +8,9 @@ import platform
 import sys
 import os
 import logging
+from pathlib import Path
 from ncm.core.logging import setup_logging, get_logger
+from ncm.infrastructure.utils.path import get_app_base
 
 logger = get_logger(__name__)
 log_level = logging.INFO
@@ -17,7 +19,7 @@ os.environ["NCM_LOG_LEVEL"] = str(log_level)  # 字符串形式
 def setup_environment():
     """Prepare system environment."""
     # Add current directory to Python path
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, str(get_app_base()))
 
     # Fix Windows event loop policy
     if platform.system() == "Windows":
@@ -31,9 +33,8 @@ def ensure_config():
     cfgm = get_config_manager()
     cfgm.ensure_loaded_sync()
     cfg_path = cfgm.path()
-    import os
 
-    if not os.path.exists(cfg_path):
+    if not Path(cfg_path).exists():
         ok = cfgm.save_sync()
         if ok:
             logger.info("已生成默认配置: %s", cfg_path)

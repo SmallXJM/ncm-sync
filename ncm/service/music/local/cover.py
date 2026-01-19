@@ -11,9 +11,11 @@ from .base import BaseMusicService
 from ncm.service.music.utils import extract_cover_bytes, guess_image_mime
 from ncm.service.music.exceptions import LocalMusicNotFoundError, LocalMusicNoCoverError
 
+from ncm.infrastructure.utils.path import get_data_path, prepare_path
+
 logger = get_logger(__name__)
 
-CACHE_DIR = Path("cache/cover")
+CACHE_DIR = get_data_path("cache/cover")
 CACHE_EXPIRY_SECONDS = 7 * 24 * 3600  # 7 days
 
 
@@ -23,17 +25,14 @@ class CoverService(BaseMusicService):
     def __init__(self, task_service: Optional[AsyncTaskService] = None):
         super().__init__(task_service)
         self._cache_dir = CACHE_DIR
-        self._ensure_cache_dir()
+        prepare_path(self._cache_dir)
         self._locks = {}  # music_id -> Lock
         self._locks_lock = asyncio.Lock()
 
     def _ensure_cache_dir(self):
         """Ensure cache directory exists."""
-        if not self._cache_dir.exists():
-            try:
-                self._cache_dir.mkdir(parents=True, exist_ok=True)
-            except Exception as e:
-                logger.error(f"Failed to create cache dir: {e}")
+        # Deprecated: Handled by prepare_path in init
+        pass
 
     async def _get_lock(self, music_id: str) -> asyncio.Lock:
         """Get or create a lock for a specific music ID."""
