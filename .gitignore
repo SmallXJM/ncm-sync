@@ -1,4 +1,4 @@
-# NCM Python API - .gitignore
+# NCM Sync - .gitignore
 
 # ===== 项目特定文件 =====
 references/
@@ -16,6 +16,8 @@ tests/
 
 *.db
 *.db-*
+*.sqlite
+*.sqlite-*
 
 # ===== Python 相关 =====
 # Byte-compiled / optimized / DLL files

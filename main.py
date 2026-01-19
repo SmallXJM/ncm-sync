@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-NCM Python API - Main Entry Point
+NCM Sync - Main Entry Point.
+
+支持命令行参数：
+  --host  服务监听地址，默认 0.0.0.0
+  --port  服务监听端口，默认 8000
+  --debug 启用调试模式（等价于原 debug.py 行为）
 """
 
 import asyncio
@@ -8,16 +13,50 @@ import platform
 import sys
 import os
 import logging
+import argparse
+import re
+from pathlib import Path
 from ncm.core.logging import setup_logging, get_logger
+from ncm.infrastructure.utils.path import get_app_base
 
 logger = get_logger(__name__)
-log_level = logging.INFO
-os.environ["NCM_LOG_LEVEL"] = str(log_level)  # 字符串形式
+
+HOST_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]+$")
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="NCM Sync - 音乐同步工具")
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="服务监听主机地址，默认 0.0.0.0",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="服务监听端口号，默认 8000",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="启用调试模式",
+    )
+
+    args = parser.parse_args(argv)
+
+    if not 1 <= args.port <= 65535:
+        parser.error("参数 --port 必须在 1-65535 范围内")
+
+    if not args.host or " " in args.host or not HOST_PATTERN.match(args.host):
+        parser.error("参数 --host 必须是有效的 IP 地址或域名格式")
+
+    return args
 
 def setup_environment():
     """Prepare system environment."""
     # Add current directory to Python path
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, str(get_app_base()))
 
     # Fix Windows event loop policy
     if platform.system() == "Windows":
@@ -31,9 +70,8 @@ def ensure_config():
     cfgm = get_config_manager()
     cfgm.ensure_loaded_sync()
     cfg_path = cfgm.path()
-    import os
 
-    if not os.path.exists(cfg_path):
+    if not Path(cfg_path).exists():
         ok = cfgm.save_sync()
         if ok:
             logger.info("已生成默认配置: %s", cfg_path)
@@ -55,31 +93,34 @@ def close_database():
         logger.error("主进程资源释放失败: %s", e)
 
 
-def start_server():
+def start_server(host: str, port: int, debug: bool):
     """Start the API server via uvicorn."""
     import uvicorn
 
     uvicorn.run(
         "ncm.infrastructure.http.app:create_app",
         factory=True,
-        host="0.0.0.0",
-        port=8000,
-        reload=False,  # 开发环境可改 True
+        host=host,
+        port=port,
+        reload=debug,
         use_colors=False,
         http="h11",
         log_config=None,
     )
 
 
-def main():
+def main(argv=None):
     """Main entry point."""
+    args = parse_args(argv)
     setup_environment()
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    os.environ["NCM_LOG_LEVEL"] = str(log_level)
     setup_logging(log_level)
     ensure_config()
     init_database()
 
     try:
-        start_server()
+        start_server(args.host, args.port, args.debug)
     except KeyboardInterrupt:
         logger.info("程序已停止")
     finally:

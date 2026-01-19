@@ -1,4 +1,4 @@
-# NCM Python API Dependencies
+# NCM Sync Dependencies
 
 # HTTP client with async support and HTTP/2
 httpx[http2]>=0.25.0

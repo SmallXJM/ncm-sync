@@ -1,8 +1,11 @@
 """Database engine configuration and management."""
 
 import os
+from pathlib import Path
 from sqlalchemy import create_engine, Engine, text
 from sqlalchemy.ext.declarative import declarative_base
+from ncm.infrastructure.utils.path import prepare_path
+from ncm.constants import DATABASE_NAME
 
 # SQLAlchemy Base for all models
 Base = declarative_base()
@@ -11,12 +14,10 @@ Base = declarative_base()
 _engine: Engine = None
 
 
-def create_engine_instance(db_path: str = "ncm_data.db") -> Engine:
+def create_engine_instance(db_path: str = DATABASE_NAME) -> Engine:
     """Create SQLAlchemy engine instance."""
     # Ensure database directory exists
-    db_dir = os.path.dirname(db_path)
-    if db_dir and not os.path.exists(db_dir):
-        os.makedirs(db_dir, exist_ok=True)
+    prepare_path(db_path)
     
     # Create engine with SQLite
     engine = create_engine(
@@ -35,7 +36,7 @@ def create_engine_instance(db_path: str = "ncm_data.db") -> Engine:
     return engine
 
 
-def get_engine(db_path: str = "ncm_data.db") -> Engine:
+def get_engine(db_path: str = DATABASE_NAME) -> Engine:
     """Get or create global engine instance."""
     global _engine
     

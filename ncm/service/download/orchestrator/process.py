@@ -273,9 +273,11 @@ class DownloadProcess:
                     target_path = self.storage_manager._generate_final_path(
                         new_task, job_obj
                     )
-                    target_path.parent.mkdir(
-                        parents=True, exist_ok=True
-                    )  # 确保目标目录存在
+                    
+                    # 确保目标目录存在
+                    from ncm.infrastructure.utils.path import prepare_path
+                    prepare_path(target_path.parent)
+                    
                     shutil.copy2(source_task.file_path, str(target_path))  # 复制文件
                     await self.task_repo.update(
                         uow.session,

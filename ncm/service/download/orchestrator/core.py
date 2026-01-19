@@ -9,6 +9,7 @@ from ncm.infrastructure.db.models.download_task import DownloadTask, TaskProgres
 from ncm.infrastructure.db.models.download_job import DownloadJob
 from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
 from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDownloadJobRepository
+from ncm.infrastructure.utils.path import sanitize_filename
 from ncm.service.download.service import AsyncJobService
 from ncm.infrastructure.db.async_session import get_uow_factory
 from ncm.service.download.models import get_task_cache_registry
@@ -19,6 +20,8 @@ from ..storage import StorageManager
 from .workflow import WorkflowEngine
 from .task_manager import TaskManager
 from ncm.core.logging import get_logger
+
+
 
 logger = get_logger(__name__)
 
@@ -525,8 +528,8 @@ class DownloadOrchestrator:
                 level=target_quality,
                 force=(cache.play_url is None)
             )
-            safe_title = self._sanitize_filename(title)
-            safe_artist = self._sanitize_filename(artist)
+            safe_title = sanitize_filename(title)
+            safe_artist = sanitize_filename(artist)
             file_format = url_data.get("type", "mp3")
             filename = f"{safe_artist} - {safe_title}.{file_format}"
             temp_file_path = str(self.downloads_dir / filename)
@@ -539,15 +542,6 @@ class DownloadOrchestrator:
             )
         logger.debug(f"Download info prepared for task {task_id}: {title} by {artist}, actual quality: {url_data['level']}")
 
-    def _sanitize_filename(self, filename: str) -> str:
-        """清理文件名"""
-        invalid_chars = '<>:"/\\|?*'
-        for char in invalid_chars:
-            filename = filename.replace(char, '_')
-        filename = filename.strip(' .')
-        if len(filename) > 100:
-            filename = filename[:100]
-        return filename or "Unknown"
 
     # 向后兼容方法
     async def download(self,
