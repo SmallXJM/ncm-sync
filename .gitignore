@@ -17,6 +17,7 @@ tests/
 *.db
 *.db-*
 *.sqlite
+*.sqlite-*
 
 # ===== Python 相关 =====
 # Byte-compiled / optimized / DLL files
