@@ -17,7 +17,7 @@ from Crypto.Util.number import bytes_to_long, long_to_bytes
 import base64
 
 from .options import CryptoType
-from .exceptions import EncryptionError
+from ncm.client.exceptions import EncryptionError
 
 # Constants from original implementation
 IV = b'0102030405060708'

@@ -4,7 +4,6 @@ from typing import Optional, Union
 from ncm.core.logging import get_logger
 from .base import BaseMusicService
 from ncm.service.music.utils import is_within, extract_lyrics
-from ncm.service.music.exceptions import LocalMusicNotFoundError
 
 logger = get_logger(__name__)
 

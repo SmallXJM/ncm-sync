@@ -1,7 +1,6 @@
 """Core audio downloader implementation for new task-driven architecture."""
 
 import asyncio
-import hashlib
 import shutil
 import time
 from pathlib import Path

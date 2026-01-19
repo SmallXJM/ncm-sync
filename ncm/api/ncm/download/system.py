@@ -1,9 +1,8 @@
 """Music download controller with new task-driven architecture."""
 
 from ncm.api.ncm.download import DownloadContext
-from ncm.core.options import APIResponse
+from ncm.client import APIResponse
 from ncm.core.logging import get_logger
-from ncm.infrastructure.http import ncm_service
 
 logger = get_logger(__name__)
 

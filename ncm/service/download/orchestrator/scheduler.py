@@ -2,7 +2,6 @@ import asyncio
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from datetime import timezone
 from ncm.infrastructure.utils.time import TIMEZONE_SYSTEM
 from ncm.service.download.orchestrator.process import DownloadProcess
 

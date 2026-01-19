@@ -1,11 +1,10 @@
 """Core download orchestrator implementation."""
 
 import asyncio
-import uuid
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from ncm.infrastructure.db.models.download_task import DownloadTask, TaskProgress
+from ncm.infrastructure.db.models.download_task import DownloadTask
 from ncm.infrastructure.db.models.download_job import DownloadJob
 from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
 from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDownloadJobRepository

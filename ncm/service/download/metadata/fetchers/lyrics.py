@@ -1,6 +1,6 @@
 """Lyrics fetcher implementation."""
 import re
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from ncm.core.logging import get_logger
 
 logger = get_logger(__name__)

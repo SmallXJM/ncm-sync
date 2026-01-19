@@ -1,16 +1,16 @@
-# api/request.py
+# api/http.py
 from typing import Optional, Dict, Any, List
 from urllib.parse import urlencode
 import json
 
-from .session import get_session
-from .options import RequestOptions, APIResponse, CryptoType
-from .cookies import process_cookie, cookie_dict_to_string
-from .headers import build_headers, choose_user_agent, build_eapi_header
-from .router import build_url
-from .crypto import get_crypto_function, decrypt_eapi_response
-from .exceptions import NetworkError, APIError, AuthenticationError, RateLimitError
-from .logging import get_logger
+from ncm.client.protocol.session import get_session
+from ncm.client.protocol.options import RequestOptions, APIResponse, CryptoType
+from ncm.client.protocol.cookies import process_cookie, cookie_dict_to_string
+from ncm.client.protocol.headers import build_headers, choose_user_agent, build_eapi_header
+from ncm.client.protocol.router import build_url
+from ncm.client.protocol.crypto import get_crypto_function, decrypt_eapi_response
+from ncm.client.exceptions import NetworkError, APIError, AuthenticationError, RateLimitError
+from ncm.core.logging import get_logger
 
 logger = get_logger(__name__)
 

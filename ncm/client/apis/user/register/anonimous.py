@@ -3,8 +3,8 @@
 import base64
 import hashlib
 from dataclasses import replace
-from ncm.core.options import CryptoType, APIResponse, _create_options
-from ncm.core.request import request
+from ncm.client import CryptoType, APIResponse, _create_options
+from ncm.client import request
 from ncm.infrastructure.utils import generate_device_id, cookie_list_to_str
 from ncm.infrastructure.http.decorators import ncm_api
 from ncm.core.logging import get_logger

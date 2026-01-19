@@ -5,8 +5,8 @@ from typing import Callable
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from .request_parser import parse_request_params
-from ncm.core.options import APIResponse
-from ncm.core.exceptions import NCMError, APIError, AuthenticationError, RateLimitError, NetworkError, ValidationError
+from ncm.client import APIResponse
+from ncm.client.exceptions import NCMError, APIError, AuthenticationError, RateLimitError, NetworkError, ValidationError
 from ncm.core.logging import get_logger
 
 logger = get_logger(__name__)

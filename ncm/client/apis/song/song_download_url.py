@@ -1,8 +1,8 @@
 """Song download URL API - 获取歌曲下载链接"""
 
 from typing import Union
-from ncm.core.options import APIResponse, _create_options
-from ncm.core.request import request
+from ncm.client import APIResponse, _create_options
+from ncm.client import request
 from ncm.infrastructure.http.decorators import ncm_api
 
 

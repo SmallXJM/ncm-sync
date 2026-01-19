@@ -1,7 +1,7 @@
 """Playlist track all API - 获取歌单所有歌曲"""
 
 from typing import Union
-from ncm.core.options import APIResponse
+from ncm.client import APIResponse
 from ncm.infrastructure.http.decorators import ncm_api
 from ncm.client.apis import playlist
 

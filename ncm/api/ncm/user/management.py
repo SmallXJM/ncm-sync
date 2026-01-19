@@ -2,7 +2,7 @@
 
 import logging
 from ncm.service.user import UserManagementService
-from ncm.core.options import APIResponse
+from ncm.client import APIResponse
 from ncm.infrastructure.http import ncm_service
 from ncm.infrastructure.db import AccountRepository
 from ncm.infrastructure.db.session import get_session

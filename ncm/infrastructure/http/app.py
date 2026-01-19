@@ -1,19 +1,14 @@
 """FastAPI application factory for NCM API http."""
 
 from contextlib import asynccontextmanager
-from pathlib import Path
-import asyncio
-import platform
 import threading
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
 from .routing.auto_router import (
     auto_register_routes,
@@ -24,7 +19,7 @@ from .routing.vue_router import register_vue_routes
 from .routing.local_music_router import register_local_music_routes
 from ncm.infrastructure.db.async_session import dispose_async_engine
 from ncm.infrastructure.db.engine import close_engine
-from ncm.core.session import close_session
+from ncm.client.protocol.session import close_session
 from ncm.core.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)

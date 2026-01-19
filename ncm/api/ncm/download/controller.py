@@ -10,7 +10,7 @@ from ncm.api.ncm.download.job import DownloadControllerJob
 from ncm.api.ncm.download.system import DownloadControllerSystem
 from ncm.api.ncm.download.task import DownloadControllerTask
 from ncm.service.download.orchestrator import DownloadOrchestrator, DownloadProcess
-from ncm.core.options import APIResponse
+from ncm.client import APIResponse
 from ncm.core.logging import get_logger
 from ncm.infrastructure.http import ncm_service, ncm_ws_service
 from ncm.infrastructure.config import get_config_manager

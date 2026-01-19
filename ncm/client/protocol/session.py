@@ -3,7 +3,7 @@ import asyncio
 import httpx
 from typing import Optional
 
-from ncm.core import RequestOptions
+from ncm.client import RequestOptions
 from ncm.core.logging import get_logger
 
 logger = get_logger(__name__)

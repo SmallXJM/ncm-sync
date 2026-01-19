@@ -1,6 +1,5 @@
-import json
 from typing import Optional
-from ncm.core.options import APIResponse
+from ncm.client import APIResponse
 from ncm.core.logging import get_logger
 from ncm.infrastructure.http import ncm_service
 

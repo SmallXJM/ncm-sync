@@ -2,7 +2,6 @@
 
 import shutil
 from pathlib import Path
-from typing import Optional
 
 from ncm.core.logging import get_logger
 from ncm.service.download.service.async_task_service import AsyncTaskService

@@ -1,8 +1,8 @@
 """User detail API - 用户详情"""
 
 from typing import Union
-from ncm.core.options import CryptoType, APIResponse, _create_options
-from ncm.core.request import request
+from ncm.client import CryptoType, APIResponse, _create_options
+from ncm.client import request
 from ncm.infrastructure.http.decorators import ncm_api
 import json
 

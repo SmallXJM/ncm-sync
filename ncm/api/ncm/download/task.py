@@ -1,17 +1,11 @@
 """Music download controller with new task-driven architecture."""
 
-import asyncio
-from typing import Dict, Any, List, Optional
-from pathlib import Path
+from typing import Optional
 
 from ncm.api.ncm.download import DownloadContext
-from ncm.service.download.orchestrator import DownloadOrchestrator, DownloadProcess
-from ncm.infrastructure.db.models.download_task import DownloadTask, TaskProgress
-from ncm.infrastructure.db.models.download_job import DownloadJob
-from ncm.core.options import APIResponse
+from ncm.infrastructure.db.models.download_task import TaskProgress
+from ncm.client import APIResponse
 from ncm.core.logging import get_logger
-from ncm.infrastructure.http import ncm_service
-from ncm.infrastructure.config import get_config_manager
 
 logger = get_logger(__name__)
 

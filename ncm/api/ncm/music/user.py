@@ -3,7 +3,7 @@
 import logging
 import time
 from typing import Union
-from ncm.core.options import APIResponse
+from ncm.client import APIResponse
 from ncm.infrastructure.http import ncm_service
 from ncm.service.cookie.decorators import with_cookie
 from ncm.client.apis import user
