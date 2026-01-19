@@ -1,4 +1,4 @@
-"""API decorators for NCM module endpoints."""
+"""API decorators for NCM client modules."""
 
 from typing import Callable, List
 

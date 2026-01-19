@@ -1,7 +1,7 @@
 from typing import Optional
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger
-from ncm.api import ncm_service
+from ncm.server.decorators import ncm_service
 
 logger = get_logger(__name__)
 

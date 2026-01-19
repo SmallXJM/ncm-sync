@@ -1,16 +1,6 @@
-# ncm/utils/tools.py
-
 import random
-import time
 import ipaddress
-import urllib.parse
-from typing import List, Tuple, Dict, Any, Optional, Union
-
-# 假设您的 logger 已经定义并导入
-# from ..core.logging import get_logger
-# logger = get_logger(__name__)
-
-# --- 1. IP 地址常量和预处理 ---
+from typing import List, Tuple, Union
 
 # 中国 IP 段（来源：data/ChineseIPGenerate.csv）
 CHINA_IP_RANGES_RAW: List[Tuple[str, str, int, str]] = [
@@ -80,90 +70,6 @@ def build_ip_ranges(raw_ranges: List[Tuple[str, str, int, str]]) -> tuple[list[d
 CHINA_IP_RANGES, CHINA_IP_TOTAL_COUNT = build_ip_ranges(CHINA_IP_RANGES_RAW)
 
 
-# --- 2. 核心工具函数 ---
-
-def to_boolean(val: Union[str, int, bool]) -> Union[bool, str]:
-    """
-    将值转换为布尔值，与 Node.js 逻辑对齐。
-    """
-    if isinstance(val, bool):
-        return val
-    if val == '':
-        return val
-    return str(val).lower() in ('true', '1')
-
-
-def cookie_to_json(cookie_str: Optional[str]) -> Dict[str, str]:
-    """
-    将 HTTP Cookie 字符串转换为字典。
-    """
-    if not cookie_str:
-        return {}
-
-    obj = {}
-    # 使用 for 循环优化性能
-    for item in cookie_str.split(';'):
-        item = item.strip()
-        if not item:
-            continue
-
-        # 使用 find/split 优化性能
-        eq_index = item.find('=')
-        if eq_index > 0:
-            key = item[:eq_index].strip()
-            value = item[eq_index + 1:].strip()
-            # Node.js 中的 trim()
-            obj[key] = value
-
-    return obj
-
-
-def cookie_obj_to_string(cookie_obj: Dict[str, str]) -> str:
-    """
-    将 Cookie 字典转换为 HTTP Cookie 字符串。
-    """
-    result = []
-    # 使用 urllib.parse.quote_plus (等同于 encodeURIComponent)
-    for key, value in cookie_obj.items():
-        result.append(f"{urllib.parse.quote(key)}={urllib.parse.quote(value)}")
-
-    return "; ".join(result)
-
-
-def get_cookie_value(cookie_str: Optional[str], key: str) -> Optional[str]:
-    """
-    从 Cookie 字符串中提取指定 key 的值。
-    """
-    if not cookie_str:
-        return None
-
-    # 转换为字典后查找是最健壮和易读的方式
-    cookie_dict = cookie_to_json(cookie_str)
-    return cookie_dict.get(key)
-
-
-def get_random(num: int) -> int:
-    """
-    生成特定位数的随机数 (复制原 Node.js 复杂逻辑)。
-    """
-    # 警告：原 JS 逻辑 (var randomNum = floor((randomValue + floorValue) * powValue))
-    # 实际上是为了生成一个 N 位数。Python 中我们使用更简单的方法模拟其效果。
-
-    # Node.js: var floorValue = floor(randomValue * 9 + 1) -> 确保 floorValue >= 1
-
-    random_value = random.random()
-    floor_value = random.randint(1, 9)
-    pow_value = 10 ** (num - 1)
-
-    # 由于 Python 的随机数精度和 JS 不同，这里直接生成指定位数的整数。
-    # 模拟原意：生成一个大于等于 10^(num-1) 的 num 位整数
-
-    # 简单实现：
-    min_val = 10 ** (num - 1)
-    max_val = 10 ** num - 1
-    return random.randint(min_val, max_val)
-
-
 def generate_ip_segment() -> int:
     """生成 IP 段（1 到 255）。"""
     return random.randint(1, 255)
@@ -207,40 +113,3 @@ def generate_random_chinese_ip() -> str:
     #     chosen['location'],
     # )
     return ip_str
-
-
-def generate_chain_id(cookie_string: Optional[str]) -> str:
-    """
-    生成用于二维码登录的 chainId (Node.js 移植)。
-    """
-    version = 'v1'
-    random_num = random.randint(0, 999999)
-
-    # 提取 sDeviceId
-    device_id = get_cookie_value(cookie_string, 'sDeviceId')
-
-    # 如果不存在，使用 'unknown-' + randomNum
-    if not device_id:
-        device_id = f'unknown-{random_num}'
-
-    platform = 'web'
-    action = 'login'
-    # Node.js: Date.now() 返回毫秒时间戳
-    timestamp = int(time.time() * 1000)
-
-    return f"{version}_{device_id}_{platform}_{action}_{timestamp}"
-
-
-def generate_device_id() -> str:
-    """
-    生成一个 52 位的随机十六进制字符串作为 deviceId。
-    """
-    hex_chars = '0123456789ABCDEF'
-
-    # 使用 random.choices 效率更高
-    chars = random.choices(hex_chars, k=52)
-    return "".join(chars)
-
-
-def cookie_list_to_str(cookie: List[str]) -> str:
-    return "; ".join(cookie)

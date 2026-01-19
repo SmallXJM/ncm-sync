@@ -5,8 +5,9 @@ import hashlib
 from dataclasses import replace
 from ncm.client import CryptoType, APIResponse, _create_options
 from ncm.client import request
-from ncm.core.tools import generate_device_id, cookie_list_to_str
-from ncm.api import ncm_api
+from ncm.core.device import generate_device_id
+from ncm.core.cookie import cookie_list_to_str
+from ncm.client.decorators import ncm_api
 from ncm.core.logging import get_logger
 
 logger = get_logger(__name__)

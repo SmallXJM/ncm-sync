@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.sql import func
-from ..engine import Base
+from ncm.data.engine import Base
 
 
 class AccountSession(Base):

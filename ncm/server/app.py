@@ -10,13 +10,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from .routing.auto_router import (
+from .framework.auto_router import (
     auto_register_routes,
     auto_register_services,
     register_health_check,
 )
-from .routing.vue_router import register_vue_routes
-from .routing.local_music_router import register_local_music_routes
+from .framework.vue_router import register_vue_routes
+from .framework.local_music_router import register_local_music_routes
 from ncm.data.async_session import dispose_async_engine
 from ncm.data.engine import close_engine
 from ncm.client.protocol.session import close_session

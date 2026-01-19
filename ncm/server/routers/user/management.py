@@ -3,7 +3,7 @@
 import logging
 from ncm.service.user import UserManagementService
 from ncm.client import APIResponse
-from ncm.api import ncm_service
+from ncm.server.decorators import ncm_service
 from ncm.data import AccountRepository
 from ncm.data.session import get_session
 from ncm.service.cookie import get_cookie_manager

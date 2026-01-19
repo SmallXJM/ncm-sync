@@ -4,7 +4,7 @@ from typing import Union
 from ncm.client import APIResponse, _create_options
 from ncm.client import request
 from ncm.client.exceptions import ValidationError  # 假设这个异常仍然存在
-from ncm.api import ncm_api
+from ncm.client.decorators import ncm_api
 
 # --- Search Type Constants ---
 SEARCH_TYPES = {

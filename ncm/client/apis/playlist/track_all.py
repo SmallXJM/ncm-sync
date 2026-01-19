@@ -2,7 +2,7 @@
 
 from typing import Union
 from ncm.client import APIResponse
-from ncm.api import ncm_api
+from ncm.client.decorators import ncm_api
 from ncm.client.apis import playlist
 
 from ncm.client.apis import song

@@ -1,4 +1,4 @@
-"""Service decorators for NCM ncm layer endpoints."""
+"""Service decorators for NCM server endpoints."""
 
 from functools import wraps
 from typing import Callable, List
