@@ -37,7 +37,6 @@ class SubscriptionSettings(BaseModel):
     embed_cover: bool = Field(default=True)
     embed_lyrics: bool = Field(default=True)
     filename: str = Field(default=r"{artist} - {title}")
-    filename: str = Field(default=r"{artist} - {title}")
     # 歌单下载目录
     music_dir_playlist: str = Field(default=r"歌单/{user_name}/{playlist_name}")
 
@@ -47,7 +46,7 @@ class NcmConfig(BaseModel):
     subscription: SubscriptionSettings = Field(default_factory=SubscriptionSettings)
 
 
-from ncm.infrastructure.utils.path import get_data_path, normalize_path
+from ncm.core.path import get_data_path, normalize_path
 
 class ConfigManager:
     def __init__(self, path: Optional[str] = None):

@@ -17,7 +17,7 @@ import argparse
 import re
 from pathlib import Path
 from ncm.core.logging import setup_logging, get_logger
-from ncm.infrastructure.utils.path import get_app_base
+from ncm.core.path import get_app_base
 
 logger = get_logger(__name__)
 
@@ -65,7 +65,7 @@ def setup_environment():
 
 def ensure_config():
     """Ensure default configuration exists."""
-    from ncm.infrastructure.config import get_config_manager
+    from ncm.core.config import get_config_manager
 
     cfgm = get_config_manager()
     cfgm.ensure_loaded_sync()

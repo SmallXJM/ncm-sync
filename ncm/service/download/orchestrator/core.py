@@ -8,11 +8,11 @@ from ncm.data.models.download_task import DownloadTask
 from ncm.data.models.download_job import DownloadJob
 from ncm.data.repositories.async_download_task_repo import AsyncDownloadTaskRepository
 from ncm.data.repositories.async_download_job_repo import AsyncDownloadJobRepository
-from ncm.infrastructure.utils.path import sanitize_filename
+from ncm.core.path import sanitize_filename
 from ncm.service.download.service import AsyncJobService
 from ncm.data.async_session import get_uow_factory
 from ncm.service.download.models import get_task_cache_registry
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 from ..downloader import AudioDownloader
 from ..metadata import MetadataProcessor
 from ..storage import StorageManager

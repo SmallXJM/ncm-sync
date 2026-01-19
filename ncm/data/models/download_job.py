@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from ncm.data.engine import Base
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 
 
 class DownloadJob(Base):

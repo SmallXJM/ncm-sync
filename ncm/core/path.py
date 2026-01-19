@@ -12,7 +12,7 @@ Usage Guide:
    - In Frozen: The directory containing the executable.
 
    ```python
-   from ncm.infrastructure.utils.path import get_app_base
+   from ncm.core.path import get_app_base
    root = get_app_base()
    ```
 
@@ -21,7 +21,7 @@ Usage Guide:
    (e.g., config files, databases, logs, downloads).
 
    ```python
-   from ncm.infrastructure.utils.path import get_data_path
+   from ncm.core.path import get_data_path
    config_path = get_data_path("config/settings.json")
    ```
 
@@ -31,7 +31,7 @@ Usage Guide:
    - In Frozen: Resolves from `sys._MEIPASS` (temp directory).
 
    ```python
-   from ncm.infrastructure.utils.path import get_static_path
+   from ncm.core.path import get_static_path
    template_path = get_static_path("templates/index.html")
    ```
 
@@ -41,7 +41,7 @@ Usage Guide:
    - If path has no extension, it creates the directory itself.
 
    ```python
-   from ncm.infrastructure.utils.path import prepare_path
+   from ncm.core.path import prepare_path
    prepare_path("downloads/music/song.mp3") # Creates downloads/music/
    ```
 
@@ -49,7 +49,7 @@ Usage Guide:
    Use `sanitize_filename(name)` to make strings safe for use as filenames.
 
    ```python
-   from ncm.infrastructure.utils.path import sanitize_filename
+   from ncm.core.path import sanitize_filename
    safe_name = sanitize_filename("Artist: Title?") # -> "Artist_ Title_"
    ```
 """
@@ -87,9 +87,9 @@ def get_app_base() -> Path:
         # PyInstaller: executable is in the root
         return Path(sys.executable).parent.resolve()
     else:
-        # Development: this file is in ncm/infrastructure/utils/path.py
-        # root is 4 levels up: ncm/infrastructure/utils/ -> ncm/infrastructure/ -> ncm/ -> root
-        return Path(__file__).resolve().parents[3]
+        # Development: this file is in ncm/core/path.py
+        # root is 3 levels up: ncm/core/ -> ncm/ -> root
+        return Path(__file__).resolve().parents[2]
 
 
 def get_static_path(relative_path: PathLike) -> Path:

@@ -2,7 +2,7 @@ from dataclasses import replace
 
 from ncm.client import CryptoType, APIResponse, _create_options
 from ncm.client import request
-from ncm.infrastructure.utils import cookie_list_to_str
+from ncm.core.tools import cookie_list_to_str
 from ncm.api import ncm_api
 
 

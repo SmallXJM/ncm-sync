@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import HTTPException
 from ncm.core.logging import get_logger
-from ncm.infrastructure.utils.path import get_static_path
+from ncm.core.path import get_static_path
 
 logger = get_logger(__name__)
 
@@ -12,15 +12,7 @@ def register_vue_routes(app: FastAPI):
     """
     Register Vue SPA routes and static files.
     """
-    # ---------------------
-    # Vue SPA mount
-    # ---------------------
 
-    # Calculate project root from current file location:
-    # .../ncm/infrastructure/http/routing/vue_router.py -> .../ncm-sync
-
-    # PROJECT_ROOT = BASE_DIR.parents[3]  # routing -> http -> infrastructure -> ncm -> ncm-sync
-    # VUE_DIST = PROJECT_ROOT / "web" / "dist"
     VUE_DIST = get_static_path("web/dist")
     VUE_ASSETS = VUE_DIST / "assets"
     

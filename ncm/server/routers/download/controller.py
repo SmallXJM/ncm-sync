@@ -13,7 +13,7 @@ from ncm.service.download.orchestrator import DownloadOrchestrator, DownloadProc
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger
 from ncm.api import ncm_service, ncm_ws_service
-from ncm.infrastructure.config import get_config_manager
+from ncm.core.config import get_config_manager
 
 logger = get_logger(__name__)
 

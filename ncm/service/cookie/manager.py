@@ -15,7 +15,7 @@ from ncm.data import AccountRepository
 from ncm.data.session import get_session
 from ncm.data.async_session import get_uow_factory
 from ncm.data.repositories.async_account_repo import AsyncAccountRepository
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 from ncm.service.cookie.models import SessionInfo
 
 logger = logging.getLogger(__name__)

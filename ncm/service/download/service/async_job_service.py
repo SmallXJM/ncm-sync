@@ -5,7 +5,7 @@ from ncm.data.async_session import get_uow_factory
 from ncm.data.models import DownloadJob
 from ncm.data.repositories.async_download_task_repo import AsyncDownloadTaskRepository
 from ncm.data.repositories.async_download_job_repo import AsyncDownloadJobRepository
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 
 class AsyncJobService:
     def __init__(self, db_url: Optional[str] = None):

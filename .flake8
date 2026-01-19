@@ -4,6 +4,7 @@ exclude =
     .venv,
     __pycache__,
     build,
+    build-env,
     dist
 
 # 最大行长度

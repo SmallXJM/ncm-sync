@@ -4,7 +4,7 @@ import uuid
 from typing import List, Optional, Dict, Any
 from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 from ..models.account import Account
 from ..models.account_session import AccountSession
 

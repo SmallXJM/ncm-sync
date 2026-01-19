@@ -4,7 +4,7 @@ from typing import Optional, List
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from ncm.data.models.account_session import AccountSession
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 
 
 class AsyncAccountRepository:

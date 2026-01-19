@@ -31,7 +31,7 @@ from ncm.service.download.models import get_task_cache_registry
 from ncm.service.download.orchestrator import DownloadOrchestrator
 from ncm.service.download.service import AsyncJobService
 from ncm.service.download.storage.manager import StorageManager
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 
 logger = get_logger(__name__)
 
@@ -275,7 +275,7 @@ class DownloadProcess:
                     )
                     
                     # 确保目标目录存在
-                    from ncm.infrastructure.utils.path import prepare_path
+                    from ncm.core.path import prepare_path
                     prepare_path(target_path.parent)
                     
                     shutil.copy2(source_task.file_path, str(target_path))  # 复制文件

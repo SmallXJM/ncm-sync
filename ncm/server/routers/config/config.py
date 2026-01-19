@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 class ConfigController:
     def __init__(self):
-        from ncm.infrastructure.config import get_config_manager
+        from ncm.core.config import get_config_manager
         self._cfgm = get_config_manager()
 
     @ncm_service("/ncm/config", ["GET"])

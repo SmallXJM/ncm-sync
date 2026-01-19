@@ -7,7 +7,7 @@ from ncm.data.repositories.async_download_job_repo import AsyncDownloadJobReposi
 from ncm.data.models.download_task import TaskProgress
 from ncm.data.models.download_job import DownloadJob
 from ncm.data.models.download_task import DownloadTask
-from ncm.infrastructure.utils.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK
 
 
 
