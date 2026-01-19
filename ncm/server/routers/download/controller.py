@@ -12,7 +12,7 @@ from ncm.server.routers.download.task import DownloadControllerTask
 from ncm.service.download.orchestrator import DownloadOrchestrator, DownloadProcess
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger
-from ncm.infrastructure.http import ncm_service, ncm_ws_service
+from ncm.api import ncm_service, ncm_ws_service
 from ncm.infrastructure.config import get_config_manager
 
 logger = get_logger(__name__)

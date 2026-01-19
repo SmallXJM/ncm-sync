@@ -3,7 +3,7 @@ from dataclasses import replace
 from ncm.client import CryptoType, APIResponse, _create_options
 from ncm.client import request
 from ncm.infrastructure.utils import cookie_list_to_str
-from ncm.infrastructure.http.decorators import ncm_api
+from ncm.api import ncm_api
 
 
 @ncm_api("/api/login/status", ["GET", "POST"])

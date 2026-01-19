@@ -9,7 +9,7 @@ from ncm.infrastructure.db.session import get_session
 from ncm.client.apis.user import login
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger
-from ncm.infrastructure.http import ncm_service
+from ncm.api import ncm_service
 
 logger = get_logger(__name__)
 

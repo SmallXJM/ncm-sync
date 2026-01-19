@@ -98,7 +98,7 @@ def start_server(host: str, port: int, debug: bool):
     import uvicorn
 
     uvicorn.run(
-        "ncm.infrastructure.http.app:create_app",
+        "ncm.server.app:create_app",
         factory=True,
         host=host,
         port=port,

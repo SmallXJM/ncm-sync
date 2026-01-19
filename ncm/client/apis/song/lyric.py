@@ -3,7 +3,7 @@
 from typing import Union
 from ncm.client import CryptoType, APIResponse, _create_options
 from ncm.client import request
-from ncm.infrastructure.http.decorators import ncm_api
+from ncm.api import ncm_api
 
 
 @ncm_api("/api/lyric", ["GET", "POST"])

@@ -1,6 +1,4 @@
-# -*- coding:utf-8 -*-
-# @Author: 
-# @Date: 2025/12/23 12:35
-# @File: __init__.py
-# @Describle: 
-# =====================
+from ncm.api.decorators import ncm_api
+from ncm.api.decorators import ncm_service, ncm_ws_service
+
+__all__ = ["ncm_api", "ncm_service", "ncm_ws_service"]
