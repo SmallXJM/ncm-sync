@@ -4,6 +4,7 @@ from typing import AsyncIterator, Callable, Optional
 import os
 from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from ncm.constants import DATABASE_NAME
 
 # Patch aiosqlite threads to be daemon threads to prevent shutdown hangs
 try:
@@ -70,7 +71,7 @@ def make_uow_factory(session_factory: async_sessionmaker[AsyncSession]) -> Calla
     return _factory
 
 # Unified DB URL management via environment variable
-_DEFAULT_DB_URL = os.getenv("NCM_DB_URL", "sqlite+aiosqlite:///ncm_data.db")
+_DEFAULT_DB_URL = os.getenv("NCM_DB_URL", f"sqlite+aiosqlite:///{DATABASE_NAME}")
 
 def get_uow_factory(db_url: Optional[str] = None) -> Callable[[], UnitOfWork]:
     """

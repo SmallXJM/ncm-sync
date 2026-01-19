@@ -4,6 +4,7 @@ import os
 from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker, Session
 from .engine import get_engine
+from ncm.constants import DATABASE_NAME
 
 
 class SessionManager:
@@ -26,7 +27,7 @@ class SessionManager:
     def _get_default_db_path(self) -> str:
         """Get default database path from environment or config."""
         # 优先级：环境变量 > 配置文件 > 默认值
-        return os.getenv('NCM_DB_PATH', 'ncm_data.db')
+        return os.getenv("NCM_DB_PATH", DATABASE_NAME)
     
     @contextmanager
     def get_session(self) -> Session:
