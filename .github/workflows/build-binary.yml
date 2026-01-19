@@ -30,7 +30,7 @@ jobs:
         with:
           name: frontend-dist
           path: web/dist/
-          retention-days: 1
+          # retention-days: 1
 
   # ---------------------------------------------------------
   # 步骤 2: 跨平台打包后端 (Windows & Linux) (使用 uv 极速安装)
@@ -114,4 +114,4 @@ jobs:
         with:
           name: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}
           path: ncm-sync-${{ matrix.platform }}-${{ matrix.arch }}.${{ matrix.archive_ext }}
-          retention-days: 7
+          # retention-days: 7
