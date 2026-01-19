@@ -15,8 +15,8 @@ import os
 import shutil
 from typing import Dict, Any, List, Tuple
 
-from ncm.api.ncm.music.playlist import PlaylistController
-from ncm.api.ncm.music.song import SongController
+from ncm.server.routers.music import PlaylistController
+from ncm.server.routers.music.song import SongController
 from ncm.core.logging import get_logger
 from ncm.infrastructure.db.async_session import get_uow_factory
 from ncm.infrastructure.db.models.download_job import DownloadJob

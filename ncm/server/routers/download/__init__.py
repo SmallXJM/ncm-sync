@@ -4,6 +4,6 @@
 # @File: __init__.py
 # @Describle: 
 # =====================
-from ncm.api.ncm.download.context import DownloadContext
+from ncm.server.routers.download.context import DownloadContext
 
 __all__ = ["DownloadContext"]

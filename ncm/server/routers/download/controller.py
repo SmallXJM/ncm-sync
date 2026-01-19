@@ -2,13 +2,13 @@
 
 from fastapi import WebSocket
 
-from ncm.api.ncm.download import DownloadContext
-from ncm.api.ncm.ws import DownloadWsContext, WsRouter
-from ncm.api.ncm.download.daemon import DownloadControllerDaemon
-from ncm.api.ncm.download.dashboard import DownloadControllerDashboard
-from ncm.api.ncm.download.job import DownloadControllerJob
-from ncm.api.ncm.download.system import DownloadControllerSystem
-from ncm.api.ncm.download.task import DownloadControllerTask
+from ncm.server.routers.download import DownloadContext
+from ncm.server.websockets import DownloadWsContext, WsRouter
+from ncm.server.routers.download.daemon import DownloadControllerDaemon
+from ncm.server.routers.download.dashboard import DownloadControllerDashboard
+from ncm.server.routers.download.job import DownloadControllerJob
+from ncm.server.routers.download.system import DownloadControllerSystem
+from ncm.server.routers.download.task import DownloadControllerTask
 from ncm.service.download.orchestrator import DownloadOrchestrator, DownloadProcess
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger

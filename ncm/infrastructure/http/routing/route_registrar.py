@@ -5,6 +5,7 @@ from .module_scanner import ModuleScanner, ServiceScanner
 from .route_handlers import create_module_handler, create_service_handler
 from ncm.core.logging import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -16,7 +17,7 @@ class RouteRegistrar:
         """Initialize registrar with FastAPI app."""
         self.app = app
     
-    def register_module_routes(self, package_name: str = "ncm.client.apis") -> int:
+    def register_module_routes(self, package_name: str) -> int:
         """
         Register all module routes with @ncm_api decorator.
         
@@ -60,7 +61,7 @@ class RouteRegistrar:
         
         return registered_count
     
-    def register_service_routes(self, package_name: str = "ncm.api.ncm") -> int:
+    def register_service_routes(self, package_name: str) -> int:
         """
         Register all ncm routes with @ncm_service decorator.
         
@@ -128,32 +129,3 @@ class RouteRegistrar:
             return {"status": "ok", "message": "NCM Sync Server is running"}
         
 
-def auto_register_all_routes(app: FastAPI) -> dict:
-    """
-    Automatically register all routes (modules, services, system).
-    
-    Args:
-        app: FastAPI application instance
-        
-    Returns:
-        Dictionary with registration statistics
-    """
-    registrar = RouteRegistrar(app)
-    
-    # Register system routes first
-    registrar.register_system_routes()
-    
-    # Register module routes
-    module_count = registrar.register_module_routes()
-    
-    # Register ncm routes
-    service_count = registrar.register_service_routes()
-    
-    total_count = module_count + service_count
-    logger.debug(f"🎉 Total registered endpoints: {total_count}")
-    
-    return {
-        "modules": module_count,
-        "services": service_count,
-        "total": total_count
-    }

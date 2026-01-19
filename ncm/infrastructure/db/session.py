@@ -4,7 +4,7 @@ import os
 from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker, Session
 from .engine import get_engine
-from ncm.constants import DATABASE_NAME
+from ncm.core.constants import DATABASE_NAME
 
 
 class SessionManager:

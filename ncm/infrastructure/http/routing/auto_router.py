@@ -1,29 +1,27 @@
 """Automatic route registration system for NCM API."""
 
 from fastapi import FastAPI
-from .route_registrar import auto_register_all_routes
 
-
-def auto_register_routes(app: FastAPI, modules_package: str = "ncm.client.apis"):
+def auto_register_routes(app: FastAPI, modules_package: str):
     """
     Automatically scan and register all functions with @ncm_api decorator.
     
     Args:
         app: FastAPI application instance
-        modules_package: Package path to scan for modules (default: "ncm.modules")
+        modules_package: Package path to scan for modules
     """
     from .route_registrar import RouteRegistrar
     registrar = RouteRegistrar(app)
     return registrar.register_module_routes(modules_package)
 
 
-def auto_register_services(app: FastAPI, services_package: str = "ncm.api.ncm"):
+def auto_register_services(app: FastAPI, services_package: str):
     """
     Automatically scan and register all ncm methods with @ncm_service decorator.
     
     Args:
         app: FastAPI application instance
-        services_package: Package path to scan for services (default: "ncm.ncm")
+        services_package: Package path to scan for services
     """
     from .route_registrar import RouteRegistrar
     registrar = RouteRegistrar(app)
@@ -36,16 +34,3 @@ def register_health_check(app: FastAPI):
     registrar = RouteRegistrar(app)
     registrar.register_system_routes()
 
-
-# Backward compatibility - use the new unified function
-def auto_register_all(app: FastAPI) -> dict:
-    """
-    Automatically register all routes (modules, services, system).
-    
-    Args:
-        app: FastAPI application instance
-        
-    Returns:
-        Dictionary with registration statistics
-    """
-    return auto_register_all_routes(app)

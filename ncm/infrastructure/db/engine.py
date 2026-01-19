@@ -1,11 +1,9 @@
 """Database engine configuration and management."""
 
-import os
-from pathlib import Path
 from sqlalchemy import create_engine, Engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from ncm.infrastructure.utils.path import prepare_path
-from ncm.constants import DATABASE_NAME
+from ncm.core.constants import DATABASE_NAME
 
 # SQLAlchemy Base for all models
 Base = declarative_base()

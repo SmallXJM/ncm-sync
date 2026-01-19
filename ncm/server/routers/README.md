@@ -26,7 +26,7 @@ Service 层专为**单实例 NAS Docker 服务**设计，简化了 Cookie 管理
 - 重启后恢复上次使用的 Cookie
 
 ```python
-from ncm.api.ncm import get_cookie_service
+from ncm.server.routers import get_cookie_service
 
 # 获取服务实例
 cookie_service = get_cookie_service()
@@ -85,7 +85,7 @@ async def my_simple_call(**kwargs):
 #### AuthService - 认证服务
 
 ```python
-from ncm.api.ncm import AuthService
+from ncm.server.routers import AuthService
 
 auth_service = AuthService()
 
@@ -109,7 +109,7 @@ local_status = auth_service.get_local_login_status()
 #### MusicService - 音乐服务
 
 ```python
-from ncm.api.ncm import MusicService
+from ncm.server.routers import MusicService
 
 music_service = MusicService()
 
@@ -136,7 +136,7 @@ download_info = await music_service.prepare_download_batch(
 #### UserService - 用户服务
 
 ```python
-from ncm.api.ncm import UserService
+from ncm.server.routers import UserService
 
 user_service = UserService()
 

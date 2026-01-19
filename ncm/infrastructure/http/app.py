@@ -21,6 +21,7 @@ from ncm.infrastructure.db.async_session import dispose_async_engine
 from ncm.infrastructure.db.engine import close_engine
 from ncm.client.protocol.session import close_session
 from ncm.core.logging import get_logger, setup_logging
+from ncm.core.constants import PACKAGE_CLIENT_APIS, PACKAGE_SERVER_ROUTERS
 
 logger = get_logger(__name__)
 
@@ -159,10 +160,10 @@ def create_app(log_level: int = None) -> FastAPI:
     register_health_check(app)
     
     # Automatically register all NCM API routes
-    auto_register_routes(app, "ncm.client.apis")
+    auto_register_routes(app, PACKAGE_CLIENT_APIS)
     
     # Automatically register all ncm routes
-    auto_register_services(app, "ncm.api.ncm")
+    auto_register_services(app, PACKAGE_SERVER_ROUTERS)
     
     # Local music file routes (no NCM external requests)
     register_local_music_routes(app)

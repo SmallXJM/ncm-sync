@@ -76,7 +76,7 @@ class DownloadOrchestrator:
     def song_controller(self):
         """懒加载歌曲控制器"""
         if self._song_controller is None:
-            from ncm.api.ncm.music.song import SongController
+            from ncm.server.routers.music.song import SongController
             self._song_controller = SongController()
         return self._song_controller
     
@@ -84,7 +84,7 @@ class DownloadOrchestrator:
     def playlist_controller(self):
         """懒加载歌单控制器"""
         if self._playlist_controller is None:
-            from ncm.api.ncm.music.playlist import PlaylistController
+            from ncm.server.routers.music import PlaylistController
             self._playlist_controller = PlaylistController()
         return self._playlist_controller
 

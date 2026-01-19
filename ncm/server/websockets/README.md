@@ -27,7 +27,7 @@
 2. 实现一个模块类：
 
 ```python
-from ncm.api.ncm.ws.base import DownloadWsContext, WsModule, WsModuleRegistry
+from ncm.server.websockets.base import DownloadWsContext, WsModule, WsModuleRegistry
 
 
 class ExampleWsModule:

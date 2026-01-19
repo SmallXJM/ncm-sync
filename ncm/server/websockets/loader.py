@@ -7,6 +7,9 @@ from typing import Dict
 
 from ncm.core.logging import get_logger
 from .base import WsModuleRegistry
+from ncm.core.constants import PACKAGE_SERVER_WEBSOCKETS
+
+
 
 logger = get_logger(__name__)
 
@@ -14,7 +17,7 @@ _LOADED_MODULES: Dict[str, ModuleType] = {}
 
 
 def load_ws_modules(registry: WsModuleRegistry, reload: bool = False) -> None:
-    package_name = "ncm.api.ncm.ws"
+    package_name = PACKAGE_SERVER_WEBSOCKETS
     try:
         package = importlib.import_module(package_name)
     except Exception as exc:
