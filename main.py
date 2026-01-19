@@ -79,13 +79,13 @@ def ensure_config():
 
 def init_database():
     """Initialize database session and engine."""
-    from ncm.infrastructure.db.session import initialize_session_manager
+    from ncm.data.session import initialize_session_manager
     initialize_session_manager()
 
 
 def close_database():
     """Close database engine."""
-    from ncm.infrastructure.db.engine import close_engine
+    from ncm.data.engine import close_engine
     try:
         close_engine()
         logger.info("主进程资源已释放")

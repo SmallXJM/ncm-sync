@@ -3,7 +3,7 @@
 from typing import Optional
 
 from ncm.server.routers.download import DownloadContext
-from ncm.infrastructure.db.models.download_task import TaskProgress
+from ncm.data.models.download_task import TaskProgress
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger
 

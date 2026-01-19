@@ -4,8 +4,8 @@ from typing import Dict, Any, Optional
 
 from ncm.service.auth import AuthenticationService
 from ncm.service.cookie import get_cookie_manager, with_cookie
-from ncm.infrastructure.db import AccountRepository
-from ncm.infrastructure.db.session import get_session
+from ncm.data import AccountRepository
+from ncm.data.session import get_session
 from ncm.client.apis.user import login
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger

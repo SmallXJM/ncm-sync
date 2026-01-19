@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from typing import Optional
-from ncm.infrastructure.db.async_session import get_uow_factory
-from ncm.infrastructure.db.repositories.async_download_task_repo import AsyncDownloadTaskRepository
-from ncm.infrastructure.db.repositories.async_download_job_repo import AsyncDownloadJobRepository
+from ncm.data.async_session import get_uow_factory
+from ncm.data.repositories.async_download_task_repo import AsyncDownloadTaskRepository
+from ncm.data.repositories.async_download_job_repo import AsyncDownloadJobRepository
 
 class DownloadAsyncService:
     def __init__(self, db_url: Optional[str] = None):

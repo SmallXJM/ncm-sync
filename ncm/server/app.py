@@ -17,8 +17,8 @@ from .routing.auto_router import (
 )
 from .routing.vue_router import register_vue_routes
 from .routing.local_music_router import register_local_music_routes
-from ncm.infrastructure.db.async_session import dispose_async_engine
-from ncm.infrastructure.db.engine import close_engine
+from ncm.data.async_session import dispose_async_engine
+from ncm.data.engine import close_engine
 from ncm.client.protocol.session import close_session
 from ncm.core.logging import get_logger, setup_logging
 from ncm.core.constants import PACKAGE_CLIENT_APIS, PACKAGE_SERVER_ROUTERS

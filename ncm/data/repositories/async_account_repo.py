@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Optional, List, Dict, Any
-from sqlalchemy import select, desc, and_
+from typing import Optional, List
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from ncm.infrastructure.db.models.account import Account
-from ncm.infrastructure.db.models.account_session import AccountSession
+from ncm.data.models.account_session import AccountSession
 from ncm.infrastructure.utils.time import UTC_CLOCK
 
 

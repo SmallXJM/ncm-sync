@@ -3,7 +3,7 @@
 import logging
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from ncm.infrastructure.db.models.download_task import DownloadTask
+from ncm.data.models.download_task import DownloadTask
 
 logger = logging.getLogger(__name__)
 

@@ -18,13 +18,13 @@ from typing import Dict, Any, List, Tuple
 from ncm.server.routers.music import PlaylistController
 from ncm.server.routers.music.song import SongController
 from ncm.core.logging import get_logger
-from ncm.infrastructure.db.async_session import get_uow_factory
-from ncm.infrastructure.db.models.download_job import DownloadJob
-from ncm.infrastructure.db.models.download_task import DownloadTask
-from ncm.infrastructure.db.repositories.async_download_job_repo import (
+from ncm.data.async_session import get_uow_factory
+from ncm.data.models.download_job import DownloadJob
+from ncm.data.models.download_task import DownloadTask
+from ncm.data.repositories.async_download_job_repo import (
     AsyncDownloadJobRepository,
 )
-from ncm.infrastructure.db.repositories.async_download_task_repo import (
+from ncm.data.repositories.async_download_task_repo import (
     AsyncDownloadTaskRepository,
 )
 from ncm.service.download.models import get_task_cache_registry

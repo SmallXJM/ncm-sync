@@ -4,8 +4,8 @@ from typing import Optional, List
 from sqlalchemy import select, delete, func, or_
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from ncm.infrastructure.db.models.download_task import DownloadTask
-from ncm.infrastructure.db.models.download_job import DownloadJob
+from ncm.data.models.download_task import DownloadTask
+from ncm.data.models.download_job import DownloadJob
 
 
 class AsyncDownloadTaskRepository:

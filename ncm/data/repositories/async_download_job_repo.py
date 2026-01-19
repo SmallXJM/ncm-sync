@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from ncm.infrastructure.db.models.download_job import DownloadJob
+from ncm.data.models.download_job import DownloadJob
 
 class AsyncDownloadJobRepository:
     async def get_by_id(self, session: AsyncSession, job_id: int) -> Optional[DownloadJob]:

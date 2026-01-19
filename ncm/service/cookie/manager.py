@@ -11,10 +11,10 @@ Cookie management business logic.
 import logging
 from typing import Optional, List
 from datetime import datetime
-from ncm.infrastructure.db import AccountRepository
-from ncm.infrastructure.db.session import get_session
-from ncm.infrastructure.db.async_session import get_uow_factory
-from ncm.infrastructure.db.repositories.async_account_repo import AsyncAccountRepository
+from ncm.data import AccountRepository
+from ncm.data.session import get_session
+from ncm.data.async_session import get_uow_factory
+from ncm.data.repositories.async_account_repo import AsyncAccountRepository
 from ncm.infrastructure.utils.time import UTC_CLOCK
 from ncm.service.cookie.models import SessionInfo
 
