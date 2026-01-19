@@ -125,19 +125,8 @@ class RouteRegistrar:
         @self.app.get("/health", tags=["System"])
         async def health_check():
             """Health check endpoint."""
-            return {"status": "ok", "message": "NCM API Server is running"}
+            return {"status": "ok", "message": "NCM Sync Server is running"}
         
-        # @self.app.get("/", tags=["System"])
-        # async def root():
-        #     """Root endpoint with basic information."""
-        #     return {
-        #         "name": "NCM Python API Server",
-        #         "version": "0.1.0",
-        #         "description": "网易云音乐 Python API 服务器",
-        #         "docs": "/docs",
-        #         "health": "/health"
-        #     }
-
 
 def auto_register_all_routes(app: FastAPI) -> dict:
     """

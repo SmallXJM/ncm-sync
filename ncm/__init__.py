@@ -1,8 +1,7 @@
 """
-NCM (Netease Cloud Music) Python API
+NCM Sync - 音乐同步工具
 
-A Python implementation of the Netease Cloud Music API that provides a clean,
-Pythonic interface for accessing Netease Cloud Music services.
+
 """
 
 from .core.exceptions import (
@@ -16,7 +15,7 @@ from .core.exceptions import (
 )
 
 __version__ = "0.1.0"
-__author__ = "NCM Python Team"
+__author__ = "smallxjm"
 
 __all__ = [
     # "Client",

@@ -191,7 +191,7 @@ if __name__ == "__main__":
     
     app = create_app()
     
-    print("🎵 Starting NCM Python API Server...")
+    print("🎵 Starting NCM Sync Server...")
     print("📖 API Documentation: http://localhost:8000/docs")
     print("🔍 Alternative Docs: http://localhost:8000/redoc")
     print("❤️  Health Check: http://localhost:8000/health")
