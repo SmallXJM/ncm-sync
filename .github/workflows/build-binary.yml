@@ -83,6 +83,7 @@ jobs:
       - name: Install Dependencies
         # 使用 --system 或者 uv venv 均可，打包环境推荐直接使用 uv pip
         run: |
+          uv venv
           uv pip install pyinstaller
           if [ -f requirements.txt ]; then
             uv pip install -r requirements.txt
