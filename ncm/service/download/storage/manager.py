@@ -55,6 +55,11 @@ class StorageManager:
             # 确保目标目录存在
             prepare_path(final_path.parent)
 
+            # 检查目标文件是否存在，若存在则添加task_id后缀
+            if final_path.exists():
+                final_path = final_path.with_name(f"{final_path.stem}_{task_id}{final_path.suffix}")
+                logger.info(f"Target file exists, renaming to: {final_path.name}")
+
             # 移动文件到最终位置
             temp_path = Path(task.file_path)
             shutil.move(str(temp_path), str(final_path))

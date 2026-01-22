@@ -533,7 +533,7 @@ class DownloadOrchestrator:
             if down_level == 'none':
                 raise RuntimeError("当前用户没有该音乐的下载权限")
             else:
-                logger.debug(f"{task.get_music_name} 目标下载音质{task.quality or 'lossless'}，实际下载音质{down_level}")
+                logger.debug(f"歌曲ID{task.music_id} 目标下载音质{task.quality or 'lossless'}，实际下载音质{down_level}")
             url_data = await cache.ensure_play_url(
                 self.song_controller.song_url_v1,
                 level=target_quality,
@@ -542,7 +542,8 @@ class DownloadOrchestrator:
             safe_title = sanitize_filename(title)
             safe_artist = sanitize_filename(artist)
             file_format = url_data.get("type", "mp3")
-            filename = f"{safe_artist} - {safe_title}.{file_format}"
+            # 使用包含task_id的唯一文件名以避免并发下载时的临时文件冲突
+            filename = f"{safe_artist} - {safe_title}_{task_id}.{file_format}"
             temp_file_path = str(self.downloads_dir / filename)
             await self.task_repo.update(uow.session, task_id,
                 quality=url_data["level"],
