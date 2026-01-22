@@ -21,25 +21,32 @@
                       </div>
                     </div>
 
-                    <div class="account-details">
-                      <h3 class="account-name">{{ currentSession.nickname || '未知用户' }}</h3>
-                      <p class="account-id text-secondary">ID: {{ currentSession.user_id }}</p>
-                      <p class="login-type text-tertiary">
+
+
+                    <div class="account-details" style="flex: 1;">
+                      <h3 class="account-name" style="margin: 0;">{{ currentSession.nickname || '未知用户' }}</h3>
+                      <p class="account-id text-secondary" style="margin: 4px 0;">ID: {{ currentSession.user_id }}</p>
+                      <p class="login-type text-tertiary" style="margin: 0;">
                         登录方式: {{ getLoginTypeText(currentSession?.login_type) }}
                       </p>
-
-                      <div class="account-actions mt-md">
-                        <button class="btn btn-secondary btn-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
-                          <div v-if="isRefreshing" class="loading-spinner"></div>
-                          <span v-else>刷新状态</span>
-                        </button>
-
-                        <button class="btn btn-danger btn-sm" @click="logout" :disabled="isLoggingOut">
-                          <div v-if="isLoggingOut" class="loading-spinner"></div>
-                          <span v-else>退出登录</span>
+                        <button class="btn btn-secondary btn-sm mt-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
+                          <template v-if="isRefreshing">
+                            <div class="loading-spinner"></div>
+                          </template>
+                          <template v-else>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                            </svg>
+                            <span>登录状态</span>
+                          </template>
                         </button>
                       </div>
-                    </div>
+
+
+
+
                   </div>
                 </div>
 
@@ -56,9 +63,18 @@
               <div class="glass-card">
                 <div class="section-header">
                   <h2 class="section-title">会话列表</h2>
-                  <button class="btn btn-secondary btn-sm" @click="refreshSessions" :disabled="isRefreshingSessions">
+                  <button class="btn btn-secondary btn-sm btn-subscribe" @click="refreshSessions"
+                    :disabled="isRefreshingSessions">
                     <div v-if="isRefreshingSessions" class="loading-spinner"></div>
-                    <span v-else>刷新</span>
+
+                    <template v-else>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                      </svg>
+                      <span>刷新</span>
+                    </template>
                   </button>
                 </div>
 
@@ -383,26 +399,6 @@ async function refreshAccountStatus(): Promise<void> {
   }
 }
 
-async function logout(): Promise<void> {
-  if (!confirm('确定要退出当前账号吗？')) return
-
-  try {
-    isLoggingOut.value = true
-    const current = sessions.value.find(s => s.is_current)
-    if (current) {
-      await invalidateSession(current.id)
-    }
-
-    currentSession.value = null
-    toast.show('已退出登录', 'success')
-  } catch (error) {
-    console.error('Failed to logout:', error)
-    toast.show('退出登录失败', 'error')
-  } finally {
-    isLoggingOut.value = false
-  }
-}
-
 async function startQRLogin(): Promise<void> {
   try {
     isStartingQR.value = true
@@ -709,9 +705,10 @@ function formatTime(timeString?: string): string {
   /* 限制高度，超出显示滚动条 */
   overflow-y: auto;
   /* 增加左右和底部的 padding，数值通常略大于阴影的扩散半径 (blur-radius) */
-  padding: 0.5rem; 
-  margin: -0.5rem; /* 使用负外边距抵消 padding，保持视觉上的对齐 */
-  padding-right: 8px; /* 为滚动条预留空间 */
+  padding: 0.5rem;
+  margin: -0.5rem;
+  /* 使用负外边距抵消 padding，保持视觉上的对齐 */
+  padding-right: 8px;
+  /* 为滚动条预留空间 */
 }
-
 </style>

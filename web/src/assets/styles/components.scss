@@ -56,10 +56,10 @@
   transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
-.login-method:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-surface-hover);
-}
+// .login-method:hover {
+//   border-color: var(--border-hover);
+//   background: var(--bg-surface-hover);
+// }
 
 .method-header h3 {
   font-size: 1.2rem;
@@ -207,10 +207,10 @@
   transition: 0.3s ease;
 }
 
-.session-item:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--text-secondary);
-}
+// .session-item:hover {
+//   background: var(--bg-surface-hover);
+//   border-color: var(--text-secondary);
+// }
 
 .session-current {
   // border-color: var(--accent-color);
