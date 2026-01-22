@@ -525,9 +525,9 @@ class DownloadOrchestrator:
 
         async with self.uow_factory() as uow:
             if detail.privilege.is_copyright_restricted:
-                raise RuntimeError("由于版权保护，您所在的地区暂时无法使用")
+                raise RuntimeError("由于版权保护，用户所在的地区暂时无法使用")
             if detail.privilege.is_grey:
-                raise RuntimeError("灰色歌曲")
+                raise RuntimeError("无音乐版权")
             
             down_level = detail.privilege.resolve_dl_level(task.quality or 'lossless')
             if down_level == 'none':
