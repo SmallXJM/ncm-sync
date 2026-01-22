@@ -10,8 +10,7 @@ class AccountSession(Base):
     __tablename__ = 'account_sessions'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    session_id = Column(String(100), unique=True, nullable=False, index=True)  # Internal session identifier
-    account_id = Column(String(50), ForeignKey('accounts.account_id'), nullable=False, index=True)
+    account_id = Column(String(50), nullable=False, index=True)
     cookie = Column(Text, nullable=False)  # NCM session cookie
     login_type = Column(String(20), nullable=False)  # qr, phone, email, cookie_upload
     is_valid = Column(Boolean, default=True)  # Whether still usable
@@ -26,7 +25,6 @@ class AccountSession(Base):
         """Convert to dictionary."""
         return {
             'id': self.id,
-            'session_id': self.session_id,
             'account_id': self.account_id,
             'has_cookie': bool(self.cookie),
             'cookie': self.cookie,
@@ -42,4 +40,4 @@ class AccountSession(Base):
     
     def __repr__(self):
         """String representation."""
-        return f"<AccountSession(session_id='{self.session_id}', account_id='{self.account_id}', login_type='{self.login_type}', is_valid={self.is_valid})>"
+        return f"<AccountSession(id={self.id}, account_id='{self.account_id}', login_type='{self.login_type}', is_valid={self.is_valid})>"

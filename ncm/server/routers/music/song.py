@@ -4,7 +4,7 @@ import logging
 from typing import List, Union
 from ncm.client import APIResponse
 from ncm.server.decorators import ncm_service
-from ncm.service.cookie.decorators import with_cookie
+from ncm.service.cookie import with_cookie
 from ncm.client.apis import song
 
 logger = logging.getLogger(__name__)

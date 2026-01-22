@@ -5,7 +5,7 @@ import time
 from typing import Union
 from ncm.client import APIResponse
 from ncm.server.decorators import ncm_service
-from ncm.service.cookie.decorators import with_cookie
+from ncm.service.cookie import with_cookie, get_cookie_manager
 from ncm.client.apis import user
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class UserController:
         session = kwargs["_session"]
 
         if uid is None or uid == "":  # 默认查找本cookie的歌单
-            uid = session["account_id"]
+            uid = session["user_id"]
 
         # Cache check for short-term deduplication (2 seconds)
         cache_key = f"{uid}_{limit}_{offset}_{include_video}"

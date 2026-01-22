@@ -6,23 +6,31 @@ export const API_CONFIG = {
   },
 } as const
 
+// [2026-01-22 10:14:33,283] Controller: [POST] /ncm/user/qr/check -> AuthController.check_qr_login
+// [2026-01-22 10:14:33,284] Controller: [GET, POST] /ncm/user/status -> AuthController.get_login_status
+// [2026-01-22 10:14:33,285] Controller: [POST] /ncm/user/qr/start -> AuthController.start_qr_login
+// [2026-01-22 10:14:33,286] Controller: [POST] /ncm/user/cookie/upload -> AuthController.upload_cookie
+// [2026-01-22 10:14:33,286] Controller: [POST] /ncm/user/session/invalidate -> ManagementController.invalidate_session
+// [2026-01-22 10:14:33,287] Controller: [GET] /ncm/user/sessions/list -> ManagementController.list_all_sessions
+// [2026-01-22 10:14:33,287] Controller: [POST] /ncm/user/switch -> ManagementController.switch_session
+// [2026-01-22 10:14:33,288] Controller: [GET] /ncm/user/current -> ProfileController.get_current_account_info
+// [2026-01-22 10:14:33,289] Controller: [GET, POST] /ncm/user/profile -> ProfileController.get_user_profile
+
 export const NCM_API = {
   USER: {
-    CURRENT: '/ncm/user/current',
-    LIST: '/ncm/user/list',
-    SWITCH: '/ncm/user/switch',
-    SESSIONS_LIST: '/ncm/user/sessions/list',
-    SESSION_INVALIDATE: '/ncm/user/session/invalidate',
-    QR_START: '/ncm/user/qr/start',
-    QR_CHECK: '/ncm/user/qr/check',
-    COOKIE_UPLOAD: '/ncm/user/cookie/upload',
-    STATUS: '/ncm/user/status',
-    AUTH: {
-      QR_START: '/ncm/user/qr/start',
-      QR_CHECK: '/ncm/user/qr/check',
-      COOKIE_UPLOAD: '/ncm/user/cookie/upload',
-      STATUS: '/ncm/user/status',
+    QR: {
+      START: '/ncm/user/qr/start',
+      CHECK: '/ncm/user/qr/check',
     },
+    SESSION: {
+      CURRENT: '/ncm/user/session/current',
+      UPLOAD: '/ncm/user/session/upload',
+      SWITCH: '/ncm/user/session/switch',
+      INVALIDATE: '/ncm/user/session/invalidate',
+      LIST: '/ncm/user/sessions/list',
+    },
+    STATUS: '/ncm/user/status',
+    PROFILE: '/ncm/user/profile',
   },
   MUSIC: {
     USER: {

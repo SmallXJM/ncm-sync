@@ -51,7 +51,7 @@ if cookie:
 **自动 Cookie 管理装饰器**：
 
 ```python
-from ncm.service.cookie.decorators import with_cookie, with_cookie
+from ncm.service.cookie import with_cookie, with_cookie
 
 
 @with_cookie

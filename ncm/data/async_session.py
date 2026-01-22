@@ -29,6 +29,14 @@ class UnitOfWork:
         self.session = self._session_factory()
         return self
 
+    async def commit(self):
+        """Commit the current transaction."""
+        await self.session.commit()
+
+    async def rollback(self):
+        """Rollback the current transaction."""
+        await self.session.rollback()
+
     async def __aexit__(self, exc_type, exc, tb):
         try:
             if exc_type is None:

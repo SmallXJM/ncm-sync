@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import threading
 import logging
 import os
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI
@@ -22,6 +23,7 @@ from ncm.data.engine import close_engine
 from ncm.client.protocol.session import close_session
 from ncm.core.logging import get_logger, setup_logging
 from ncm.core.constants import PACKAGE_CLIENT_APIS, PACKAGE_SERVER_ROUTERS
+from ncm.service.cookie import get_cookie_manager
 
 logger = get_logger(__name__)
 
@@ -35,6 +37,10 @@ async def lifespan(app: FastAPI):
     logger.info("Application startup: initializing resources...")
     try:
         # Startup logic here (if needed)
+        # 异步刷新 CookieManager 中的用户信息
+        cookie_manager = get_cookie_manager()
+        await cookie_manager.initialize()
+        
         yield
     except asyncio.CancelledError:
         # Handle cancellation gracefully
@@ -78,43 +84,46 @@ async def lifespan(app: FastAPI):
             close_engine()
         except Exception as e:
             logger.error(f"Failed to dispose sync engine: {e}")
+            
+        
+        # ChatGPT: 以下代码过度接管了 event loop 的关闭流程
 
         # Final cleanup: Cancel pending tasks and shutdown executor
-        try:
-            # 1. Log active threads for diagnosis
-            for t in threading.enumerate():
-                if t is not threading.current_thread():
-                    logger.debug(f"Active thread at shutdown: {t.name} (daemon={t.daemon})")
+        # try:
+        #     # 1. Log active threads for diagnosis
+        #     for t in threading.enumerate():
+        #         if t is not threading.current_thread():
+        #             logger.debug(f"Active thread at shutdown: {t.name} (daemon={t.daemon})")
 
-            # 2. Cancel all pending tasks
-            current_task = asyncio.current_task()
-            tasks = [t for t in asyncio.all_tasks() if t is not current_task]
-            if tasks:
-                logger.info(f"Cancelling {len(tasks)} pending async tasks...")
-                for task in tasks:
-                    task.cancel()
+        #     # 2. Cancel all pending tasks
+        #     current_task = asyncio.current_task()
+        #     tasks = [t for t in asyncio.all_tasks() if t is not current_task]
+        #     if tasks:
+        #         logger.info(f"Cancelling {len(tasks)} pending async tasks...")
+        #         for task in tasks:
+        #             task.cancel()
                 
-                # Wait briefly for tasks to acknowledge cancellation, suppressing CancelledError
-                try:
-                    await asyncio.gather(*tasks, return_exceptions=True)
-                except asyncio.CancelledError:
-                    # If we are cancelled while waiting, we can't do much more
-                    logger.debug("Gathering pending tasks was cancelled")
+        #         # Wait briefly for tasks to acknowledge cancellation, suppressing CancelledError
+        #         try:
+        #             await asyncio.gather(*tasks, return_exceptions=True)
+        #         except asyncio.CancelledError:
+        #             # If we are cancelled while waiting, we can't do much more
+        #             logger.debug("Gathering pending tasks was cancelled")
 
-            # 3. Shutdown default executor if it exists
-            loop = asyncio.get_running_loop()
-            if hasattr(loop, "_default_executor") and loop._default_executor:
-                executor = loop._default_executor
-                if isinstance(executor, ThreadPoolExecutor):
-                    logger.info("Shutting down default ThreadPoolExecutor...")
-                    # wait=False ensures we don't block if threads are stuck
-                    executor.shutdown(wait=False)
+        #     # 3. Shutdown default executor if it exists
+        #     loop = asyncio.get_running_loop()
+        #     if hasattr(loop, "_default_executor") and loop._default_executor:
+        #         executor = loop._default_executor
+        #         if isinstance(executor, ThreadPoolExecutor):
+        #             logger.info("Shutting down default ThreadPoolExecutor...")
+        #             # wait=False ensures we don't block if threads are stuck
+        #             executor.shutdown(wait=False)
                     
-        except asyncio.CancelledError:
-            # Swallow CancelledError during final cleanup to ensure graceful exit
-            logger.info("Final cleanup interrupted by cancellation")
-        except Exception as e:
-            logger.error(f"Error during final cleanup: {e}")
+        # except asyncio.CancelledError:
+        #     # Swallow CancelledError during final cleanup to ensure graceful exit
+        #     logger.info("Final cleanup interrupted by cancellation")
+        # except Exception as e:
+        #     logger.error(f"Error during final cleanup: {e}")
             
         logger.info("Application shutdown complete.")
 

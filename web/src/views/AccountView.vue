@@ -3,59 +3,136 @@
     <!-- Main Content -->
     <main>
       <div class="container">
-        <!-- Current Account Section -->
-        <section class="mb-2xl">
-          <div class="glass-card">
-            <h2 class="section-title mb-lg">当前账号</h2>
+        <div class="dashboard-grid mb-2xl">
+          <div class="dashboard-left">
+            <!-- Current Account Section -->
+            <section class="current-account-section">
+              <div class="glass-card">
+                <div v-if="currentSession" class="current-account-info">
+                  <div class="account-header">
+                    <div class="avatar-container">
+                      <div class="avatar avatar-xl">
+                        <img :src="currentSession.avatar_url || ''" :alt="currentSession.nickname || '用户头像'"
+                          @error="handleAvatarError" />
+                      </div>
+                      <div class="status-badge">
+                        <div class="status-dot" :class="getStatusClass(currentSession.is_valid)"></div>
+                        <span>{{ getStatusText(currentSession.is_valid) }}</span>
+                      </div>
+                    </div>
 
-            <div v-if="currentAccount" class="current-account-info">
-              <div class="account-header">
-                <div class="avatar-container">
-                  <div class="avatar avatar-xl">
-                    <img :src="currentAccount.avatar_url || '/default-avatar.png'"
-                      :alt="currentAccount.nickname || '用户头像'" @error="handleAvatarError" />
-                  </div>
-                  <div class="status-badge">
-                    <div class="status-dot" :class="getStatusClass(currentAccount.status)"></div>
-                    <span>{{ getStatusText(currentAccount.status) }}</span>
+
+
+                    <div class="account-details" style="flex: 1;">
+                      <h3 class="account-name" style="margin: 0;">{{ currentSession.nickname || '未知用户' }}</h3>
+                      <p class="account-id text-secondary" style="margin: 4px 0;">ID: {{ currentSession.user_id }}</p>
+                      <p class="login-type text-tertiary" style="margin: 0;">
+                        登录方式: {{ getLoginTypeText(currentSession?.login_type) }}
+                      </p>
+                        <button class="btn btn-secondary btn-sm mt-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
+                          <template v-if="isRefreshing">
+                            <div class="loading-spinner"></div>
+                          </template>
+                          <template v-else>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                            </svg>
+                            <span>登录状态</span>
+                          </template>
+                        </button>
+                      </div>
+
+
+
+
                   </div>
                 </div>
 
-                <div class="account-details">
-                  <h3 class="account-name">{{ currentAccount.nickname || '未知用户' }}</h3>
-                  <p class="account-id text-secondary">ID: {{ currentAccount.account_id }}</p>
-                  <p class="login-type text-tertiary">
-                    登录方式: {{ getLoginTypeText(currentSession?.login_type) }}
-                  </p>
-
-                  <div class="account-actions mt-md">
-                    <button class="btn btn-secondary btn-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
-                      <div v-if="isRefreshing" class="loading-spinner"></div>
-                      <span v-else>刷新状态</span>
-                    </button>
-
-                    <button class="btn btn-danger btn-sm" @click="logout" :disabled="isLoggingOut">
-                      <div v-if="isLoggingOut" class="loading-spinner"></div>
-                      <span v-else>退出登录</span>
-                    </button>
-                  </div>
+                <div v-else class="empty-state">
+                  <div class="empty-icon">👤</div>
+                  <h3>暂无登录账号</h3>
+                  <p class="text-secondary">请使用下方方式登录您的网易云音乐账号</p>
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div v-else class="empty-state">
-              <div class="empty-icon">👤</div>
-              <h3>暂无登录账号</h3>
-              <p class="text-secondary">请使用下方方式登录您的网易云音乐账号</p>
-            </div>
+            <section class="sessions-section">
+              <!-- Sessions List Section -->
+              <div class="glass-card">
+                <div class="section-header">
+                  <h2 class="section-title">会话列表</h2>
+                  <button class="btn btn-secondary btn-sm btn-subscribe" @click="refreshSessions"
+                    :disabled="isRefreshingSessions">
+                    <div v-if="isRefreshingSessions" class="loading-spinner"></div>
+
+                    <template v-else>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                      </svg>
+                      <span>刷新</span>
+                    </template>
+                  </button>
+                </div>
+
+                <div v-if="sessions.length > 0" class="sessions-list">
+                  <div v-for="session in sessions" :key="session.id" class="session-item"
+                    :class="{ 'session-current': session.is_current }">
+                    <div class="session-info">
+                      <!-- <div class="session-avatar">
+                    <div class="avatar avatar-md">
+                      <img :src="session.avatar_url || ''" :alt="session.nickname || '用户头像'"
+                        @error="handleAvatarError" />
+                    </div>
+                  </div> -->
+
+                      <div class="session-details">
+                        <h4 class="session-name">
+                          ID: {{ session.account_id }}
+                          <span v-if="session.is_current" class="current-badge">当前</span>
+                        </h4>
+                        <!-- <p class="session-id text-secondary">{{ session.account_id || session.user_id }}</p> -->
+                        <p class="session-time text-tertiary">
+                          最后使用: {{ formatTime(session.last_selected_at) }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="session-status">
+                      <div class="status-indicator" :class="session.is_valid ? 'status-online' : 'status-offline'">
+                        <div class="status-dot"></div>
+                        <span>{{ session.is_valid ? '有效' : '已失效' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="session-actions">
+                      <button v-if="!session.is_current && session.is_valid" class="btn btn-primary btn-sm"
+                        @click="switchToSession(session.id)" :disabled="isSwitchingSession">
+                        切换
+                      </button>
+
+                      <button v-if="session.is_valid" class="btn btn-danger btn-sm"
+                        @click="invalidateSession(session.id)" :disabled="isInvalidatingSession">
+                        失效
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="empty-state">
+                  <div class="empty-icon">🔐</div>
+                  <h3>暂无会话</h3>
+                  <p class="text-secondary">登录后会话信息将显示在这里</p>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
 
-        <!-- Login Methods Section -->
-        <section class="mb-2xl">
-          <div class="glass-card">
-            <h2 class="section-title mb-lg">登录方式</h2>
-
+          <!-- Login Methods Section -->
+          <section class="login-methods-section">
             <div class="login-methods">
               <!-- QR Code Login -->
               <div class="login-method">
@@ -148,71 +225,9 @@
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
 
-        <!-- Sessions List Section -->
-        <section>
-          <div class="glass-card">
-            <div class="section-header">
-              <h2 class="section-title">会话列表</h2>
-              <button class="btn btn-secondary btn-sm" @click="refreshSessions" :disabled="isRefreshingSessions">
-                <div v-if="isRefreshingSessions" class="loading-spinner"></div>
-                <span v-else>刷新</span>
-              </button>
-            </div>
-
-            <div v-if="sessions.length > 0" class="sessions-list">
-              <div v-for="session in sessions" :key="session.session_id" class="session-item"
-                :class="{ 'session-current': session.is_current }">
-                <div class="session-info">
-                  <div class="session-avatar">
-                    <div class="avatar avatar-md">
-                      <img :src="session.avatar_url || '/default-avatar.png'" :alt="session.nickname || '用户头像'"
-                        @error="handleAvatarError" />
-                    </div>
-                  </div>
-
-                  <div class="session-details">
-                    <h4 class="session-name">
-                      {{ session.nickname || '未知用户' }}
-                      <span v-if="session.is_current" class="current-badge">当前</span>
-                    </h4>
-                    <p class="session-id text-secondary">{{ session.account?.account_id }}</p>
-                    <p class="session-time text-tertiary">
-                      最后使用: {{ formatTime(session.last_selected_at) }}
-                    </p>
-                  </div>
-                </div>
-
-                <div class="session-status">
-                  <div class="status-indicator" :class="session.is_valid ? 'status-online' : 'status-offline'">
-                    <div class="status-dot"></div>
-                    <span>{{ session.is_valid ? '有效' : '已失效' }}</span>
-                  </div>
-                </div>
-
-                <div class="session-actions">
-                  <button v-if="!session.is_current && session.is_valid" class="btn btn-primary btn-sm"
-                    @click="switchToSession(session.session_id)" :disabled="isSwitchingSession">
-                    切换
-                  </button>
-
-                  <button class="btn btn-danger btn-sm" @click="invalidateSession(session.session_id)"
-                    :disabled="isInvalidatingSession">
-                    失效
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div v-else class="empty-state">
-              <div class="empty-icon">🔐</div>
-              <h3>暂无会话</h3>
-              <p class="text-secondary">登录后会话信息将显示在这里</p>
-            </div>
-          </div>
-        </section>
       </div>
     </main>
 
@@ -224,26 +239,22 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 // 直接导入服务类
 import api from '@/api'
 import { toast } from '@/utils/toast'
+import type { UserProfile } from '@/api/ncm/user'
 
 // ----------------------
 // 类型定义
 // ----------------------
-interface Account {
-  account_id: string
-  nickname?: string
-  avatar_url?: string
-  status: 'active' | 'disabled' | 'banned' | string
-}
 
 interface Session {
-  session_id: string
+  id: number
+  user_id?: string
+  account_id?: string
   login_type?: string
   nickname?: string
   avatar_url?: string
   last_selected_at?: string
   is_current?: boolean
   is_valid?: boolean
-  account?: Account
 }
 
 interface QRCode {
@@ -270,7 +281,6 @@ function getEnvelope<T>(value: unknown): ApiEnvelope<T> | null {
 // ----------------------
 // Reactive data
 // ----------------------
-const currentAccount = ref<Account | null>(null)
 const currentSession = ref<Session | null>(null)
 const sessions = ref<Session[]>([])
 const cookieInput = ref('')
@@ -285,7 +295,6 @@ const qrCode = reactive<QRCode>({
 
 // Loading states
 const isRefreshing = ref(false)
-const isLoggingOut = ref(false)
 const isStartingQR = ref(false)
 const isLoggingInWithCookie = ref(false)
 const isRefreshingSessions = ref(false)
@@ -299,8 +308,8 @@ let qrPollingTimer: number | null = null
 // ----------------------
 // Lifecycle hooks
 // ----------------------
-onMounted(() => {
-  loadCurrentAccount()
+onMounted(async () => {
+  await loadUserProfile()
   loadSessions()
 })
 
@@ -308,19 +317,25 @@ onUnmounted(() => {
   if (qrPollingTimer) clearInterval(qrPollingTimer)
 })
 
-// ----------------------
-// Methods
-// ----------------------
-async function loadCurrentAccount(): Promise<void> {
+
+async function loadUserProfile(): Promise<void> {
+
+  // Fetch profile for additional info
   try {
-    const result = await api.user.getCurrentUser()
-    const payload = getEnvelope<{ account: Account; session: Session }>(result.success ? result.data : null)
-    if (result.success && payload?.code === 200 && payload.data) {
-      currentAccount.value = payload.data.account
-      currentSession.value = payload.data.session
-    } else {
-      currentAccount.value = null
-      currentSession.value = null
+    const profileResult = await api.user.getUserProfile()
+    const profile = getEnvelope<UserProfile>(profileResult.success ? profileResult.data : null)?.data
+    const sessionResult = await api.user.getCurrentSession()
+    const session = getEnvelope<Session>(sessionResult.success ? sessionResult.data : null)?.data
+    // Update session display info
+    if (profile && session) {
+      currentSession.value = {
+        id: session?.id || 0,
+        user_id: session?.user_id,
+        login_type: session?.login_type || '',
+        nickname: profile?.nickname || '',
+        avatar_url: profile?.avatarUrl || '',
+        is_valid: session?.is_valid
+      }
     }
   } catch (error) {
     console.error('Failed to load current account:', error)
@@ -331,14 +346,30 @@ async function loadCurrentAccount(): Promise<void> {
 async function loadSessions(): Promise<void> {
   try {
     isRefreshingSessions.value = true
-    const result = await api.user.getSessionsList()
-    const payload = getEnvelope<{ sessions: Session[]; current_session_id: string }>(result.success ? result.data : null)
-    if (result.success && payload?.code === 200 && payload.data) {
-      const currentSessionId = payload.data.current_session_id
-      sessions.value = payload.data.sessions.map((session: Session) => ({
-        ...session,
-        is_current: session.session_id === currentSessionId,
-      }))
+    const result = await api.user.listAllSessions()
+    const sessionsList = getEnvelope<Session[]>(result.success ? result.data : null)?.data
+
+    if (result.success && sessionsList) {
+      // Mark current session
+      const currentId = currentSession.value?.id
+      console.log('Current Session ID:', currentId)
+
+      sessions.value = sessionsList.map(s => {
+        const isCurrent = currentId !== undefined && s.id === currentId
+        // If it's current, use the info we just fetched
+        if (isCurrent && currentSession.value) {
+          return {
+            ...s,
+            is_current: true,
+            nickname: currentSession.value.nickname,
+            avatar_url: currentSession.value.avatar_url
+          }
+        }
+        return {
+          ...s,
+          is_current: isCurrent
+        }
+      })
     }
   } catch (error) {
     console.error('Failed to load sessions:', error)
@@ -351,10 +382,10 @@ async function loadSessions(): Promise<void> {
 async function refreshAccountStatus(): Promise<void> {
   try {
     isRefreshing.value = true
-    const result = await api.auth.checkStatus()
+    const result = await api.user.getLoginStatus()
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
-      await loadCurrentAccount()
+      await loadUserProfile()
       toast.show('状态刷新成功', 'success')
     } else {
       toast.show('状态刷新失败', 'error')
@@ -367,31 +398,10 @@ async function refreshAccountStatus(): Promise<void> {
   }
 }
 
-async function logout(): Promise<void> {
-  if (!confirm('确定要退出当前账号吗？')) return
-
-  try {
-    isLoggingOut.value = true
-    const current = sessions.value.find(s => s.is_current)
-    if (current) {
-      await invalidateSession(current.session_id)
-    }
-
-    currentAccount.value = null
-    currentSession.value = null
-    toast.show('已退出登录', 'success')
-  } catch (error) {
-    console.error('Failed to logout:', error)
-    toast.show('退出登录失败', 'error')
-  } finally {
-    isLoggingOut.value = false
-  }
-}
-
 async function startQRLogin(): Promise<void> {
   try {
     isStartingQR.value = true
-    const result = await api.auth.startQRLogin()
+    const result = await api.user.startQrLogin()
     const payload = getEnvelope<{ qr_key: string; qr_img: string }>(result.success ? result.data : null)
     if (result.success && payload?.code === 200 && payload.data) {
       qrCode.key = payload.data.qr_key
@@ -416,7 +426,7 @@ function startQRPolling(): void {
 
   qrPollingTimer = window.setInterval(async () => {
     try {
-      const result = await api.auth.checkQRLogin(qrCode.key)
+      const result = await api.user.checkQrLogin(qrCode.key)
       const payload = getEnvelope<{ status: QRCode['status']; message?: string }>(result.success ? result.data : null)
       if (result.success && payload?.code === 200 && payload.data) {
         const status: QRCode['status'] = payload.data.status
@@ -426,7 +436,7 @@ function startQRPolling(): void {
           clearInterval(qrPollingTimer!)
           qrPollingTimer = null
           toast.show('登录成功！', 'success')
-          await loadCurrentAccount()
+          await loadUserProfile()
           await loadSessions()
           setTimeout(() => {
             qrCode.key = ''
@@ -459,17 +469,17 @@ function cancelQRLogin(): void {
 
 async function loginWithCookie(): Promise<void> {
   if (!cookieInput.value.trim()) {
-    toast.show('请输入 Cookie', 'warning')  
+    toast.show('请输入 Cookie', 'warning')
     return
   }
   try {
     isLoggingInWithCookie.value = true
-    const result = await api.auth.loginWithCookie(cookieInput.value.trim())
+    const result = await api.user.uploadSession(cookieInput.value.trim())
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
       toast.show('Cookie 登录成功！', 'success')
       cookieInput.value = ''
-      await loadCurrentAccount()
+      await loadUserProfile()
       await loadSessions()
     } else {
       toast.show((payload?.message as string | undefined) || 'Cookie 登录失败', 'error')
@@ -486,14 +496,14 @@ function clearCookieInput(): void {
   cookieInput.value = ''
 }
 
-async function switchToSession(sessionId: string): Promise<void> {
+async function switchToSession(sessionId: number): Promise<void> {
   try {
     isSwitchingSession.value = true
     const result = await api.user.switchSession(sessionId)
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
       toast.show('切换账号成功', 'success')
-      await loadCurrentAccount()
+      await loadUserProfile()
       await loadSessions()
     } else {
       toast.show((payload?.message as string | undefined) || '切换账号失败', 'error')
@@ -506,26 +516,29 @@ async function switchToSession(sessionId: string): Promise<void> {
   }
 }
 
-async function invalidateSession(sessionId: string): Promise<void> {
+async function invalidateSession(id: number): Promise<void> {
   if (!confirm('确定要使此会话失效吗？')) return
 
   try {
     isInvalidatingSession.value = true
-    const result = await api.user.invalidateSession(sessionId)
+    const result = await api.user.invalidateSession(id)
     const payload = getEnvelope<unknown>(result.success ? result.data : null)
     if (result.success && payload?.code === 200) {
       toast.show('会话已失效', 'success')
-      await loadSessions()
-      const current = sessions.value.find(s => s.is_current && s.session_id === sessionId)
+      // 先获取最新当前会话
+      const current = sessions.value.find(s => s.is_current && s.id === id)
       if (current) {
-        await loadCurrentAccount()
+        await loadUserProfile()
       }
+      // 然后加载会话列表，确保当前最新状态
+      await loadSessions()
+
     } else {
       toast.show((payload?.message as string | undefined) || '操作失败', 'error')
     }
   } catch (error) {
     console.error('Failed to invalidate session:', error)
-    toast.show('操作失败', 'error') 
+    toast.show('操作失败', 'error')
   } finally {
     isInvalidatingSession.value = false
   }
@@ -541,23 +554,21 @@ async function refreshSessions(): Promise<void> {
 // ----------------------
 function handleAvatarError(event: Event) {
   const target = event.target as HTMLImageElement
-  target.src = '/default-avatar.png'
+  target.src = ''
 }
 
-function getStatusClass(status: Account['status']): string {
+function getStatusClass(status: Session['is_valid']): string {
   switch (status) {
-    case 'active': return 'status-online'
-    case 'disabled': 
-    case 'banned': return 'status-offline'
+    case true: return 'status-online'
+    case false: return 'status-offline'
     default: return 'status-pending'
   }
 }
 
-function getStatusText(status: Account['status']): string {
+function getStatusText(status: Session['is_valid']): string {
   switch (status) {
-    case 'active': return '正常'
-    case 'disabled': return '已禁用'
-    case 'banned': return '已封禁'
+    case true: return '正常'
+    case false: return '已失效'
     default: return '未知'
   }
 }
@@ -607,3 +618,96 @@ function formatTime(timeString?: string): string {
 }
 
 </script>
+
+
+<style scoped>
+/* 网格布局：桌面端并列，移动端垂直 */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* 1:1 等分 */
+  gap: 1.5rem;
+  /* 间距 */
+  align-items: stretch;
+}
+
+/* 确保两个卡片高度一致 */
+.full-height {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 针对登录方式内部的优化：改为垂直排列以适应半宽容器 */
+.login-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* 响应式适配：平板或手机端改为单列 */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+.cookie-textarea {
+  min-height: 120px;
+}
+
+/* 网格基础布局 */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  /* 改为 start，防止左侧卡片被强行拉伸过长 */
+}
+
+/* 左侧容器：控制两个卡片的上下间距 */
+.dashboard-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  /* 这里设置两个卡片之间的垂直间距 */
+}
+
+/* 右侧容器：如果希望右侧卡片高度自动撑满，匹配左侧两个卡片总和 */
+.full-height {
+  height: 100%;
+  min-height: 500px;
+  /* 设置一个最小高度保证美观 */
+}
+
+/* 移动端适配 */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-left {
+    order: 1;
+    /* 移动端可以让账号信息排在最前 */
+  }
+
+  .login-methods-section {
+    order: 2;
+    /* 登录方式排第二 */
+  }
+}
+
+/* 会话列表内部样式优化 */
+.sessions-list {
+  max-height: 400px;
+  /* 限制高度，超出显示滚动条 */
+  overflow-y: auto;
+  /* 增加左右和底部的 padding，数值通常略大于阴影的扩散半径 (blur-radius) */
+  padding: 0.5rem;
+  margin: -0.5rem;
+  /* 使用负外边距抵消 padding，保持视觉上的对齐 */
+  padding-right: 8px;
+  /* 为滚动条预留空间 */
+}
+</style>
