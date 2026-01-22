@@ -1,0 +1,139 @@
+name: Release and Publish
+
+on:
+  push:
+    tags:
+      - 'v*' # 匹配 v 开头的 tag，例如 v0.1.0
+  workflow_dispatch:
+    inputs:
+      test_tag:
+        description: 'Test Tag Name (e.g. v0.1.0-test)'
+        required: true
+        default: 'v0.1.0-test'
+      is_prerelease:
+        description: 'Is Prerelease?'
+        type: boolean
+        default: true
+      dry_run:
+        description: 'Dry Run (Skip uploads/push)'
+        type: boolean
+        default: false # 建议默认 false，手动触发通常也是为了测发布
+
+permissions:
+  contents: write # 允许创建 Release
+  packages: write
+
+jobs:
+  # =========================================================
+  # 任务 1: 构建二进制文件
+  # =========================================================
+  build-binaries:
+    uses: ./.github/workflows/build-binary.yml
+
+  # =========================================================
+  # 任务 2: 创建 GitHub Release
+  # =========================================================
+  create-github-release:
+    name: Create GitHub Release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine Tag and Version
+        id: tag_logic
+        run: |
+          # 1. 确定 Tag 名称
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "TAG_NAME=${{ inputs.test_tag }}" >> $GITHUB_ENV
+            echo "IS_MANUAL=true" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "IS_MANUAL=false" >> $GITHUB_ENV
+          fi
+
+          # 2. 从文件提取版本 (用于校验)
+          FILE_VERSION=$(grep -oP '__version__\s*=\s*"\K[^"]+' ncm/__init__.py)
+          echo "Detected file version: $FILE_VERSION"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      # 调试步骤：展示文件结构，防止路径错误
+      - name: Display structure
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2 # 升级到 v2
+        # 逻辑修正：如果是 Push 事件，或者手动触发且 dry_run 为 false，则执行
+        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: Release ${{ env.TAG_NAME }}
+          # 确保手动触发时指向当前 commit，防止 tag 还没 push 导致报错
+          target_commitish: ${{ github.sha }}
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+          # 逻辑修正：如果是 Push，dry_run 为空(视为false)；如果是手动，读取输入
+          draft: ${{ inputs.dry_run == true }}
+          # 逻辑修正：自动识别 tag 是否包含 '-' (如 v1.0-beta) 或读取手动输入
+          prerelease: ${{ contains(env.TAG_NAME, '-') || inputs.is_prerelease == true }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # =========================================================
+  # 任务 3: 构建并推送 Docker 镜像
+  # =========================================================
+  docker-publish:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    # 建议加上 needs，虽然并行跑更快，但通常希望 Release 成功后再推镜像
+    needs: build-binaries 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/ncm-sync
+          # 关键修正：混合处理自动 Tag 和手动 Input
+          tags: |
+            # 1. 自动触发 (Push Tag): 使用语义化版本
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'push' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ github.event_name == 'push' }}
+            # 2. 自动触发: 只有正式版才打 latest
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && !contains(github.ref, '-') }}
+            # 3. 手动触发: 使用输入的 test_tag，强制生效
+            type=raw,value=${{ inputs.test_tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          # 逻辑修正：Push 事件总是推送，手动事件看 dry_run
+          push: ${{ github.event_name == 'push' || inputs.dry_run == false }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
