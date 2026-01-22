@@ -295,7 +295,6 @@ const qrCode = reactive<QRCode>({
 
 // Loading states
 const isRefreshing = ref(false)
-const isLoggingOut = ref(false)
 const isStartingQR = ref(false)
 const isLoggingInWithCookie = ref(false)
 const isRefreshingSessions = ref(false)
@@ -555,7 +554,7 @@ async function refreshSessions(): Promise<void> {
 // ----------------------
 function handleAvatarError(event: Event) {
   const target = event.target as HTMLImageElement
-  // target.src = '/default-avatar.png'
+  target.src = ''
 }
 
 function getStatusClass(status: Session['is_valid']): string {
