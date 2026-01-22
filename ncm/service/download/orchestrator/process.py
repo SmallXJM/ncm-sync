@@ -147,9 +147,7 @@ class DownloadProcess:
             int(self._status.get("submitted_tasks", 0)) + submitted_count
         )
 
-    async def _process_single_job(
-        self, job: DownloadJob, batch_size: int
-    ) -> None:
+    async def _process_single_job(self, job: DownloadJob, batch_size: int) -> None:
         """处理单个作业的核心流程。"""
         self._status["current_job_id"] = job.id
         self._status["current_batch_index"] = 0
@@ -162,12 +160,12 @@ class DownloadProcess:
         else:
             raise ValueError(f"Unsupported job type: {job.job_type}")
 
-        logger.info(f"扫描{job.get_job_name}完成，获取到 {len(tasks)} 首新歌曲")  
+        logger.info(f"扫描{job.get_job_name}完成，获取到 {len(tasks)} 首新歌曲")
         if len(tasks) == 0:
             return
         submitted_count = await self._handle_batches(job, tasks, batch_size)
         # logger.debug(f"--- Finished Job {job.id} ---")
- 
+
         await self.job_service.set_job_status_completed(job.id)
         self._update_success_stats(submitted_count)
         logger.info(f"{job.get_job_name}完成，成功下载 {submitted_count} 首新歌曲")
@@ -177,9 +175,7 @@ class DownloadProcess:
                 f"Job {job.id}: {len(failed_ids)} tracks failed to fetch details."
             )
 
-    async def _handle_job_exception(
-        self, job: DownloadJob, exc: Exception
-    ) -> None:
+    async def _handle_job_exception(self, job: DownloadJob, exc: Exception) -> None:
         """统一处理作业异常。"""
         logger.exception(f"Job {job.id} failed: {exc}")
         await self.job_service.set_job_status_failed(job.id)
@@ -195,11 +191,13 @@ class DownloadProcess:
         failed_ids = fetch_result.get("failed_ids", [])
 
         detail_map: Dict[str, dict] = {}
+
         for track in detailed_tracks:
-            music_id = str(track.get("id"))
+            song = track.get("song") or {}
+            music_id = str(song.get("id"))
             if not music_id:
                 continue
-            detail_map[music_id] = track
+            detail_map[str(music_id)] = track
 
         async with self.uow_factory() as uow:
             tasks = await self.task_repo.create_batch_ids_and_get_pending_music(
@@ -211,7 +209,10 @@ class DownloadProcess:
         registry = get_task_cache_registry()
         for task in tasks:
             cache = await registry.get_or_create(task.id, task.music_id)
-            cache.song_detail = detail_map.get(task.music_id)
+            # cache.song_detail = detail_map.get(task.music_id)
+            await cache.set_song_detail_detailed_tracks(
+                detail_map.get(task.music_id, {})
+            )
 
         return tasks, failed_ids
 
@@ -235,9 +236,7 @@ class DownloadProcess:
             # logger.debug(
             #     f"Starting batch {batch_index} for job {job.id} with {len(batch)} tasks"
             # )
-            logger.info(
-                f"开始下载{job.get_job_name}的第 {batch_index} 批次"
-            )
+            logger.info(f"开始下载{job.get_job_name}的第 {batch_index} 批次")
             await self._dispatch_and_wait_batch(job, batch)
             submitted_ids.extend([t.id for t in batch])
 
@@ -248,7 +247,9 @@ class DownloadProcess:
         source_task: DownloadTask | None = None  # 来源任务对象（若存在且音质匹配）
         async with self.uow_factory() as uow:
             source_task = await self.task_repo.find_completed_by_music_and_quality(
-                uow.session, data["music_id"], job.target_quality,
+                uow.session,
+                data["music_id"],
+                job.target_quality,
             )
             if not source_task or not source_task.file_path:
                 return None
@@ -273,11 +274,12 @@ class DownloadProcess:
                     target_path = self.storage_manager._generate_final_path(
                         new_task, job_obj
                     )
-                    
+
                     # 确保目标目录存在
                     from ncm.core.path import prepare_path
+
                     prepare_path(target_path.parent)
-                    
+
                     shutil.copy2(source_task.file_path, str(target_path))  # 复制文件
                     await self.task_repo.update(
                         uow.session,
@@ -302,7 +304,7 @@ class DownloadProcess:
                     # 回滚由 UnitOfWork 处理；确保删除已复制的文件
                     try:
                         if "target_path" in locals() and os.path.exists(
-                                str(target_path)
+                            str(target_path)
                         ):
                             os.remove(str(target_path))  # 清理失败复制的残留目标文件
                     except Exception:
@@ -313,7 +315,7 @@ class DownloadProcess:
                     return None
 
     async def _dispatch_and_wait_batch(
-            self, job: DownloadJob, created: List[DownloadTask]
+        self, job: DownloadJob, created: List[DownloadTask]
     ) -> None:
         """调度当前批次的下载工作流并等待所有子流程完成；收集异常并记录日志。"""
         # 调度执行工作流
@@ -332,10 +334,12 @@ class DownloadProcess:
             for idx, res in enumerate(done):
                 task = created[idx]
                 if isinstance(res, Exception):
-                    logger.warning(f"{job.source_type}\"{job.job_name}\" 批次任务 {task.id} 引发异常: {res}")
+                    logger.warning(
+                        f'{job.source_type}"{job.job_name}" 批次任务 {task.id} 引发异常: {res}'
+                    )
 
     async def _fetch_playlist_tracks(
-            self, job_id: int, playlist_id: str, max_retries: int = 3
+        self, job_id: int, playlist_id: str, max_retries: int = 3
     ) -> dict:
         """获取歌单曲目 ID 并批量拉取歌曲详情；包含重试与歌曲ID去重。"""
         delay = 1.0  # 初始重试延迟秒数
@@ -400,13 +404,28 @@ class DownloadProcess:
         failed_ids: List[str] = []  # 拉取失败的歌曲 ID
         chunk_size = 300  # 详情拉取的分块大小；避免接口长度与频率限制
         for i in range(0, len(effective_ids), chunk_size):
-            chunk = effective_ids[i: i + chunk_size]
+            chunk = effective_ids[i : i + chunk_size]
             try:
                 resp = await self.song_controller.song_detail(ids=",".join(chunk))
                 if getattr(resp, "success", False):
                     body = getattr(resp, "body", {}) or {}
+                    code = body.get("code", 200)
                     songs = body.get("songs") or []
-                    detailed_tracks.extend(songs)
+                    privileges = body.get("privileges") or []
+
+                    privilege_map = {
+                        p.get("id"): p for p in privileges if p and "id" in p
+                    }
+
+                    detailed_tracks.extend(
+                        {
+                            "code": code,
+                            "song": song,
+                            "privilege": privilege_map.get(song.get("id")),
+                        }
+                        for song in songs
+                    )
+
                 else:
                     failed_ids.extend(chunk)
             except Exception as e:

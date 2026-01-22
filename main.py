@@ -106,6 +106,7 @@ def start_server(host: str, port: int, debug: bool):
         use_colors=False,
         http="h11",
         log_config=None,
+        timeout_graceful_shutdown=5 if debug else None,
     )
 
 

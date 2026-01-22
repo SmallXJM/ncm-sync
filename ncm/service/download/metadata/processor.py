@@ -70,8 +70,7 @@ class MetadataProcessor:
             if task.metadata and isinstance(task.metadata, dict):
                 artwork_url = task.metadata.get("album_pic") or task.metadata.get("artwork_url")
             if not artwork_url and cache.song_detail:
-                al = cache.song_detail.get("al") or {}
-                artwork_url = al.get("picUrl") or None
+                artwork_url = cache.song_detail.song.al.picUrl
             if not artwork_url:
                 return True
             artwork_data = await self.artwork_fetcher.fetch(artwork_url)
@@ -153,18 +152,16 @@ class MetadataProcessor:
             track_number = 0
             publish_time = 0
             if cache.song_detail:
-                detail = cache.song_detail
-                title = title or detail.get("name") or "Unknown"
-                ar = detail.get("ar") or []
-                artists = [a.get("name") for a in ar if isinstance(a, dict)]
+                detail = cache.song_detail.song
+                title = title or detail.name or "Unknown"
+                artists = [a.name for a in detail.ar]
                 artist = artist or (", ".join(artists) if artists else "Unknown")
-                al = detail.get("al") or {}
-                album = album or al.get("name") or "Unknown Album"
-                album_pic = al.get("picUrl") or ""
-                duration = detail.get("dt", 0) or 0
-                cd_number = str(detail.get("cd", "01"))
-                track_number = detail.get("no", 0) or 0
-                publish_time = detail.get("publishTime", 0) or 0
+                album = album or detail.al.name or "Unknown Album"
+                album_pic = detail.al.picUrl or ""
+                duration = detail.dt
+                cd_number = str(detail.cd) if detail.cd else "01"
+                track_number = detail.no
+                publish_time = detail.publishTime
             bitrate = (cache.play_url or {}).get("br", 0)
             sample_rate = (cache.play_url or {}).get("sr", 0) or 44100
             file_format = task.file_format or (cache.play_url or {}).get("type", "mp3")

@@ -99,9 +99,8 @@ class CookieManager:
                 raise ValueError("Failed to connect to NCM API for validation")
 
             body = resp.body
-            data = body.get("data", {})
-            account = data.get("account")
-
+            account = body.get("account")
+            
             if not account:
                 raise ValueError("Cookie is invalid or expired (no account info)")
 
