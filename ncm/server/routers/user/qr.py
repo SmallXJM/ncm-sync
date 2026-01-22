@@ -11,41 +11,12 @@ from ncm.server.decorators import ncm_service
 logger = get_logger(__name__)
 
 
-class AuthController:
+class QRAuthController:
     """HTTP controller for authentication functionality."""
 
     def __init__(self):
         """Initialize auth controller."""
         self.cookie_manager = get_cookie_manager()
-
-    # ==================== Cookie Management ====================
-    
-    @ncm_service("/ncm/user/cookie/upload", ["POST"])
-    async def upload_cookie(self, cookie: str, **kwargs) -> APIResponse:
-        """Upload and validate cookie directly."""
-        try:
-            result = await self.cookie_manager.add_session(
-                cookie, **kwargs
-            )
-            
-            return APIResponse(
-                status=200,
-                body={
-                    "code": 200,
-                    "message": "Cookie 上传成功",
-                    "data": result
-                }
-            )
-
-        except Exception as e:
-            logger.exception(f"Cookie 上传失败")
-            return APIResponse(
-                status=500,
-                body={
-                    "code": 500,
-                    "message": f"Cookie 上传失败: {str(e)}"
-                }
-            )
 
     # ==================== QR Login ====================
     @ncm_service("/ncm/user/qr/start", ["POST"])
@@ -189,40 +160,4 @@ class AuthController:
                 }
             )
 
-    # ==================== Login Status ====================
-    
-    @ncm_service("/ncm/user/status", ["GET", "POST"])
-    @with_cookie
-    async def get_login_status(self, **kwargs) -> APIResponse:
-        """Get current login status using available cookie."""
-        try:
-            # 使用 refresh_status 获取最新状态
-            login_status = await self.cookie_manager.refresh_status()
-            
-            if login_status:
-                return APIResponse(
-                    status=200,
-                    body={
-                        "code": 200,
-                        "message": "获取登录状态成功",
-                        "data": login_status
-                    }
-                )
-            else:
-                return APIResponse(
-                    status=401,
-                    body={
-                        "code": 401,
-                        "message": "没有可用的会话",
-                    }
-                )
 
-        except Exception as e:
-            logger.error(f"获取登录状态失败: {str(e)}")
-            return APIResponse(
-                status=500,
-                body={
-                    "code": 500,
-                    "message": f"获取登录状态失败: {str(e)}",
-                }
-            )

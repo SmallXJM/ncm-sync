@@ -1,15 +1,15 @@
 """User ncm package."""
 
-from .auth import AuthController
+from .qr import QRAuthController
 from .profile import ProfileController
-from .management import ManagementController
+from .session import SessionController
 
-auth = AuthController()
+qr = QRAuthController()
 profile = ProfileController()
-manage = ManagementController()
+session = SessionController()
 
 __all__ = [
-    "auth",
+    "qr",
     "profile",
-    "manage"
+    "session"
 ]

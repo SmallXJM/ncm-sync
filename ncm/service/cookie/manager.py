@@ -203,7 +203,7 @@ class CookieManager:
             return None
         session = self._current_session
         if session:
-            return SimpleSession(id=session.id, user_id=session.account_id, cookie=session.cookie, login_type=session.login_type)
+            return SimpleSession(id=session.id, user_id=session.account_id, cookie=session.cookie, login_type=session.login_type, is_valid=session.is_valid)
         return None
 
     async def mark_cookie_success(self) -> None:

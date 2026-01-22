@@ -209,7 +209,6 @@
 
 .session-item:hover {
   background: var(--bg-surface-hover);
-  transform: translateY(-2px);
   border-color: var(--text-secondary);
 }
 
@@ -217,7 +216,7 @@
   // border-color: var(--accent-color);
   background: var(--bg-surface);
   /* 保持背景一致，只高亮边框 */
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
 }
 
 .session-info {
