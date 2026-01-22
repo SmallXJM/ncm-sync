@@ -505,23 +505,35 @@ class DownloadOrchestrator:
                 raise RuntimeError(f"Task not found: {task_id}")
             registry = get_task_cache_registry()
             cache = await registry.get_or_create(task_id, task.music_id)
-            song_info = await cache.ensure_song_detail(
+            detail = await cache.ensure_song_detail(
                 self.song_controller.song_detail,
                 force=(cache.song_detail is None)
             )
+            
+            song = detail.song
 
-            title = song_info["name"]
-            artists = [artist["name"] for artist in song_info.get("ar", [])]
+            title = song.name or "Unknown Title"
+            artists = [artist.name or "Unknown Artist" for artist in song.ar or []]
             artist = ", ".join(artists) if artists else "Unknown Artist"
 
             await self.task_repo.update(uow.session, task_id,
                 music_title=title,
                 music_artist=artist,
-                music_album=song_info.get("al", {}).get("name", "Unknown Album"),
+                music_album=song.al.name or "Unknown Album",
                 started_at=UTC_CLOCK.now()
             )
 
         async with self.uow_factory() as uow:
+            if detail.privilege.is_copyright_restricted:
+                raise RuntimeError("由于版权保护，您所在的地区暂时无法使用")
+            if detail.privilege.is_grey:
+                raise RuntimeError("灰色歌曲")
+            
+            down_level = detail.privilege.resolve_dl_level(task.quality or 'lossless')
+            if down_level == 'none':
+                raise RuntimeError("当前用户没有该音乐的下载权限")
+            else:
+                logger.debug(f"{task.get_music_name} 目标下载音质{task.quality or 'lossless'}，实际下载音质{down_level}")
             url_data = await cache.ensure_play_url(
                 self.song_controller.song_url_v1,
                 level=target_quality,

@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 import asyncio
 from ncm.core.logging import get_logger
 from ncm.core.time import UTC_CLOCK
-
+from ncm.client.apis.song.detail_models import SongDetailResponseOnlyOne, Song, Privilege
 logger = get_logger(__name__)
 
 @dataclass
@@ -78,13 +78,33 @@ class DownloadDataCache:
     def __init__(self, task_id: int, music_id: str):
         self.task_id = task_id
         self.music_id = music_id
-        self.song_detail: Optional[Dict[str, Any]] = None
+        self.song_detail: Optional[SongDetailResponseOnlyOne] = None
         self.play_url: Optional[Dict[str, Any]] = None
         self._detail_ts: Optional[datetime] = None
         self._url_ts: Optional[datetime] = None
         self._lock = asyncio.Lock()
+        
+    async def set_song_detail_detailed_tracks(self, tracks: Dict[str, Any]):
+        async with self._lock:
+            song = tracks.get("song") or []
+            if not song:
+                raise RuntimeError("tracks.song invalid")
+            song = Song.model_validate(song)
+            
+            privilege = tracks.get("privilege") or []
+            if not privilege:
+                raise RuntimeError("tracks.privilege invalid")
+            privilege = Privilege.model_validate(privilege)
+            
+            self.song_detail = SongDetailResponseOnlyOne(
+                song=song,
+                privilege=privilege,
+                code=tracks.get("code") or 200
+            )
+            self._detail_ts = UTC_CLOCK.now()
+        return self.song_detail
 
-    async def ensure_song_detail(self, loader, force: bool = False) -> Dict[str, Any]:
+    async def ensure_song_detail(self, loader, force: bool = False) -> SongDetailResponseOnlyOne:
         async with self._lock:
             if self.song_detail is None or force:
                 resp = await loader(ids=self.music_id)
@@ -93,8 +113,19 @@ class DownloadDataCache:
                 body = getattr(resp, "body", {})
                 songs = body.get("songs") or []
                 if not songs:
-                    raise RuntimeError("song_detail invalid")
-                self.song_detail = songs[0]
+                    raise RuntimeError("song_detail.songs invalid")
+                song = Song.model_validate(songs[0])
+                
+                privileges = body.get("privileges") or []
+                if not privileges:
+                    raise RuntimeError("song_detail.privileges invalid")
+                privilege = Privilege.model_validate(privileges[0])
+                
+                self.song_detail = SongDetailResponseOnlyOne(
+                    song=song,
+                    privilege=privilege,
+                    code=resp.body.get("code") or 200
+                )
                 self._detail_ts = UTC_CLOCK.now()
             return self.song_detail
 

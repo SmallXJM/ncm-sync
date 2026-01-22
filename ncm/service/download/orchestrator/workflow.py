@@ -3,6 +3,11 @@
 from ncm.core.logging import get_logger
 from ncm.data.models.download_task import TaskProgress
 from ncm.service.download.service.async_task_service import AsyncTaskService
+from ..downloader import AudioDownloader
+from ..metadata import MetadataProcessor
+from ..storage import StorageManager
+
+
 
 logger = get_logger(__name__)
 
@@ -10,7 +15,7 @@ logger = get_logger(__name__)
 class WorkflowEngine:
     """工作流执行引擎 - 协调各个组件完成下载流程"""
     
-    def __init__(self, downloader, metadata_processor, storage_manager):
+    def __init__(self, downloader: AudioDownloader, metadata_processor: MetadataProcessor, storage_manager: StorageManager):
         """
         初始化工作流引擎
         
