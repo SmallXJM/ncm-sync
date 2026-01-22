@@ -103,6 +103,5 @@ jobs:
       - name: Frontend Lint
         run: bun run lint
       
-      # PR 阶段不build
-      # - name: Frontend Build
-      #   run: bun run build
+      - name: Frontend Build
+        run: bun run build
