@@ -2,7 +2,6 @@
 
 import asyncio
 from typing import Dict, Any
-from ncm.data import AccountRepository
 from ncm.client.apis.user import login
 from ncm.core.logging import get_logger
 from ncm.service.cookie import get_cookie_manager
@@ -142,61 +141,5 @@ async def complete_qr_login_workflow(qr_key: str, timeout: int = 300, **kwargs) 
                 "success": False,
                 "code": 500,
                 "message": f"QR login workflow failed: {str(e)}"
-            }
-
-
-class AuthenticationService:
-    """Business logic for authentication workflows."""
-
-    def __init__(self):
-        """Initialize authentication service."""
-        self.account_repo = AccountRepository()
-        self.cookie_manager = get_cookie_manager()
-
-    def list_available_cookies(self) -> Dict[str, Any]:
-        """
-        List all available cookies with their account information.
-        
-        Returns:
-            Dict containing list of available cookies and accounts
-        """
-        try:
-            # Get all sessions from cookie manager
-            sessions = self.cookie_manager.list_all_sessions()
-
-            # Filter only valid sessions
-            valid_sessions = [s for s in sessions if s.is_valid]
-
-            cookie_list = []
-            for session in valid_sessions:
-                cookie_info = {
-                    "session_id": session.session_id,
-                    "account_id": session.account_id,
-                    "nickname": session.nickname,
-                    "avatar_url": session.avatar_url,
-                    "login_type": session.login_type,
-                    "last_success_at": session.last_success_at,
-                    "is_current": session.is_current,
-                    "created_at": session.created_at
-                }
-                cookie_list.append(cookie_info)
-
-            return {
-                "success": True,
-                "code": 200,
-                "message": f"找到 {len(cookie_list)} 个有效 Cookie",
-                "data": {
-                    "total_cookies": len(cookie_list),
-                    "current_cookie": self.cookie_manager.get_current_session_id(),
-                    "cookies": cookie_list
-                }
-            }
-
-        except Exception as e:
-            logger.error(f"获取 Cookie 列表失败: {str(e)}")
-            return {
-                "success": False,
-                "code": 500,
-                "message": f"获取 Cookie 列表失败: {str(e)}"
             }
 

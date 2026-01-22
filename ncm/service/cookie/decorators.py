@@ -9,6 +9,7 @@ import logging
 from typing import Callable, Optional
 from . import get_cookie_manager
 from ncm.client.exceptions import AuthenticationError
+from .manager import SimpleSession
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +31,12 @@ async def _execute_with_cookie(
         try:
             # 自动注入 Cookie（若调用方未显式传入）
             if not kwargs.get("cookie"):
-                session = cookie_service.get_current_session()
-                if not session:
+                current_session = await cookie_service.get_current_session()
+                if not current_session:
                     raise AuthenticationError("没有可用的登录会话，请先登录")
-                kwargs["cookie"] = session.cookie
+                kwargs["cookie"] = current_session.cookie
                 # 留个坑，传入cookie时没有_session
-                kwargs["_session"] = session.to_dict()
+                kwargs["_session"] = current_session.to_dict()
 
             result = await func(*args, **kwargs)
 
