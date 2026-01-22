@@ -428,11 +428,11 @@ function startQRPolling(): void {
     try {
       const result = await api.user.checkQrLogin(qrCode.key)
       const payload = getEnvelope<{ status: QRCode['status']; message?: string }>(result.success ? result.data : null)
-      console.log('QR Login Check:', payload)
+      // console.log('QR Login Check:', payload)
       if (result.success && payload?.data) {
         const status: QRCode['status'] = payload.data.status
         qrCode.status = status
-        console.log('qrCode.status', qrCode.status)
+        // console.log('qrCode.status', qrCode.status)
 
         if (status === 'success') {
           clearInterval(qrPollingTimer!)
