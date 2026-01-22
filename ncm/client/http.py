@@ -108,7 +108,7 @@ async def request(
             body = json.dumps(encrypted)
 
     try:
-        logger.debug(f"\nrequest: {method} {url}\n{request_data}")
+        logger.debug(f"\nrequest: {method} {url}\n{request_data}\nheaders: {headers}")
         resp = await client.request(
             method=method.upper(),
             url=url,

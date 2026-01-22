@@ -87,11 +87,12 @@ class SessionController:
             
     
     @ncm_service("/ncm/user/session/upload", ["POST"])
-    async def upload_cookie(self, cookie: str, **kwargs) -> APIResponse:
+    async def upload_cookie(self, upload_data: str, **kwargs) -> APIResponse:
         """Upload and validate cookie directly."""
         try:
             result = await self.cookie_service.add_session(
-                cookie, **kwargs
+                upload_data, 
+                login_type=kwargs.get("login_type", "manual")
             )
             
             return APIResponse(

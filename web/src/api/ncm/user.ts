@@ -94,8 +94,8 @@ export const getLoginStatus = async (): Promise<ApiResult<ApiEnvelope<LoginStatu
  * @param cookie The raw cookie string
  * @returns Result of the upload
  */
-export const uploadSession = async (cookie: string): Promise<ApiResult<ApiEnvelope<unknown>>> => {
-  return http.post<ApiEnvelope<unknown>>(NCM_API.USER.SESSION.UPLOAD, { cookie })
+export const uploadSession = async (uploadData: string): Promise<ApiResult<ApiEnvelope<unknown>>> => {
+  return http.post<ApiEnvelope<unknown>>(NCM_API.USER.SESSION.UPLOAD, { upload_data: uploadData })
 }
 
 // --- Session Management ---
