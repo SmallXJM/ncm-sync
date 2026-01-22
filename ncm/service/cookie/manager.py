@@ -87,14 +87,14 @@ class CookieManager:
         except Exception as e:
             logger.error(f"Initialization failed: {str(e)}")
 
-    async def add_session(self, cookie: str, login_type: str = 'manual') -> Dict[str, Any]:
+    async def add_session(self, upload_data: str, login_type: str = 'manual', **kwargs) -> Dict[str, Any]:
         """
         Add a new session (cookie).
         Validates the cookie first. If valid, saves it and sets it as current.
         """
         async with self._lock:
             # 1. Validate cookie
-            resp = await login.status(cookie=cookie)
+            resp = await login.status(cookie=upload_data)
             if not resp.success:
                 raise ValueError("Failed to connect to NCM API for validation")
 
@@ -111,7 +111,7 @@ class CookieManager:
                 new_session = await self._async_repo.create_session(
                     uow.session,
                     account_id=account_id,
-                    cookie=cookie,
+                    cookie=upload_data,
                     login_type=login_type,
                 )
                 await uow.commit()
