@@ -34,9 +34,18 @@ async def parse_request_params(request: Request) -> Dict[str, Any]:
             pass
     
     # Add cookies as a parameter
-    if request.cookies:
-        cookie_str = "; ".join([f"{k}={v}" for k, v in request.cookies.items()])
-        params['cookie'] = cookie_str
+    # Logic updated:
+    # 1. Prioritize explicit 'cookie' parameter from query/body
+    # 2. Only fall back to HTTP cookies if they contain NCM session indicators (MUSIC_U)
+    #    This prevents random browser cookies (e.g. _ga) from overriding the backend service account
+    # 1. 显式优先 ：如果在 API 请求中（URL参数或JSON体）显式传递了 cookie 字段，系统将无条件使用它（完全受控）。
+    # 2. 智能过滤 ：如果没有显式传递，系统会检查 HTTP 请求头中的 Cookie，但仅当包含 MUSIC_U 时才会被采纳。
+    #  - 包含 MUSIC_U -> 视为有效前端凭证 -> 使用前端 Cookie
+    #  - 仅有 _ga / session_id -> 视为无关干扰 -> 忽略 -> 后端自动注入服务器账号 Cookie
+    if request.cookies and 'cookie' not in params:
+        if 'MUSIC_U' in request.cookies:
+            cookie_str = "; ".join([f"{k}={v}" for k, v in request.cookies.items()])
+            params['cookie'] = cookie_str
     
     # Process NCM-specific configuration parameters
     # These parameters are used by RequestOptions and should be handled specially

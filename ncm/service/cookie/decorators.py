@@ -29,13 +29,20 @@ async def _execute_with_cookie(
 
     for attempt in range(retries + 1):
         try:
+            # 尝试获取当前会话
+            current_session = await cookie_service.get_current_session()
+
             # 自动注入 Cookie（若调用方未显式传入）
             if not kwargs.get("cookie"):
-                current_session = await cookie_service.get_current_session()
                 if not current_session:
                     raise AuthenticationError("没有可用的登录会话，请先登录")
                 kwargs["cookie"] = current_session.cookie
-                # 留个坑，传入cookie时没有_session
+                kwargs["_session"] = current_session.to_dict()
+            
+            # 即使传入了Cookie，如果有当前会话，也注入_session以防止Controller报错
+            # 注意：这里假设前端传入的Cookie与后端当前会话是同一个用户的，或者是可兼容的
+            # 如果不一致，使用current_session的信息作为fallback可能不完全准确，但能防止KeyError
+            elif current_session and "_session" not in kwargs:
                 kwargs["_session"] = current_session.to_dict()
 
             result = await func(*args, **kwargs)

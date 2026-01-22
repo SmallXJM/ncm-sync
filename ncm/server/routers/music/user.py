@@ -27,9 +27,18 @@ class UserController:
                             include_video: bool = True,
                             **kwargs
                             ) -> APIResponse:
-        session = kwargs["_session"]
+        session = kwargs.get("_session")
 
         if uid is None or uid == "":  # 默认查找本cookie的歌单
+            if not session:
+                return APIResponse(
+                    status=401,
+                    body={
+                        "code": 401,
+                        "message": "无法获取用户信息，请指定用户ID或确保已登录",
+                        "success": False
+                    }
+                )
             uid = session["user_id"]
 
         # Cache check for short-term deduplication (2 seconds)
