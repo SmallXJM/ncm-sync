@@ -428,9 +428,11 @@ function startQRPolling(): void {
     try {
       const result = await api.user.checkQrLogin(qrCode.key)
       const payload = getEnvelope<{ status: QRCode['status']; message?: string }>(result.success ? result.data : null)
-      if (result.success && payload?.code === 200 && payload.data) {
+      console.log('QR Login Check:', payload)
+      if (result.success && payload?.data) {
         const status: QRCode['status'] = payload.data.status
         qrCode.status = status
+        console.log('qrCode.status', qrCode.status)
 
         if (status === 'success') {
           clearInterval(qrPollingTimer!)
@@ -579,6 +581,7 @@ function getLoginTypeText(type: string | undefined): string {
     case 'phone': return '手机号'
     case 'email': return '邮箱'
     case 'cookie_upload': return 'Cookie'
+    case 'manual': return '手动'
     default: return '未知'
   }
 }
