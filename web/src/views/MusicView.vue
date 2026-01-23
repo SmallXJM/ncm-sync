@@ -22,109 +22,87 @@
               </div>
             </div>
             <div class="filter-wrapper" ref="filterContainerRef">
-              <button ref="filterTriggerRef" type="button" class="filter-trigger"
-                :aria-expanded="isFilterOpen ? 'true' : 'false'" aria-haspopup="listbox" @click="toggleFilterDropdown"
-                @keydown.enter.prevent="toggleFilterDropdown" @keydown.space.prevent="toggleFilterDropdown"
-                @keydown.down.prevent="openFilterDropdown" @keydown.up.prevent="openFilterDropdown"
-                @keydown.esc.stop.prevent="closeFilterDropdown">
-                <span class="filter-label">筛选：</span>
-
-                <!-- Tags 容器 -->
-                <div class="filter-tags">
-                  <!-- 状态 Tag -->
-                  <span v-if="filterStatus" class="filter-tag">
-                    <span class="filter-text">{{ getStatusText(filterStatus) }}</span>
-                    <button type="button" class="filter-clear" aria-label="清除状态筛选" @click.stop="clearStatusFilter"
-                      @keydown.enter.stop.prevent="clearStatusFilter" @keydown.space.stop.prevent="clearStatusFilter">
+              <!-- Status Filter -->
+              <div class="filter-group relative">
+                <button type="button" class="filter-trigger"
+                  :aria-expanded="isStatusFilterOpen ? 'true' : 'false'" aria-haspopup="listbox"
+                  @click.stop="toggleStatusFilterDropdown">
+                  <span class="filter-label">状态：</span>
+                  
+                  <span class="filter-tag">
+                    <span class="filter-text">{{ filterStatus ? getStatusText(filterStatus) : '未应用' }}</span>
+                    <button v-if="filterStatus" type="button" class="filter-clear" aria-label="清除状态筛选" @click.stop="clearStatusFilter">
                       ×
                     </button>
                   </span>
 
-                  <!-- 订阅 Tag -->
-                  <span v-if="selectedJob" class="filter-tag">
-                    <span class="filter-text">{{ selectedJob.job_name }}</span>
-                    <button type="button" class="filter-clear" aria-label="清除订阅筛选" @click.stop="clearJobFilter"
-                      @keydown.enter.stop.prevent="clearJobFilter" @keydown.space.stop.prevent="clearJobFilter">
+                  <span class="filter-arrow">
+                    <svg width="12" height="12" viewBox="0 0 24 24">
+                      <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                </button>
+
+                <transition name="dropdown-fade">
+                  <div v-if="isStatusFilterOpen" class="filter-dropdown glass-card" role="listbox">
+                    <button type="button" class="submenu-option" :class="{ 'is-selected': !filterStatus }"
+                      @click="selectStatusFilter('')">
+                      全部
+                    </button>
+                    <button v-for="option in statusOptions" :key="option.value" type="button" class="submenu-option"
+                      :class="{ 'is-selected': option.value === filterStatus }"
+                      @click="selectStatusFilter(option.value)">
+                      {{ option.label }}
+                    </button>
+                  </div>
+                </transition>
+              </div>
+
+              <!-- Job Filter -->
+              <div class="filter-group relative">
+                <button type="button" class="filter-trigger"
+                  :aria-expanded="isJobFilterOpen ? 'true' : 'false'" aria-haspopup="listbox"
+                  @click.stop="toggleJobFilterDropdown">
+                  <span class="filter-label">订阅：</span>
+                  
+                  <span class="filter-tag">
+                    <span class="filter-text">{{ selectedJob ? selectedJob.job_name : '所有订阅' }}</span>
+                    <button v-if="selectedJob" type="button" class="filter-clear" aria-label="清除订阅筛选" @click.stop="clearJobFilter">
                       ×
                     </button>
                   </span>
 
-                  <!-- 无筛选时的占位 -->
-                  <span v-if="!filterStatus && !selectedJob" class="filter-value-muted">
-                    未应用
+                  <span class="filter-arrow">
+                    <svg width="12" height="12" viewBox="0 0 24 24">
+                      <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    </svg>
                   </span>
-                </div>
+                </button>
 
-                <!-- <span class="filter-arrow" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24">
-                        <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5"
-                          stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span> -->
-              </button>
-
-              <transition name="dropdown-fade">
-                <div v-if="isFilterOpen" class="filter-dropdown glass-card" role="menu">
-                  <!-- 菜单项：状态 -->
-                  <div class="menu-item" @click.stop="toggleSubMenu('status')" @mouseenter="activeSubMenu = 'status'"
-                    @mouseleave="handleSubMenuLeave">
-                    <span class="menu-label">状态</span>
-                    <span class="menu-arrow">
-                      <svg width="12" height="12" viewBox="0 0 24 24">
-                        <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2"
-                          stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span>
-
-                    <!-- 状态子菜单 -->
-                    <transition name="dropdown-fade">
-                      <div v-if="activeSubMenu === 'status'" class="submenu glass-card" role="listbox">
-                        <button v-for="option in statusOptions" :key="option.value || 'all'" type="button"
-                          class="submenu-option" :class="{ 'is-selected': option.value === filterStatus }"
-                          @click="selectStatusFilter(option.value)">
-                          {{ option.label }}
-                          <!-- <span v-if="option.value === filterStatus" class="check-icon">✓</span> -->
-                        </button>
+                <transition name="dropdown-fade">
+                  <div v-if="isJobFilterOpen" class="filter-dropdown glass-card dropdown-large" role="listbox">
+                    <div class="submenu-search">
+                      <input ref="filterSearchInputRef" v-model="jobSearchKeyword" type="text" class="search-input"
+                        placeholder="搜索订阅..." @click.stop />
+                    </div>
+                    <div class="submenu-list">
+                      <button type="button" class="submenu-option" :class="{ 'is-selected': activeJobId === 0 }"
+                        @click="selectJobFromDropdown({ id: 0, job_name: '所有订阅' } as any)">
+                        所有订阅
+                      </button>
+                      <button v-for="job in filteredJobs" :key="job.id" type="button" class="submenu-option"
+                        :class="{ 'is-selected': job.id === activeJobId }" @click="selectJobFromDropdown(job)">
+                        <span class="filter-option-name">{{ job.job_name }}</span>
+                      </button>
+                      <div v-if="filteredJobs.length === 0" class="filter-empty text-tertiary">
+                        未找到 "{{ jobSearchKeyword }}"
                       </div>
-                    </transition>
+                    </div>
                   </div>
-
-                  <!-- 菜单项：订阅 -->
-                  <div class="menu-item" @click.stop="toggleSubMenu('job')" @mouseenter="activeSubMenu = 'job'"
-                    @mouseleave="handleSubMenuLeave">
-                    <span class="menu-label">订阅</span>
-                    <span class="menu-arrow">
-                      <svg width="12" height="12" viewBox="0 0 24 24">
-                        <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2"
-                          stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span>
-
-                    <!-- 订阅子菜单 -->
-                    <transition name="dropdown-fade">
-                      <div v-if="activeSubMenu === 'job'" class="submenu glass-card submenu-large" role="listbox">
-                        <div class="submenu-search">
-                          <input ref="filterSearchInputRef" v-model="jobSearchKeyword" type="text" class="search-input"
-                            placeholder="搜索订阅..." @click.stop />
-                        </div>
-                        <div class="submenu-list">
-                          <!-- <button type="button" class="submenu-option" :class="{ 'is-selected': activeJobId === 0 }"
-                                @click="selectJobFromDropdown({ id: 0, job_name: '所有订阅' } as any)">
-                                所有订阅
-                              </button> -->
-                          <button v-for="job in filteredJobs" :key="job.id" type="button" class="submenu-option"
-                            :class="{ 'is-selected': job.id === activeJobId }" @click="selectJobFromDropdown(job)">
-                            <span class="filter-option-name">{{ job.job_name }}</span>
-                          </button>
-                          <div v-if="filteredJobs.length === 0" class="filter-empty text-tertiary">
-                            未找到 "{{ jobSearchKeyword }}"
-                          </div>
-                        </div>
-                      </div>
-                    </transition>
-                  </div>
-                </div>
-              </transition>
+                </transition>
+              </div>
             </div>
           </div>
 
@@ -251,11 +229,10 @@ const isLoading = ref(false)
 const searchDebounceTimer = ref<number | null>(null)
 const processingTasks = ref<Set<number>>(new Set())
 const coverErrorTaskIds = ref<Set<number>>(new Set())
-const isFilterOpen = ref(false)
-const activeSubMenu = ref<'none' | 'status' | 'job'>('none')
+const isStatusFilterOpen = ref(false)
+const isJobFilterOpen = ref(false)
 const jobSearchKeyword = ref('')
 const filterHighlightedIndex = ref(-1)
-const filterTriggerRef = ref<HTMLElement | null>(null)
 const filterSearchInputRef = ref<HTMLInputElement | null>(null)
 
 const {
@@ -392,61 +369,29 @@ const selectStatusFilter = (value: TaskStatusFilter) => {
   filterStatus.value = value
   currentPage.value = 1
   runSearchDebounced()
-  isFilterOpen.value = false
+  isStatusFilterOpen.value = false
 }
 
-const handleSubMenuLeave = () => {
-  // 桌面端鼠标离开关闭，移动端靠点击切换，不触发 leave 关闭
-  if (window.innerWidth <= 768) return;
-
-  if (activeSubMenu.value === 'job' &&
-    filterSearchInputRef.value &&
-    document.activeElement === filterSearchInputRef.value) {
-    return;
-  }
-  activeSubMenu.value = 'none';
-}
-
-// 菜单项点击逻辑
-const toggleSubMenu = (menu: 'status' | 'job') => {
-  if (activeSubMenu.value === menu) {
-  // 如果是 job 菜单且在桌面端，自动聚焦搜索框
-    if (menu === 'job' && window.innerWidth > 768) {
-      nextTick(() => filterSearchInputRef.value?.focus());
-      return;
-    }
-  } else {
-    activeSubMenu.value = menu;
+const toggleStatusFilterDropdown = () => {
+  isStatusFilterOpen.value = !isStatusFilterOpen.value
+  if (isStatusFilterOpen.value) {
+    isJobFilterOpen.value = false
   }
 }
 
-const openFilterDropdown = async () => {
-  if (!jobs.value.length) return
-  isFilterOpen.value = true
-  activeSubMenu.value = 'none'
-  // await nextTick()
-  // 移除自动聚焦搜索框，因为现在默认是二级菜单
-}
-
-const closeFilterDropdown = () => {
-  isFilterOpen.value = false
-  filterHighlightedIndex.value = -1
-  if (filterTriggerRef.value) {
-    filterTriggerRef.value.focus()
-  }
-}
-
-const toggleFilterDropdown = () => {
-  if (isFilterOpen.value) {
-    closeFilterDropdown()
-  } else {
-    openFilterDropdown()
+const toggleJobFilterDropdown = () => {
+  isJobFilterOpen.value = !isJobFilterOpen.value
+  if (isJobFilterOpen.value) {
+    isStatusFilterOpen.value = false
+    nextTick(() => {
+      filterSearchInputRef.value?.focus()
+    })
   }
 }
 
 const selectJobFromDropdown = (job: DownloadJobItem) => {
   selectJob(job.id)
-  isFilterOpen.value = false
+  isJobFilterOpen.value = false
   jobSearchKeyword.value = ''
 }
 
@@ -455,10 +400,11 @@ const filterContainerRef = ref<HTMLElement | null>(null) // 新增 container 引
 // 处理外部点击的函数
 const handleClickOutside = (event: MouseEvent) => {
   // 如果下拉框是打开的，且点击的元素不在 container 内部
-  if (isFilterOpen.value &&
+  if ((isStatusFilterOpen.value || isJobFilterOpen.value) &&
     filterContainerRef.value &&
     !filterContainerRef.value.contains(event.target as Node)) {
-    closeFilterDropdown()
+    isStatusFilterOpen.value = false
+    isJobFilterOpen.value = false
   }
 }
 
@@ -570,15 +516,15 @@ onUnmounted(() => {
   flex-wrap: wrap;
   /* 宽度不够时自动换行 */
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   /* 左右/上下间距 */
   padding: var(--spacing-sm);
 
   margin-bottom: var(--spacing-lg);
 
   .search-form {
-    flex: 1;
-    /* 占据剩余所有空间 */
+    flex: 500 1 300px;
+    /* 占据剩余所有空间，且权重远大于 filter-wrapper，确保同一行时 filter 保持内容宽度 */
     min-width: 300px;
     /* 保证搜索框在窄屏下不会缩得太小，触发换行 */
     display: flex;
@@ -652,19 +598,37 @@ onUnmounted(() => {
   }
 
   .filter-wrapper {
-    flex-shrink: 0;
-    /* 筛选按钮保持原始大小，不收缩 */
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    flex: 1 1 auto;
+    /* 允许生长，但在同一行时会被 search-form 挤压 */
+    min-width: 0;
+
+    .filter-group:first-child {
+      flex: 0 0 auto;
+      /* 状态筛选始终保持内容宽度 */
+    }
+
+    .filter-group:last-child {
+      flex: 1 1 auto;
+      /* 订阅筛选在空间足够（如换行）时自动填充 */
+      min-width: 0;
+    }
 
     @media (max-width: 600px) {
-      flex: 1;
-      /* 在非常小的屏幕上，筛选按钮也撑满宽度 */
+      flex-basis: 100%;
 
+      /* 移除原本的 .filter-group flex: 1，遵循新的规则：状态内容宽，订阅填充 */
       .filter-trigger {
         width: 100%;
-        /* 按钮宽度撑满容器 */
       }
     }
   }
+}
+
+.filter-group {
+  position: relative;
 }
 
 .header {
@@ -703,7 +667,7 @@ onUnmounted(() => {
 }
 
 .filter-trigger {
-  width: auto;
+  width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -739,24 +703,31 @@ onUnmounted(() => {
   /* 确保它作为一个整体块处理 */
 }
 
-.filter-value {
+.filter-tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: var(--text-primary);
-}
-
-.filter-value-muted {
-  color: var(--text-tertiary);
   padding: 4px 8px;
   background: var(--bg-surface-hover);
   border-radius: 4px;
   font-size: 0.85rem;
-  transition: color 0.3s ease, background-color 0.3s ease;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+  flex: 0 1 auto;
+  /* 允许收缩 */
+  min-width: 0;
+  /* 防止溢出 */
+  max-width: 100%;
+  /* 确保不超过父容器 */
 }
 
 .filter-text {
-  max-width: 160px;
+  /* max-width: 120px; */
+  /* 移除固定最大宽度 */
+  flex: 0 1 auto;
+  /* 允许收缩 */
+  min-width: 0;
+  /* 防止溢出 */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -774,7 +745,7 @@ onUnmounted(() => {
   border-radius: 999px;
   color: var(--text-tertiary);
   padding: 0;
-  margin-left: 2px;
+  margin-left: 4px;
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -814,7 +785,7 @@ onUnmounted(() => {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 200px;
+  min-width: 160px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -823,85 +794,8 @@ onUnmounted(() => {
   box-shadow: var(--shadow-lg);
 }
 
-.filter-tags {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.filter-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 8px;
-  background: var(--bg-surface-hover);
-  border-radius: 4px;
-  font-size: 0.85rem;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-
-}
-
-.menu-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
-}
-
-.menu-item:hover {
-  background: var(--bg-surface-hover);
-}
-
-.menu-arrow {
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  margin-left: 12px;
-}
-
-.submenu {
-  position: absolute;
-  top: -40%;
-  // top: -4px;
-  // left: 100%;
-  right: 100%;
-  margin-left: 8px;
-  min-width: 180px;
-  padding: 4px;
-  box-shadow: var(--shadow-lg);
-  z-index: 21;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-
-  @media (max-width: 768px) {
-    top: 100%;
-    right: 30%;
-  }
-}
-
-/* 透明桥接，防止鼠标经过间隙时菜单关闭 */
-.submenu::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -12px;
-  bottom: 0;
-  width: 12px;
-  background: transparent;
-}
-
-
-
-.submenu-large {
-  width: 260px;
+.dropdown-large {
+  min-width: 260px;
 }
 
 .submenu-option {
