@@ -73,6 +73,7 @@ div[onclick],
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+  transition: all 0.3s ease;
 }
 
 .section-header {
@@ -350,7 +351,7 @@ div[onclick],
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 1rem;
-  transition: 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .input::placeholder {

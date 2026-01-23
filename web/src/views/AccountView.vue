@@ -7,7 +7,11 @@
           <div class="dashboard-left">
             <!-- Current Account Section -->
             <section class="current-account-section">
-              <div class="glass-card">
+              <div class="glass-card" :class="{ 'account-bg-cover': currentSession?.background_url }"
+                :style="{ '--bg-image': currentSession ? `url(${currentSession.background_url})` : 'none' }">
+
+                <div v-if="currentSession" class="account-card-overlay"></div>
+
                 <div v-if="currentSession" class="current-account-info">
                   <div class="account-header">
                     <div class="avatar-container">
@@ -22,13 +26,12 @@
                     </div>
 
 
-
                     <div class="account-details">
                       <div class="account-info">
                         <h3 class="account-name">{{ currentSession.nickname || '未知用户' }}</h3>
-                        <div class="account-id-container">
-                          <p class="account-id text-tertiary">ID: {{ currentSession.user_id }}</p>
-                          <p class="login-type text-tertiary">
+                        <div class="account-meta">
+                          <p class="account-id">ID: {{ currentSession.user_id }}</p>
+                          <p class="login-type">
                             {{ getLoginTypeText(currentSession?.login_type) }}登录
                           </p>
                         </div>
@@ -48,9 +51,6 @@
                         </template>
                       </button>
                     </div>
-
-
-
 
                   </div>
                 </div>
@@ -265,6 +265,7 @@ interface Session {
   last_selected_at?: string
   is_current?: boolean
   is_valid?: boolean
+  background_url?: string
 }
 
 interface QRCode {
@@ -344,7 +345,8 @@ async function loadUserProfile(): Promise<void> {
         login_type: session?.login_type || '',
         nickname: profile?.nickname || '',
         avatar_url: profile?.avatarUrl || '',
-        is_valid: session?.is_valid
+        is_valid: session?.is_valid,
+        background_url: profile?.backgroundUrl || ''
       }
     }
   } catch (error) {
@@ -664,6 +666,18 @@ function formatTime(timeString?: string): string {
   }
 }
 
+
+.account-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(10px);
+  z-index: -1;
+}
 
 
 .cookie-textarea {
