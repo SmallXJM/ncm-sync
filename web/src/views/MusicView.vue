@@ -29,7 +29,7 @@
                   <span class="filter-label">状态：</span>
 
                   <span class="filter-tag" :class="{ 'filter-tag-muted': !filterStatus }">
-                    <span class="filter-text">{{ filterStatus ? getStatusText(filterStatus) : '未应用' }}</span>
+                    <span class="filter-text">{{ filterStatus ? getStatusOptions(filterStatus) : '未应用' }}</span>
                     <button v-if="filterStatus" type="button" class="filter-clear" aria-label="清除状态筛选"
                       @click.stop="clearStatusFilter">
                       ×
@@ -46,15 +46,16 @@
 
                 <transition name="dropdown-fade">
                   <div v-if="isStatusFilterOpen" class="filter-dropdown glass-card dropdown-left" role="listbox">
-                    <button type="button" class="submenu-option" :class="{ 'is-selected': !filterStatus }"
-                      @click="selectStatusFilter('')">
-                      全部
-                    </button>
                     <button v-for="option in statusOptions" :key="option.value" type="button" class="submenu-option"
                       :class="{ 'is-selected': option.value === filterStatus }"
                       @click="selectStatusFilter(option.value)">
                       {{ option.label }}
                     </button>
+                    <div class="dropdown-footer">
+                      <button type="button" class="submenu-option" @click="selectStatusFilter('')">
+                        移除筛选
+                      </button>
+                    </div>
                   </div>
                 </transition>
               </div>
@@ -97,10 +98,6 @@
                       </div>
                     </div>
                     <div class="submenu-list">
-                      <button type="button" class="submenu-option" :class="{ 'is-selected': activeJobId === 0 }"
-                        @click="selectJobFromDropdown({ id: 0, job_name: '所有订阅' } as any)">
-                        所有订阅
-                      </button>
                       <button v-for="job in filteredJobs" :key="job.id" type="button" class="submenu-option"
                         :class="{ 'is-selected': job.id === activeJobId }" @click="selectJobFromDropdown(job)">
                         <span class="filter-option-name">{{ job.job_name }}</span>
@@ -108,6 +105,12 @@
                       <div v-if="filteredJobs.length === 0" class="filter-empty text-tertiary">
                         未找到 "{{ jobSearchKeyword }}"
                       </div>
+                    </div>
+                    <div class="dropdown-footer">
+                      <button type="button" class="submenu-option"
+                        @click="selectJobFromDropdown({ id: 0, job_name: '所有订阅' } as any)">
+                        移除筛选
+                      </button>
                     </div>
                   </div>
                 </transition>
@@ -192,7 +195,7 @@
                 <div class="action-buttons">
                   <button v-if="['failed', 'cancelled'].includes(task.status)" class="btn btn-sm btn-secondary"
                     @click.stop="resetTask(task)" :disabled="isProcessing(task.id)">
-                    {{ isProcessing(task.id) ? '处理中...' : '重试' }}
+                    {{ isProcessing(task.id) ? '处理中...' : '重置' }}
                   </button>
                   <button class="btn btn-sm btn-secondary ml-sm" @click="goDetail(task)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
@@ -276,13 +279,23 @@ type TaskStatusFilter =
 
 const statusOptions: { value: TaskStatusFilter; label: string }[] = [
   // { value: '', label: '所有状态' },
-  { value: 'pending', label: '等待中' },
-  { value: 'downloading', label: '下载中' },
-  { value: 'processing', label: '处理中' },
-  { value: 'completed', label: '已完成' },
-  { value: 'failed', label: '失败' },
-  { value: 'cancelled', label: '已取消' },
+  { value: 'pending', label: '仅等待' },
+  // { value: 'downloading', label: '下载中' },
+  // { value: 'processing', label: '处理中' },
+  { value: 'completed', label: '仅完成' },
+  { value: 'failed', label: '仅失败' },
+  // { value: 'cancelled', label: '已取消' },
 ]
+
+const getStatusOptions = (status: string) => {
+  const map: Record<string, string> = {
+    pending: '仅等待',
+    completed: '仅完成',
+    failed: '仅失败',
+  }
+  return map[status] || status
+}
+
 
 const filteredJobs = computed<DownloadJobItem[]>(() => {
   const keyword = jobSearchKeyword.value.trim().toLowerCase()
@@ -495,12 +508,12 @@ function getStatusClass(status: string): string {
 
 const getStatusText = (status: string) => {
   const map: Record<string, string> = {
-    pending: '等待中',
-    downloading: '下载中',
-    processing: '处理中',
-    completed: '已完成',
+    pending: '等待',
+    downloading: '下载',
+    processing: '处理',
+    completed: '完成',
     failed: '失败',
-    cancelled: '已取消',
+    cancelled: '取消',
   }
   return map[status] || status
 }
@@ -904,6 +917,12 @@ onUnmounted(() => {
 .submenu-list {
   max-height: 240px;
   overflow-y: auto;
+}
+
+.dropdown-footer {
+  padding-top: 4px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-color);
 }
 
 .filter-empty {

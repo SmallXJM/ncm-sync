@@ -1047,6 +1047,14 @@
   color: var(--text-secondary);
   font-size: 0.9rem;
   transition: color 0.3s ease;
+
+    // 最多显示两行
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* 标准属性，用于未来兼容性 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .creator-info img {
@@ -1068,6 +1076,13 @@
   font-size: 0.85rem;
   color: var(--text-tertiary);
   transition: color 0.3s ease;
+  // 最多显示两行
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* 标准属性，用于未来兼容性 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .card-footer {
