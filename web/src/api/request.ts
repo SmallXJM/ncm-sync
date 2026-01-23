@@ -92,7 +92,34 @@ class HttpClient {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
+        let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`
+        try {
+          const errorData = await response.json()
+          if (errorData && typeof errorData === 'object') {
+            if ('detail' in errorData) {
+              const detail = errorData.detail
+              if (typeof detail === 'string') {
+                errorMessage = detail
+              } else if (typeof detail === 'object' && detail !== null) {
+                if ('message' in detail) {
+                  errorMessage = (detail as any).message
+                } else {
+                  errorMessage = JSON.stringify(detail)
+                }
+              }
+            } else if ('message' in errorData) {
+              errorMessage = (errorData as any).message
+            }
+          }
+        } catch {
+          // ignore JSON parse error
+        }
+        
+        return {
+          success: false,
+          error: errorMessage,
+          status: response.status,
+        }
       }
 
       const data = (await response.json()) as T

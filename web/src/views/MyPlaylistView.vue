@@ -378,7 +378,7 @@ async function fetchDownloadJob() {
 
 async function fetchPlaylists() {
   if (isLoading.value) return
-  console.log('fetchPlaylists called')
+  // console.log('fetchPlaylists called')
   isLoading.value = true
   try {
     const res = await api.music.user.getUserPlaylist({ limit: 1000, uid: '' }) // uid empty means current user
@@ -391,7 +391,8 @@ async function fetchPlaylists() {
         playlists.value = []
       }
     } else {
-      toast.show('获取歌单失败: ' + (res.success ? res.data.code : res.error || '未知错误'), 'error')
+      const errorMsg = res.success ? `${res.data.code} ${res.data.message}` : (res.error || '未知错误')
+      toast.show(`获取歌单失败: ${errorMsg}`, 'error')
     }
   } catch (e) {
     toast.show('获取歌单失败:' + (e as Error).message, 'error')

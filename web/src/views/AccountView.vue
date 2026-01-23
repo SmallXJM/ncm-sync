@@ -364,7 +364,7 @@ async function loadSessions(): Promise<void> {
     if (result.success && sessionsList) {
       // Mark current session
       const currentId = currentSession.value?.id
-      console.log('Current Session ID:', currentId)
+      // console.log('Current Session ID:', currentId)
 
       sessions.value = sessionsList.map(s => {
         const isCurrent = currentId !== undefined && s.id === currentId
