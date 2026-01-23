@@ -1035,4 +1035,14 @@ onUnmounted(() => {
 .ml-sm {
   margin-left: var(--spacing-sm);
 }
+
+.creator-info {
+    // 最多显示两行
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* 标准属性，用于未来兼容性 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 </style>
