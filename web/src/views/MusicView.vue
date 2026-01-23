@@ -24,24 +24,24 @@
             <div class="filter-wrapper" ref="filterContainerRef">
               <!-- Status Filter -->
               <div class="filter-group relative">
-                <button type="button" class="filter-trigger"
-                  :aria-expanded="isStatusFilterOpen ? 'true' : 'false'" aria-haspopup="listbox"
-                  @click.stop="toggleStatusFilterDropdown">
+                <button type="button" class="filter-trigger" :aria-expanded="isStatusFilterOpen ? 'true' : 'false'"
+                  aria-haspopup="listbox" @click.stop="toggleStatusFilterDropdown">
                   <span class="filter-label">状态：</span>
-                  
-                  <span class="filter-tag">
+
+                  <span class="filter-tag" :class="{ 'filter-tag-muted': !filterStatus }">
                     <span class="filter-text">{{ filterStatus ? getStatusText(filterStatus) : '未应用' }}</span>
-                    <button v-if="filterStatus" type="button" class="filter-clear" aria-label="清除状态筛选" @click.stop="clearStatusFilter">
+                    <button v-if="filterStatus" type="button" class="filter-clear" aria-label="清除状态筛选"
+                      @click.stop="clearStatusFilter">
                       ×
                     </button>
                   </span>
 
-                  <span class="filter-arrow">
+                  <!-- <span class="filter-arrow">
                     <svg width="12" height="12" viewBox="0 0 24 24">
                       <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                         stroke-linejoin="round" />
                     </svg>
-                  </span>
+                  </span> -->
                 </button>
 
                 <transition name="dropdown-fade">
@@ -61,31 +61,40 @@
 
               <!-- Job Filter -->
               <div class="filter-group relative">
-                <button type="button" class="filter-trigger"
-                  :aria-expanded="isJobFilterOpen ? 'true' : 'false'" aria-haspopup="listbox"
-                  @click.stop="toggleJobFilterDropdown">
+                <button type="button" class="filter-trigger" :aria-expanded="isJobFilterOpen ? 'true' : 'false'"
+                  aria-haspopup="listbox" @click.stop="toggleJobFilterDropdown">
                   <span class="filter-label">订阅：</span>
-                  
-                  <span class="filter-tag">
-                    <span class="filter-text">{{ selectedJob ? selectedJob.job_name : '所有订阅' }}</span>
-                    <button v-if="selectedJob" type="button" class="filter-clear" aria-label="清除订阅筛选" @click.stop="clearJobFilter">
+
+                  <span class="filter-tag" :class="{ 'filter-tag-muted': !selectedJob }">
+                    <span class="filter-text">{{ selectedJob ? selectedJob.job_name : '未应用' }}</span>
+                    <button v-if="selectedJob" type="button" class="filter-clear" aria-label="清除订阅筛选"
+                      @click.stop="clearJobFilter">
                       ×
                     </button>
                   </span>
 
-                  <span class="filter-arrow">
+                  <!-- <span class="filter-arrow">
                     <svg width="12" height="12" viewBox="0 0 24 24">
                       <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                         stroke-linejoin="round" />
                     </svg>
-                  </span>
+                  </span> -->
                 </button>
 
                 <transition name="dropdown-fade">
                   <div v-if="isJobFilterOpen" class="filter-dropdown glass-card dropdown-large" role="listbox">
-                    <div class="submenu-search">
-                      <input ref="filterSearchInputRef" v-model="jobSearchKeyword" type="text" class="search-input"
-                        placeholder="搜索订阅..." @click.stop />
+                    <div class="submenu-list-form search-form">
+                      <div class="search-input-wrapper" style="flex: 1;">
+                        <span class="search-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                          </svg>
+                        </span>
+                        <input ref="filterSearchInputRef" v-model="jobSearchKeyword" type="text" class="search-input"
+                          placeholder="搜索订阅..." @click.stop />
+                      </div>
                     </div>
                     <div class="submenu-list">
                       <button type="button" class="submenu-option" :class="{ 'is-selected': activeJobId === 0 }"
@@ -554,14 +563,25 @@ onUnmounted(() => {
       .search-input {
         width: 100%;
         padding-left: 38px;
+        /* 如果有清除按钮，input 右侧也要加 padding */
+        padding-right: 30px;
         /* 重要：留出图标的空间 (图标宽度 + 间距) */
         transition: background-color 0.3s ease, border-color 0.3s ease;
+      }
 
-        /* 当输入框聚焦时，可以改变图标颜色 */
-        &:focus+.search-icon,
-        /* 这种写法需要图标在 input 后面，或者在 input 容器上使用 :focus-within */
-        &:focus {
-          border-color: var(--accent-color);
+      .search-input:focus {
+        border-color: var(--border-hover);
+        box-shadow: none;
+        /* 修正：清除阴影的标准写法 */
+        outline: none;
+        /* 关键：清除浏览器默认的对焦外框 */
+      }
+
+      /* 推荐做法：使用 focus-within 让 input 聚焦时图标也变色 */
+      &:focus-within {
+        .search-icon {
+          color: var(--text-secondary);
+          /* 聚焦时放大镜变色 */
         }
       }
 
@@ -582,19 +602,10 @@ onUnmounted(() => {
         }
       }
 
-      /* 如果有清除按钮，input 右侧也要加 padding */
-      .search-input {
-        padding-right: 30px;
-      }
+
     }
 
-    /* 推荐做法：使用 focus-within 让 input 聚焦时图标也变色 */
-    .search-input-wrapper:focus-within {
-      .search-icon {
-        color: var(--accent-color);
-        /* 聚焦时放大镜变色 */
-      }
-    }
+
   }
 
   .filter-wrapper {
@@ -721,6 +732,12 @@ onUnmounted(() => {
   /* 确保不超过父容器 */
 }
 
+.filter-tag-muted {
+  color: var(--text-tertiary);
+  background: var(--bg-surface-hover);
+  border: 1px solid var(--bg-surface-hover);
+}
+
 .filter-text {
   /* max-width: 120px; */
   /* 移除固定最大宽度 */
@@ -732,6 +749,8 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
 
 .filter-clear {
   border: none;
@@ -803,7 +822,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 12px 12px;
   border-radius: 6px;
   border: none;
   background: transparent;
@@ -839,7 +858,7 @@ onUnmounted(() => {
 
 /* 4. 优化子菜单内部搜索框 */
 .submenu-search {
-  padding: 4px;
+  // padding: 4px;
   position: sticky;
   /* 搜索框固定在子菜单顶部 */
   top: 0;
@@ -850,7 +869,12 @@ onUnmounted(() => {
 .submenu-search .search-input {
   width: 100%;
   font-size: 0.85rem;
-  padding: 6px 10px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+}
+
+.headbar .submenu-list-form {
+  margin-bottom: 4px;
 }
 
 .submenu-list {
