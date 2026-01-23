@@ -7,7 +7,11 @@
           <div class="dashboard-left">
             <!-- Current Account Section -->
             <section class="current-account-section">
-              <div class="glass-card">
+              <div class="glass-card" :class="{ 'account-bg-cover': currentSession?.background_url }"
+                :style="{ '--bg-image': currentSession ? `url(${currentSession.background_url})` : 'none' }">
+
+                <div v-if="currentSession" class="account-card-overlay"></div>
+
                 <div v-if="currentSession" class="current-account-info">
                   <div class="account-header">
                     <div class="avatar-container">
@@ -22,30 +26,31 @@
                     </div>
 
 
-
-                    <div class="account-details" style="flex: 1;">
-                      <h3 class="account-name" style="margin: 0;">{{ currentSession.nickname || '未知用户' }}</h3>
-                      <p class="account-id text-secondary" style="margin: 4px 0;">ID: {{ currentSession.user_id }}</p>
-                      <p class="login-type text-tertiary" style="margin: 0;">
-                        登录方式: {{ getLoginTypeText(currentSession?.login_type) }}
-                      </p>
-                        <button class="btn btn-secondary btn-sm mt-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
-                          <template v-if="isRefreshing">
-                            <div class="loading-spinner"></div>
-                          </template>
-                          <template v-else>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
-                            </svg>
-                            <span>登录状态</span>
-                          </template>
-                        </button>
+                    <div class="account-details">
+                      <div class="account-info">
+                        <h3 class="account-name">{{ currentSession.nickname || '未知用户' }}</h3>
+                        <div class="account-meta">
+                          <p class="account-id">ID: {{ currentSession.user_id }}</p>
+                          <p class="login-type">
+                            {{ getLoginTypeText(currentSession?.login_type) }}登录
+                          </p>
+                        </div>
                       </div>
 
-
-
+                      <button class="btn btn-secondary btn-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
+                        <template v-if="isRefreshing">
+                          <div class="loading-spinner"></div>
+                        </template>
+                        <template v-else>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                          </svg>
+                          <span>登录状态</span>
+                        </template>
+                      </button>
+                    </div>
 
                   </div>
                 </div>
@@ -102,10 +107,15 @@
                     </div>
 
                     <div class="session-status">
+
                       <div class="status-indicator" :class="session.is_valid ? 'status-online' : 'status-offline'">
                         <div class="status-dot"></div>
-                        <span>{{ session.is_valid ? '有效' : '已失效' }}</span>
+                        <span>{{ getStatusText(session.is_valid) }}</span>
                       </div>
+
+                      <p class="session-time text-tertiary">
+                        {{ getLoginTypeText(session?.login_type) }}登录
+                      </p>
                     </div>
 
                     <div class="session-actions">
@@ -135,10 +145,10 @@
           <section class="login-methods-section">
             <div class="login-methods">
               <!-- QR Code Login -->
-              <div class="login-method">
-                <div class="method-header">
-                  <h3>二维码登录</h3>
-                  <p class="text-secondary">使用网易云音乐 App 扫码登录</p>
+              <div class="glass-card">
+                <div class="section-header">
+                  <h2 class="section-title">二维码登录</h2>
+                  <p class="text-tertiary">使用网易云音乐 App 扫码登录</p>
                 </div>
 
                 <div class="qr-login-container">
@@ -184,10 +194,10 @@
               </div>
 
               <!-- Cookie Login -->
-              <div class="login-method">
-                <div class="method-header">
-                  <h3>Cookie 登录</h3>
-                  <p class="text-secondary">手动输入 Cookie 进行登录</p>
+              <div class="glass-card">
+                <div class="section-header">
+                  <h2 class="section-title">Cookie 登录</h2>
+                  <p class="text-tertiary">手动输入 Cookie 进行登录</p>
                 </div>
 
                 <div class="cookie-login-container">
@@ -255,6 +265,7 @@ interface Session {
   last_selected_at?: string
   is_current?: boolean
   is_valid?: boolean
+  background_url?: string
 }
 
 interface QRCode {
@@ -334,7 +345,8 @@ async function loadUserProfile(): Promise<void> {
         login_type: session?.login_type || '',
         nickname: profile?.nickname || '',
         avatar_url: profile?.avatarUrl || '',
-        is_valid: session?.is_valid
+        is_valid: session?.is_valid,
+        background_url: profile?.backgroundUrl || ''
       }
     }
   } catch (error) {
@@ -654,6 +666,18 @@ function formatTime(timeString?: string): string {
   }
 }
 
+
+.account-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(10px);
+  z-index: -1;
+}
 
 
 .cookie-textarea {

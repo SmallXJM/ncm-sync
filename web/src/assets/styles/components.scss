@@ -3,10 +3,62 @@
 /* 将组件样式迁移为 SCSS，保持类名与结构兼容 */
 
 /* 账户管理相关 */
+.account-bg-cover {
+  position: relative;
+  z-index: 0;
+  /* 建立层叠上下文 */
+  overflow: hidden;
+  /* 必须，否则模糊边缘会溢出卡片 */
+  // background: transparent !important; /* 关键：父容器不能有不透明背景，否则文字只跟白色背景混合 */
+  /* 移除原有的背景，改由伪元素实现 */
+
+  // isolation: isolate;
+
+
+}
+
+.account-bg-cover::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* 继承父组件传进来的变量（见下方 Vue 改进） */
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center;
+
+  /* 变白 模糊处理 */
+  filter: var(--bg-cover-filter);
+  /* 稍微放大一点点，解决模糊后边缘出现的“白边/透明边”问题 */
+  transform: scale(1.1);
+
+  z-index: -1;
+  /* 确保在内容下方 */
+
+  transition: filter 0.3s ease, transform 0.3s ease;
+  
+}
+
+/* 2. 增加半透明压暗，防止背景图看不清字 */
+.account-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-cover-bg);
+  z-index: -1;
+
+  transition: all 0.3s ease;
+}
+
 .account-header {
   display: flex;
   gap: var(--spacing-xl);
   align-items: flex-start;
+
 }
 
 .avatar-container {
@@ -18,23 +70,49 @@
   flex: 1;
 }
 
+.account-info {
+  display: flex;
+  align-items: flex-start;
+  /* 让 ID 的底部与昵称顶部对齐 */
+  justify-content: space-between;
+  gap: 10px;
+  /* 昵称和 ID 之间的间距 */
+  margin-bottom: 4px;
+  /* 如下方有其他元素，可增加间距 */
+
+  // color: #fff !important; /* 必须是纯白，反色效果最强 */
+  // mix-blend-mode: exclusion; /* 也可以尝试 difference */
+  // position: relative;
+  // z-index: 2;
+
+
+}
+
 .account-name {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-sm);
+  font-size: 1.8rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+
+}
+
+.account-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
 }
 
 .account-id {
-  font-size: 0.9rem;
-  margin: 0 0 var(--spacing-xs);
-  color: var(--text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+
+
 }
 
 .login-type {
   font-size: 0.85rem;
-  margin: 0 0 var(--spacing-md);
-  color: var(--text-tertiary);
+  transition: all 0.3s ease;
 }
 
 .account-actions {
@@ -165,7 +243,7 @@
   border-radius: 0.5rem;
   padding: var(--spacing-md);
   border: 1px solid var(--border-color);
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
 
 }
 
@@ -173,6 +251,7 @@
   font-weight: 600;
   cursor: pointer;
   color: var(--accent-color);
+  transition: all 0.3s ease;
 }
 
 .help-content {
@@ -429,10 +508,17 @@
 }
 
 .config-nav-item {
+  /* 关键代码 */
+  flex: 1 0 auto; 
+  /* 解析：
+     flex-grow: 1;    -> 填满剩余空间（实现整行占满）
+     flex-shrink: 0;  -> 不压缩宽度（保证不挤压文字）
+     flex-basis: auto; -> 初始宽度基于内容（保证最窄是内容宽度）
+  */
   width: auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--spacing-sm);
   padding: 10px 12px;
   border-radius: 14px;
@@ -440,8 +526,7 @@
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background-color 0.22s ease, border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease,
-    color 0.22s ease;
+  transition: all 0.3s ease;
   text-align: left;
 }
 

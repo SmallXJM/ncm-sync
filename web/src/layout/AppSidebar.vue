@@ -123,26 +123,32 @@ onUnmounted(() => {
 const DashboardIcon = h(
     'svg',
     {
-        xmlns: 'http://www.w3.org/2000/svg',
-        width: 20,
-        height: 20,
-        viewBox: '0 0 24 24',
+      xmlns: 'http://www.w3.org/2000/svg',
+      width: 20,
+      height: 20,
+      viewBox: '0 0 24 24',
     },
     [
-        h(
-            'g',
-            { fill: 'currentColor' },
-            [
-                h('path', {
-                    d: 'M9.883 2.207a1.9 1.9 0 0 1 2.087 1.522l.025.167L12 4v7a1 1 0 0 0 .883.993L13 12h6.8a2 2 0 0 1 2 2a1 1 0 0 1-.026.226A10 10 0 1 1 9.504 2.293l.27-.067z',
-                }),
-                h('path', {
-                    d: 'M14 3.5V9a1 1 0 0 0 1 1h5.5a1 1 0 0 0 .943-1.332a10 10 0 0 0-6.11-6.111A1 1 0 0 0 14 3.5',
-                }),
-            ]
-        ),
+      h(
+        'g',
+        {
+          fill: 'none',
+          stroke: 'currentColor',
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          'stroke-width': 2,
+        },
+        [
+          h('path', {
+            d: 'M10 3.2A9 9 0 1 0 20.8 14a1 1 0 0 0-1-1H13a2 2 0 0 1-2-2V4a.9.9 0 0 0-1-.8',
+          }),
+          h('path', {
+            d: 'M15 3.5A9 9 0 0 1 20.5 9H16a1 1 0 0 1-1-1z',
+          }),
+        ]
+      ),
     ]
-)
+  )
 
 const UserIcon = h('svg', {
     xmlns: 'http://www.w3.org/2000/svg',

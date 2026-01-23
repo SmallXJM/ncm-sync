@@ -26,6 +26,7 @@ export interface RequestOptions {
   headers?: HeadersInit
   body?: unknown
   signal?: AbortSignal | null
+  credentials?: RequestCredentials
 }
 
 function headersToRecord(headers?: HeadersInit): Record<string, string> {
@@ -64,6 +65,7 @@ class HttpClient {
       method: options.method ?? 'GET',
       headers,
       signal: options.signal ?? undefined,
+      credentials: options.credentials ?? 'omit',
     }
 
     if (options.body !== undefined) {

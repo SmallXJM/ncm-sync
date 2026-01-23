@@ -518,7 +518,7 @@ async function submitEdit() {
   align-items: center;
   gap: var(--spacing-lg);
   // margin-top: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  // margin-bottom: var(--spacing-lg);
 
   p {
     font-size: 1rem;
@@ -532,7 +532,7 @@ async function submitEdit() {
 $grid-config: minmax(150px, auto) max-content max-content max-content max-content;
 
 .job-list-container {
-  margin-top: var(--spacing-lg);
+  // margin-top: var(--spacing-lg);
   /* 屏幕太小时允许横向滚动 */
   overflow-x: auto;
 

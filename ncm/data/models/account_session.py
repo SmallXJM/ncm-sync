@@ -1,7 +1,7 @@
 """Account session model definition."""
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
-from sqlalchemy.sql import func
+from ncm.core.time import UTC_CLOCK, to_iso_format
 from ncm.data.engine import Base
 
 
@@ -18,8 +18,8 @@ class AccountSession(Base):
     last_selected_at = Column(DateTime)  # Last time selected as current cookie
     last_success_at = Column(DateTime)  # Last successful request time
     expired_at = Column(DateTime)  # Known expiration time (nullable)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=lambda: UTC_CLOCK.now())
+    updated_at = Column(DateTime, default=lambda: UTC_CLOCK.now(), onupdate=lambda: UTC_CLOCK.now())
     
     def to_dict(self):
         """Convert to dictionary."""
@@ -31,11 +31,11 @@ class AccountSession(Base):
             'login_type': self.login_type,
             'is_valid': self.is_valid,
             'fail_count': self.fail_count,
-            'last_selected_at': self.last_selected_at.isoformat() if self.last_selected_at else None,
-            'last_success_at': self.last_success_at.isoformat() if self.last_success_at else None,
-            'expired_at': self.expired_at.isoformat() if self.expired_at else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'last_selected_at': to_iso_format(self.last_selected_at),
+            'last_success_at': to_iso_format(self.last_success_at),
+            'expired_at': to_iso_format(self.expired_at),
+            'created_at': to_iso_format(self.created_at),
+            'updated_at': to_iso_format(self.updated_at),
         }
     
     def __repr__(self):
