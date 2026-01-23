@@ -45,7 +45,7 @@
                 </button>
 
                 <transition name="dropdown-fade">
-                  <div v-if="isStatusFilterOpen" class="filter-dropdown glass-card" role="listbox">
+                  <div v-if="isStatusFilterOpen" class="filter-dropdown glass-card dropdown-left" role="listbox">
                     <button type="button" class="submenu-option" :class="{ 'is-selected': !filterStatus }"
                       @click="selectStatusFilter('')">
                       全部
@@ -60,7 +60,7 @@
               </div>
 
               <!-- Job Filter -->
-              <div class="filter-group relative">
+              <div class="filter-group relative" ref="jobFilterGroupRef">
                 <button type="button" class="filter-trigger" :aria-expanded="isJobFilterOpen ? 'true' : 'false'"
                   aria-haspopup="listbox" @click.stop="toggleJobFilterDropdown">
                   <span class="filter-label">订阅：</span>
@@ -82,7 +82,7 @@
                 </button>
 
                 <transition name="dropdown-fade">
-                  <div v-if="isJobFilterOpen" class="filter-dropdown glass-card dropdown-large" role="listbox">
+                  <div v-if="isJobFilterOpen" class="filter-dropdown glass-card dropdown-large" :class="{ 'dropdown-left': jobDropdownPlacement === 'left' }" role="listbox">
                     <div class="submenu-list-form search-form">
                       <div class="search-input-wrapper" style="flex: 1;">
                         <span class="search-icon">
@@ -240,6 +240,8 @@ const processingTasks = ref<Set<number>>(new Set())
 const coverErrorTaskIds = ref<Set<number>>(new Set())
 const isStatusFilterOpen = ref(false)
 const isJobFilterOpen = ref(false)
+const jobFilterGroupRef = ref<HTMLElement | null>(null)
+const jobDropdownPlacement = ref<'left' | 'right'>('left')
 const jobSearchKeyword = ref('')
 const filterHighlightedIndex = ref(-1)
 const filterSearchInputRef = ref<HTMLInputElement | null>(null)
@@ -392,8 +394,24 @@ const toggleJobFilterDropdown = () => {
   isJobFilterOpen.value = !isJobFilterOpen.value
   if (isJobFilterOpen.value) {
     isStatusFilterOpen.value = false
+    jobSearchKeyword.value = ''
+    filterHighlightedIndex.value = -1
+    // Reset to preferred alignment first
+    jobDropdownPlacement.value = 'left'
     nextTick(() => {
-      filterSearchInputRef.value?.focus()
+      // Check collision
+      if (jobFilterGroupRef.value && filterContainerRef.value) {
+        const groupRect = jobFilterGroupRef.value.getBoundingClientRect()
+        const containerRect = filterContainerRef.value.getBoundingClientRect()
+        const dropdownWidth = 260 // Minimum width of dropdown-large
+
+        // Check if extending to the right would overflow the container's right edge
+        // Left alignment means the dropdown starts at groupRect.left
+        if (groupRect.left + dropdownWidth > containerRect.right) {
+          jobDropdownPlacement.value = 'right'
+        }
+      }
+      // filterSearchInputRef.value?.focus()
     })
   }
 }
@@ -817,6 +835,11 @@ onUnmounted(() => {
   min-width: 260px;
 }
 
+.dropdown-left {
+  left: 0;
+  right: auto;
+}
+
 .submenu-option {
   width: 100%;
   display: flex;
@@ -875,6 +898,7 @@ onUnmounted(() => {
 
 .headbar .submenu-list-form {
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 .submenu-list {
