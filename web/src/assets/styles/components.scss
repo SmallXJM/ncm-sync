@@ -508,10 +508,17 @@
 }
 
 .config-nav-item {
+  /* 关键代码 */
+  flex: 1 0 auto; 
+  /* 解析：
+     flex-grow: 1;    -> 填满剩余空间（实现整行占满）
+     flex-shrink: 0;  -> 不压缩宽度（保证不挤压文字）
+     flex-basis: auto; -> 初始宽度基于内容（保证最窄是内容宽度）
+  */
   width: auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--spacing-sm);
   padding: 10px 12px;
   border-radius: 14px;
@@ -519,8 +526,7 @@
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background-color 0.22s ease, border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease,
-    color 0.22s ease;
+  transition: all 0.3s ease;
   text-align: left;
 }
 
