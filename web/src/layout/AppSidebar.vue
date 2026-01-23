@@ -10,11 +10,14 @@
         </div>
 
         <nav class="sidebar__menu">
-            <router-link v-for="item in menus" :key="item.path" :to="item.path" class="menu-item" :title="item.title"
-                @click="handleMenuItemClick">
-                <component :is="item.icon" class="menu-icon" />
-                <span class="menu-text">{{ item.title }}</span>
-            </router-link>
+            <div v-for="(group, index) in menuGroups" :key="index" class="menu-group">
+                <div v-if="group.title" class="menu-group-title">{{ group.title }}</div>
+                <router-link v-for="item in group.items" :key="item.path" :to="item.path" class="menu-item"
+                    :title="item.title" @click="handleMenuItemClick">
+                    <component :is="item.icon" class="menu-icon" />
+                    <span class="menu-text">{{ item.title }}</span>
+                </router-link>
+            </div>
         </nav>
 
 
@@ -273,14 +276,32 @@ interface MenuItem {
     icon: Component
 }
 
-const menus: MenuItem[] = [
-    { title: '仪表盘', path: '/', icon: DashboardIcon },
-    { title: '登录态', path: '/account', icon: UserIcon },
-    { title: '音乐', path: '/music', icon: FileMusicIcon },
-    { title: '订阅', path: '/subscription', icon: BellIcon },
-    // { title: '任务', path: '/download/tasks', icon: TaskIcon },
-    { title: '我的歌单', path: '/my/playlist', icon: PlaylistIcon },
-    // { title: '设置', path: '/config', icon: SettingsIcon }
+interface MenuGroup {
+    title: string
+    items: MenuItem[]
+}
+
+const menuGroups: MenuGroup[] = [
+    {
+        title: '总览',
+        items: [
+            { title: '仪表盘', path: '/', icon: DashboardIcon },
+            { title: '登录态', path: '/account', icon: UserIcon },
+        ]
+    },
+    {
+        title: '内容管理',
+        items: [
+            { title: '音乐', path: '/music', icon: FileMusicIcon },
+            { title: '订阅', path: '/subscription', icon: BellIcon },
+        ]
+    },
+    {
+        title: '快捷订阅',
+        items: [
+            { title: '我的歌单', path: '/my/playlist', icon: PlaylistIcon },
+        ]
+    }
 ]
 
 // const isDark = ref(false)
@@ -416,6 +437,10 @@ onUnmounted(() => {
         // 这样配合 flex-end，按钮(40px)在64px宽度下：左(4+8)px，右12px -> 视觉居中
         padding: $space-sm;
 
+        .menu-group-title {
+            display: none;
+        }
+
         .brand-text,
         .menu-text {
             opacity: 0;
@@ -503,10 +528,24 @@ onUnmounted(() => {
 .sidebar__menu {
     display: flex;
     flex-direction: column;
-    gap: $space-xs;
+    gap: $space-md;
     flex: 1;
     width: 100%;
     /* 占据剩余空间，将 footer 推到底部 */
+}
+
+.menu-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-xs;
+}
+
+.menu-group-title {
+    padding: 0 $space-md;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    margin-bottom: 2px;
 }
 
 .sidebar__setting {
