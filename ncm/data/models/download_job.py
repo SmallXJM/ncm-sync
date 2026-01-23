@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from ncm.data.engine import Base
-from ncm.core.time import UTC_CLOCK
+from ncm.core.time import UTC_CLOCK, to_iso_format
 
 
 class DownloadJob(Base):
@@ -88,8 +88,8 @@ class DownloadJob(Base):
             'completed_tasks': self.completed_tasks,
             'failed_tasks': self.failed_tasks,
             'enabled': self.enabled,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'started_at': self.started_at.isoformat() if self.started_at else None,
-            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'created_at': to_iso_format(self.created_at),
+            'updated_at': to_iso_format(self.updated_at),
+            'started_at': to_iso_format(self.started_at),
+            'completed_at': to_iso_format(self.completed_at),
         }
