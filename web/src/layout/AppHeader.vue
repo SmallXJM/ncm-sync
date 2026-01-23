@@ -237,7 +237,7 @@ watch(isWsDisconnected, (newVal) => {
 .breadcrumb-link {
     border-radius: $radius-sm;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
     transition: all 0.3s ease;
 
     &:hover {
