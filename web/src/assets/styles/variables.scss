@@ -67,6 +67,8 @@ $ts-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 $img-filter-brightness-dark: brightness(0.7);
 $img-filter-brightness-light: brightness(1);
 
+$bg-cover-blur: blur(2px);
+
 /* 定义深色模式变量集合 */
 @mixin dark-mode-vars {
   --bg-body: #{$color-gray-1000};
@@ -113,7 +115,7 @@ $img-filter-brightness-light: brightness(1);
 
   // 图片框filter
   --img-filter-brightness: #{$img-filter-brightness-dark};
-  --bg-cover-filter: brightness(1) saturate(2) blur(2px);
+  --bg-cover-filter: brightness(1) saturate(2);
   --bg-cover-bg: rgba(20, 20, 20, 0.7);
 
 
@@ -167,7 +169,7 @@ $img-filter-brightness-light: brightness(1);
   --img-filter-brightness: #{$img-filter-brightness-light};
   /* brightness 亮暗 */
   /* saturate 饱和度 */
-  --bg-cover-filter: brightness(1) saturate(3) blur(2px);
+  --bg-cover-filter: brightness(1) saturate(3);
   --bg-cover-bg: rgba(255, 255, 255, 0.3);
 
   --color-scheme: light;
@@ -190,6 +192,9 @@ $img-filter-brightness-light: brightness(1);
   --spacing-lg: #{$space-lg};
   --spacing-xl: #{$space-xl};
   --spacing-2xl: #{$space-2xl};
+
+  --bg-cover-blur: blur(2px);
+
 }
 
 /* 1. 系统偏好为深色时自动应用 */
