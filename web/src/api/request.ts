@@ -13,6 +13,12 @@ export type ApiFailure = {
   status: number
 }
 
+export type ApiErrorResponse = {
+  detail?: string | { message?: string; [key: string]: unknown }
+  message?: string
+  [key: string]: unknown
+}
+
 export type ApiResult<T> = ApiSuccess<T> | ApiFailure
 
 export interface ApiEnvelope<T> {
@@ -92,7 +98,34 @@ class HttpClient {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
+        let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`
+        try {
+          const errorData = (await response.json()) as ApiErrorResponse
+          if (errorData && typeof errorData === 'object') {
+            if (errorData.detail !== undefined) {
+              const detail = errorData.detail
+              if (typeof detail === 'string') {
+                errorMessage = detail
+              } else if (typeof detail === 'object' && detail !== null) {
+                if (detail.message) {
+                  errorMessage = detail.message
+                } else {
+                  errorMessage = JSON.stringify(detail)
+                }
+              }
+            } else if (errorData.message) {
+              errorMessage = errorData.message
+            }
+          }
+        } catch {
+          // ignore JSON parse error
+        }
+        
+        return {
+          success: false,
+          error: errorMessage,
+          status: response.status,
+        }
       }
 
       const data = (await response.json()) as T

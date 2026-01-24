@@ -2,16 +2,23 @@
 @use './variables' as *;
 
 /* 针对所有可交互元素 */
-button, 
-a, 
-input, 
-textarea, 
-div[onclick], 
-.range-slider {
+a {
   /* 1. 移除移动端点击时的蓝色高亮遮罩 */
   // -webkit-tap-highlight-color: transparent;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  /* 2. 移除点击/聚焦后的蓝色外边框 */
+  outline: none;
+}
 
+button,
+input,
+textarea,
+div[onclick],
+.config-nav-item,
+.item-control,
+.range-slider {
+  /* 1. 移除移动端点击时的蓝色高亮遮罩 */
+  -webkit-tap-highlight-color: transparent;
   /* 2. 移除点击/聚焦后的蓝色外边框 */
   outline: none;
 }
@@ -264,7 +271,7 @@ div[onclick],
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: var(--img-filter-brightness); 
+  filter: var(--img-filter-brightness);
   transition: background-color 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
 }
 
@@ -327,7 +334,7 @@ div[onclick],
 .status-badge {
   position: absolute;
   bottom: -4px;
-  right: -4px; 
+  right: -4px;
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);

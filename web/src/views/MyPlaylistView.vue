@@ -192,7 +192,7 @@
 </template>
 
 <script lang="ts" setup>
-import { watch, computed, onMounted, reactive, ref } from 'vue'
+import { watch, computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import api from '@/api'
 import type { Playlist } from '@/api/ncm/music/user'
 import type { CreateJobParams, DownloadJobItem } from '@/api/ncm/download'
@@ -284,9 +284,18 @@ onMounted(async () => {
   }
 
   updateUrl()
-
+  window.addEventListener('popstate', handlePopState)
 })
 
+onUnmounted(() => {
+  window.removeEventListener('popstate', handlePopState)
+})
+
+const handlePopState = () => {
+  if (isDrawerOpen.value) {
+    isDrawerOpen.value = false
+  }
+}
 
 const updateUrl = () => {
   const query = { ...route.query }
@@ -378,7 +387,7 @@ async function fetchDownloadJob() {
 
 async function fetchPlaylists() {
   if (isLoading.value) return
-  console.log('fetchPlaylists called')
+  // console.log('fetchPlaylists called')
   isLoading.value = true
   try {
     const res = await api.music.user.getUserPlaylist({ limit: 1000, uid: '' }) // uid empty means current user
@@ -391,7 +400,8 @@ async function fetchPlaylists() {
         playlists.value = []
       }
     } else {
-      toast.show('获取歌单失败: ' + (res.success ? res.data.code : res.error || '未知错误'), 'error')
+      const errorMsg = res.success ? `${res.data.code} ${res.data.message}` : (res.error || '未知错误')
+      toast.show(`获取歌单失败: ${errorMsg}`, 'error')
     }
   } catch (e) {
     toast.show('获取歌单失败:' + (e as Error).message, 'error')
@@ -443,7 +453,12 @@ function openSubscribe(playlist: Playlist) {
 
     jobConfig.filename_template = globalConfig.value?.subscription?.filename || jobConfig.filename_template
   })
-  isDrawerOpen.value = true
+  
+  if (!isDrawerOpen.value) {
+    window.history.pushState({ drawer: 'open' }, '')
+    isDrawerOpen.value = true
+  }
+
   // drawer-body 到最顶层
   const scrollContainer = document.querySelector('.drawer-body')
   if (scrollContainer) {
@@ -455,7 +470,10 @@ function openSubscribe(playlist: Playlist) {
 }
 
 function closeDrawer() {
-  isDrawerOpen.value = false
+  if (isDrawerOpen.value) {
+    isDrawerOpen.value = false
+    window.history.back()
+  }
 }
 
 async function submitJob() {
@@ -541,7 +559,7 @@ function sanitizeFilename(name: string): string {
   max-width: 90dvw;
   background: var(--bg-modal);
   box-shadow: var(--shadow-2xl);
-  z-index: 600; //弹窗600
+  z-index: 700; //弹窗700
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
   display: flex;

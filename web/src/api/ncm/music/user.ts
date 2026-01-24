@@ -12,6 +12,7 @@ export interface GetUserPlaylistParams {
 
 export interface GetUserPlaylistResult {
     code: number
+    message?: string
     more: boolean
     playlist: Playlist[]
 }

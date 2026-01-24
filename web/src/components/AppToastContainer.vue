@@ -69,7 +69,8 @@ defineExpose({ add });
 
 .toast-list-leave-to {
   opacity: 0;
-  transform: scale(0.9); // 消失时轻微缩小
+  transform: translateX(30px); // 从右侧滑入
+  // transform: scale(0.9); // 消失时轻微缩小
 }
 
 /* 确保列表中其他元素平滑移动 */

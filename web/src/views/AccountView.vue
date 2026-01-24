@@ -364,7 +364,7 @@ async function loadSessions(): Promise<void> {
     if (result.success && sessionsList) {
       // Mark current session
       const currentId = currentSession.value?.id
-      console.log('Current Session ID:', currentId)
+      // console.log('Current Session ID:', currentId)
 
       sessions.value = sessionsList.map(s => {
         const isCurrent = currentId !== undefined && s.id === currentId
@@ -733,8 +733,12 @@ function formatTime(timeString?: string): string {
   /* 增加左右和底部的 padding，数值通常略大于阴影的扩散半径 (blur-radius) */
   padding: 0.5rem;
   margin: -0.5rem;
+
+  padding-bottom: 1.1rem;
+
   /* 使用负外边距抵消 padding，保持视觉上的对齐 */
   padding-right: 8px;
   /* 为滚动条预留空间 */
 }
+
 </style>
