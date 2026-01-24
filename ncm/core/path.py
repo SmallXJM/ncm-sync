@@ -58,6 +58,7 @@ __all__ = [
     "get_app_base",
     "get_static_path",
     "get_data_path",
+    "get_config_path",
     "prepare_path",
     "normalize_path",
     "sanitize_filename",
@@ -68,6 +69,7 @@ import sys
 import os
 from pathlib import Path
 from typing import Union
+from ncm.core.constants import CONFIG_DIR_NAME
 
 # Type alias for path-like objects
 PathLike = Union[str, Path]
@@ -126,6 +128,22 @@ def get_data_path(relative_path: PathLike) -> Path:
         Path: The absolute path.
     """
     return (get_app_base() / relative_path).resolve()
+
+
+def get_config_path(filename: str = "") -> Path:
+    """
+    Get the absolute path to the configuration directory or a file within it.
+
+    Args:
+        filename: Optional filename to append to the config directory path.
+
+    Returns:
+        Path: The absolute path to the config directory or file.
+    """
+    config_dir = get_data_path(CONFIG_DIR_NAME)
+    if filename:
+        return (config_dir / filename).resolve()
+    return config_dir
 
 
 def prepare_path(path: PathLike) -> Path:

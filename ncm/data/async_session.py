@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from typing import Callable, Optional
-import os
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from ncm.core.constants import DATABASE_NAME
+from ncm.core.constants import DATABASE_FILE_NAME
+from ncm.core.path import prepare_path, get_config_path
 
 # Patch aiosqlite threads to be daemon threads to prevent shutdown hangs
 try:
@@ -49,6 +49,16 @@ class UnitOfWork:
 def _ensure_session_factory(url: str) -> async_sessionmaker[AsyncSession]:
     global _ENGINE, _SESSION_FACTORY
     if _SESSION_FACTORY is None or _ENGINE is None:
+        # Ensure database directory exists for SQLite
+        if url.startswith("sqlite") and "memory" not in url:
+            try:
+                # Extract path from URL (naive approach, but works for standard sqlite:///)
+                path_part = url.split(":///")[-1].split("?")[0]
+                if path_part:
+                    prepare_path(path_part)
+            except Exception:
+                pass
+
         _ENGINE = create_async_engine(
             url,
             future=True,
@@ -77,13 +87,14 @@ def make_uow_factory(session_factory: async_sessionmaker[AsyncSession]) -> Calla
         return UnitOfWork(session_factory)
     return _factory
 
-# Unified DB URL management via environment variable
-_DEFAULT_DB_URL = os.getenv("NCM_DB_URL", f"sqlite+aiosqlite:///{DATABASE_NAME}")
+# Unified DB URL management
+_db_path = str(get_config_path(DATABASE_FILE_NAME))
+_DEFAULT_DB_URL = f"sqlite+aiosqlite:///{_db_path}"
 
 def get_uow_factory(db_url: Optional[str] = None) -> Callable[[], UnitOfWork]:
     """
     Get a UnitOfWork factory using a unified DB URL.
-    Priority: explicit db_url > env NCM_DB_URL > default sqlite+aiosqlite.
+    Priority: explicit db_url > default sqlite+aiosqlite.
     """
     url = db_url or _DEFAULT_DB_URL
     session_factory = _ensure_session_factory(url)

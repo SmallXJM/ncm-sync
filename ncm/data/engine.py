@@ -2,8 +2,8 @@
 
 from sqlalchemy import create_engine, Engine, text
 from sqlalchemy.ext.declarative import declarative_base
-from ncm.core.path import prepare_path
-from ncm.core.constants import DATABASE_NAME
+from ncm.core.path import prepare_path, get_config_path
+from ncm.core.constants import DATABASE_FILE_NAME
 
 # SQLAlchemy Base for all models
 Base = declarative_base()
@@ -12,8 +12,11 @@ Base = declarative_base()
 _engine: Engine = None
 
 
-def create_engine_instance(db_path: str = DATABASE_NAME) -> Engine:
+def create_engine_instance(db_path: str = None) -> Engine:
     """Create SQLAlchemy engine instance."""
+    if db_path is None:
+        db_path = str(get_config_path(DATABASE_FILE_NAME))
+
     # Ensure database directory exists
     prepare_path(db_path)
     
@@ -34,7 +37,7 @@ def create_engine_instance(db_path: str = DATABASE_NAME) -> Engine:
     return engine
 
 
-def get_engine(db_path: str = DATABASE_NAME) -> Engine:
+def get_engine(db_path: str = None) -> Engine:
     """Get or create global engine instance."""
     global _engine
     
