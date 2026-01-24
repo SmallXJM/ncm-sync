@@ -56,7 +56,7 @@ COPY main.py ./
 COPY --from=frontend /app/web/dist ./web/dist
 
 # 开放服务端口
-EXPOSE 8000
+EXPOSE 17666
 
 # 容器启动命令：运行现有 main.py（main.py 内部已经调用 uvicorn）
 CMD ["python", "main.py"]
