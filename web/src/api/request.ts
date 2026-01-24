@@ -96,19 +96,21 @@ class HttpClient {
         try {
           const errorData = await response.json()
           if (errorData && typeof errorData === 'object') {
-            if ('detail' in errorData) {
-              const detail = errorData.detail
+            const errorObj = errorData as Record<string, unknown>
+            if ('detail' in errorObj) {
+              const detail = errorObj.detail
               if (typeof detail === 'string') {
                 errorMessage = detail
               } else if (typeof detail === 'object' && detail !== null) {
-                if ('message' in detail) {
-                  errorMessage = (detail as any).message
+                const detailObj = detail as Record<string, unknown>
+                if ('message' in detailObj && typeof detailObj.message === 'string') {
+                  errorMessage = detailObj.message
                 } else {
                   errorMessage = JSON.stringify(detail)
                 }
               }
-            } else if ('message' in errorData) {
-              errorMessage = (errorData as any).message
+            } else if ('message' in errorObj && typeof errorObj.message === 'string') {
+              errorMessage = errorObj.message
             }
           }
         } catch {

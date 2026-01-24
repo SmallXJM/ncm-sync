@@ -291,7 +291,7 @@ onUnmounted(() => {
   window.removeEventListener('popstate', handlePopState)
 })
 
-const handlePopState = (event: PopStateEvent) => {
+const handlePopState = () => {
   if (isDrawerOpen.value) {
     isDrawerOpen.value = false
   }
