@@ -641,7 +641,7 @@ function formatTime(timeString?: string): string {
   display: grid;
   grid-template-columns: 1fr 1fr;
   /* 1:1 等分 */
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
   /* 间距 */
   align-items: stretch;
 }
@@ -656,7 +656,7 @@ function formatTime(timeString?: string): string {
 .login-methods {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
 }
 
 /* 响应式适配：平板或手机端改为单列 */
@@ -688,7 +688,7 @@ function formatTime(timeString?: string): string {
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
   align-items: start;
   /* 改为 start，防止左侧卡片被强行拉伸过长 */
 }
@@ -697,7 +697,7 @@ function formatTime(timeString?: string): string {
 .dashboard-left {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
   /* 这里设置两个卡片之间的垂直间距 */
 }
 

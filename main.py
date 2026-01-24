@@ -4,7 +4,7 @@ NCM Sync - Main Entry Point.
 
 支持命令行参数：
   --host  服务监听地址，默认 0.0.0.0
-  --port  服务监听端口，默认 8000
+  --port  服务监听端口，默认 17666
   --debug 启用调试模式（等价于原 debug.py 行为）
 """
 
@@ -34,8 +34,8 @@ def parse_args(argv=None):
     parser.add_argument(
         "--port",
         type=int,
-        default=8000,
-        help="服务监听端口号，默认 8000",
+        default=17666,
+        help="服务监听端口号，默认 17666",
     )
     parser.add_argument(
         "--debug",

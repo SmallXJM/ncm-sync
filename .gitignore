@@ -14,6 +14,8 @@ tests/
 
 # web
 
+config/
+
 *.db
 *.db-*
 *.sqlite

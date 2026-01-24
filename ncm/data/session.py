@@ -1,10 +1,10 @@
 """Database session management with centralized configuration."""
 
-import os
 from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker, Session
 from .engine import get_engine
-from ncm.core.constants import DATABASE_NAME
+from ncm.core.constants import DATABASE_FILE_NAME
+from ncm.core.path import get_config_path
 
 
 class SessionManager:
@@ -25,9 +25,8 @@ class SessionManager:
         )
     
     def _get_default_db_path(self) -> str:
-        """Get default database path from environment or config."""
-        # 优先级：环境变量 > 配置文件 > 默认值
-        return os.getenv("NCM_DB_PATH", DATABASE_NAME)
+        """Get default database path from config."""
+        return str(get_config_path(DATABASE_FILE_NAME))
     
     @contextmanager
     def get_session(self) -> Session:

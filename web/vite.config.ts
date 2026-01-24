@@ -19,22 +19,22 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:17666',
         changeOrigin: true,
         secure: false
       },
       '/ncm': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:17666',
         changeOrigin: true,
         secure: false
       },
       '/local': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:17666',
         changeOrigin: true,
         secure: false
       },
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: 'ws://localhost:17666',
         changeOrigin: true,
         ws: true
       }

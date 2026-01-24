@@ -32,7 +32,7 @@
   /* 变白 模糊处理 */
   filter: var(--bg-cover-filter) var(--bg-cover-blur);
   /* 稍微放大一点点，解决模糊后边缘出现的“白边/透明边”问题 */
-  transform: scale(1.1);
+  transform: scale(1.02);
 
   z-index: -1;
   /* 确保在内容下方 */
@@ -43,7 +43,7 @@
 
 .account-bg-cover:hover::before {
   filter: var(--bg-cover-filter);
-  transform: scale(1.115);
+  transform: scale(1.035);
 }
 
 /* 2. 增加半透明压暗，防止背景图看不清字 */

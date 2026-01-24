@@ -4,6 +4,7 @@ import asyncio
 from pathlib import Path
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator
+from ncm.core.constants import CONFIG_FILE_NAME
 
 
 class DownloadSettings(BaseModel):
@@ -46,14 +47,14 @@ class NcmConfig(BaseModel):
     subscription: SubscriptionSettings = Field(default_factory=SubscriptionSettings)
 
 
-from ncm.core.path import get_data_path, normalize_path
+from ncm.core.path import get_data_path, normalize_path, get_config_path
 
 class ConfigManager:
     def __init__(self, path: Optional[str] = None):
         if path:
             self._path = path
         else:
-            self._path = str(get_data_path("config.json"))
+            self._path = str(get_config_path(CONFIG_FILE_NAME))
         self._lock = asyncio.Lock()
         self._config = NcmConfig()
         self._loaded = False
