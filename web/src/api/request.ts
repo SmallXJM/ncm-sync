@@ -13,6 +13,12 @@ export type ApiFailure = {
   status: number
 }
 
+export type ApiErrorResponse = {
+  detail?: string | { message?: string; [key: string]: unknown }
+  message?: string
+  [key: string]: unknown
+}
+
 export type ApiResult<T> = ApiSuccess<T> | ApiFailure
 
 export interface ApiEnvelope<T> {
@@ -94,23 +100,21 @@ class HttpClient {
       if (!response.ok) {
         let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`
         try {
-          const errorData = await response.json()
+          const errorData = (await response.json()) as ApiErrorResponse
           if (errorData && typeof errorData === 'object') {
-            const errorObj = errorData as Record<string, unknown>
-            if ('detail' in errorObj) {
-              const detail = errorObj.detail
+            if (errorData.detail !== undefined) {
+              const detail = errorData.detail
               if (typeof detail === 'string') {
                 errorMessage = detail
               } else if (typeof detail === 'object' && detail !== null) {
-                const detailObj = detail as Record<string, unknown>
-                if ('message' in detailObj && typeof detailObj.message === 'string') {
-                  errorMessage = detailObj.message
+                if (detail.message) {
+                  errorMessage = detail.message
                 } else {
                   errorMessage = JSON.stringify(detail)
                 }
               }
-            } else if ('message' in errorObj && typeof errorObj.message === 'string') {
-              errorMessage = errorObj.message
+            } else if (errorData.message) {
+              errorMessage = errorData.message
             }
           }
         } catch {
