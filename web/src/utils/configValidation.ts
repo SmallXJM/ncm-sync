@@ -62,8 +62,8 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         path: 'download.cron_expr',
         label: '定时任务调度',
         description: [
-          '启用后将按照 Cron 表达式自动执行下载任务。', 
-          '关闭后仅支持手动触发。', 
+          '启用后将按照 Cron 表达式自动执行下载任务。',
+          '关闭后仅支持手动触发。',
         ].join('\n'),
         control: { type: 'cronToggle' },
       },
@@ -72,7 +72,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         path: 'download.cron_expr',
         label: '定时设置',
         description: [
-          'Cron 表达式（[秒] 分 时 日 月 周）。', 
+          'Cron 表达式（[秒] 分 时 日 月 周）。',
           '例如：0 2 * * * 表示每天凌晨 2 点执行。',
         ].join('\n'),
         control: { type: 'text', placeholder: '例如：0 2 * * *', mono: true },
@@ -84,9 +84,9 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         path: 'download.max_concurrent_downloads',
         label: '最大并发下载数',
         description: [
-          '同时进行的下载任务数量（1 ~ 10）。', 
+          '同时进行的下载任务数量（1 ~ 10）。',
           '数值过大可能导致网络拥堵或被封禁。',
-        ].join('\n'), 
+        ].join('\n'),
         control: { type: 'intRange', min: 1, max: 10 },
         rule: { kind: 'intRange', min: 1, max: 10, label: '最大并发量' },
       },
@@ -95,9 +95,9 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         path: 'download.max_threads_per_download',
         label: '单任务线程数',
         description: [
-          '单个下载任务使用的最大线程数（1 ~ 10）。', 
+          '单个下载任务使用的最大线程数（1 ~ 10）。',
           '建议设置为 4。',
-        ].join('\n'), 
+        ].join('\n'),
         control: { type: 'intRange', min: 1, max: 10 },
         rule: { kind: 'intRange', min: 1, max: 10, label: '单任务最大线程数' },
       },
@@ -204,6 +204,29 @@ export function validateCronExpr(value: string | null): string | null {
   if (!trimmed) return 'cron_expr 不能为空字符串（或设置为 null 禁用）'
   const parts = trimmed.split(/\s+/)
   if (parts.length !== 5 && parts.length !== 6) return 'cron_expr 需要 5 或 6 段（空格分隔）'
+
+  // 基础数字格式校验
+  // 简单的正则检查，允许 *, /, -, , 和数字
+  // 这不是完美的 cron 校验，但能过滤掉明显的错误字符
+  const illegalCharRegex = /[^\d*/\-,?]/g
+  const errors = []
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+    if (!part) continue
+
+    const illegalChars = part.match(illegalCharRegex)
+    if (!illegalChars) continue
+
+    const unique = [...new Set(illegalChars)].join(', ')
+    errors.push(`第 ${i + 1} 段包含非法字符: ${unique}`)
+  }
+
+  if (errors.length > 0) {
+    return errors.join('\n')
+  }
+
+
   return null
 }
 
@@ -278,7 +301,15 @@ function validateByRule(value: unknown, rule: NcmConfigFieldRule): string | null
   return validateTemplateString(value, rule.label)
 }
 
-export function validateNcmConfigDraft(draft: NcmConfigDraft): ConfigValidationErrors {
+export interface ValidationContext {
+  cronServerPreview?: string | null
+  isCronBackendInvalid?: boolean
+}
+
+export function validateNcmConfigDraft(
+  draft: NcmConfigDraft,
+  context?: ValidationContext,
+): ConfigValidationErrors {
   const errors: ConfigValidationErrors = {}
 
   for (const group of NCM_CONFIG_UI_SCHEMA) {
@@ -287,7 +318,16 @@ export function validateNcmConfigDraft(draft: NcmConfigDraft): ConfigValidationE
       if (!isVisibleByRule(draft, field.visibleWhen)) continue
       const value = getValueByPath(draft, field.path)
       const error = validateByRule(value, field.rule)
-      if (error) errors[field.path] = error
+      if (error) {
+        errors[field.path] = error
+      } else {
+        // 额外的业务逻辑校验：当服务端返回无效时报错
+        if (field.path === 'download.cron_expr' && typeof value === 'string' && value.trim()) {
+          if (context?.isCronBackendInvalid) {
+            errors[field.path] = '无有效运行时间'
+          }
+        }
+      }
     }
   }
 

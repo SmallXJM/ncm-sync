@@ -103,7 +103,8 @@ export const resetTask = async (task_id: number): Promise<ApiResult<ApiEnvelope<
 }
 
 export const daemonControl = async (
-  action: 'start' | 'stop' | 'trigger_now',
+  action: 'start' | 'stop' | 'trigger_now' | 'preview_cron',
+  cron_expr?: string,
 ): Promise<ApiResult<ApiEnvelope<TaskStatusPayload>>> => {
-  return http.post<ApiEnvelope<TaskStatusPayload>>(DOWNLOAD.DAEMON_CONTROL, { action })
+  return http.post<ApiEnvelope<TaskStatusPayload>>(DOWNLOAD.DAEMON_CONTROL, { action, cron_expr })
 }

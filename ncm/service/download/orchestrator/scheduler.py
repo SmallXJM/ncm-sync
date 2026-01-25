@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -92,6 +93,36 @@ class ProcessScheduler:
         if self._job and self._job.next_run_time:
             return self._job.next_run_time.isoformat()
         return None
+
+    def preview_next_run(self, cron_expr: str) -> Optional[str]:
+        """Preview the next run time for a given cron expression without scheduling it."""
+        try:
+            parts = cron_expr.split()
+            trigger = None
+            if len(parts) == 5:
+                trigger = CronTrigger.from_crontab(
+                    cron_expr, timezone=TIMEZONE_SYSTEM.get()
+                )
+            elif len(parts) == 6:
+                trigger = CronTrigger(
+                    second=parts[0],
+                    minute=parts[1],
+                    hour=parts[2],
+                    day=parts[3],
+                    month=parts[4],
+                    day_of_week=parts[5],
+                    timezone=TIMEZONE_SYSTEM.get(),
+                )
+            
+            if trigger:
+                now = datetime.now(TIMEZONE_SYSTEM.get())
+                next_fire_time = trigger.get_next_fire_time(None, now)
+                if next_fire_time:
+                    return next_fire_time.isoformat()
+            return None
+        except Exception as e:
+            logger.warning(f"Failed to preview cron: {e}")
+            return None
 
     def get_stats(self) -> dict:
         return {
