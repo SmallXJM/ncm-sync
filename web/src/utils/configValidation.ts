@@ -90,14 +90,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         control: { type: 'intRange', min: 1, max: 10 },
         rule: { kind: 'intRange', min: 1, max: 10, label: '单任务最大线程数' },
       },
-      {
-        id: 'download.temp_downloads_dir',
-        path: 'download.temp_downloads_dir',
-        label: '临时下载目录',
-        description: '下载过程中的临时文件存放位置。\n支持绝对路径或相对于运行目录的相对路径。',
-        control: { type: 'text', placeholder: 'downloads' },
-        rule: { kind: 'pathLike', label: '临时下载目录' },
-      },
+
     ],
   },
   {

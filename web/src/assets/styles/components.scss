@@ -480,7 +480,7 @@
 /* 配置管理 - 新版卡片式布局 */
 .config-layout {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-lg);
   align-items: flex-start;
   flex-direction: column;
 }
