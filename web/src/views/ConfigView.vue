@@ -74,7 +74,7 @@
                         <div v-if="field.path === 'download.cron_expr' && (nextRunTimePreview || isPreviewLoading)"
                           class="field-preview">
                           <span v-if="isPreviewLoading">正在计算下次运行时间...</span>
-                          <span v-else>预计下次运行时间: {{ new Date(nextRunTimePreview!).toLocaleString() }}</span>
+                          <span v-else>预计下次运行: {{ new Date(nextRunTimePreview!).toLocaleString() }}</span>
                         </div>
                       </div>
                     </div>
