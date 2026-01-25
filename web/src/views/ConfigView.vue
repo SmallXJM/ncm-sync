@@ -3,10 +3,7 @@
     <main>
       <div class="container">
 
-        <div v-if="isLoading && !originalConfig" class="text-center py-2xl">
-          <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
-          <p class="text-secondary">正在加载配置...</p>
-        </div>
+        <AppLoading v-if="isLoading && !originalConfig" message="正在获取设置信息" />
 
         <div v-else-if="draftConfig && originalConfig" class="config-layout">
           <aside class="glass-card config-sidebar">
@@ -48,7 +45,7 @@
                       <span class="switch-handle"></span>
                     </label>
                   </template>
-                  
+
                   <template v-else-if="field.control.type === 'select'">
                     <select :value="getDraftValue(field.path)" class="input w-full"
                       @change="(e) => setDraftText(field.path, (e.target as HTMLSelectElement).value)">
@@ -66,8 +63,16 @@
                         :class="['input', 'w-full', field.control.mono ? 'mono' : '']"
                         :placeholder="field.control.placeholder"
                         @input="(e) => setDraftText(field.path, (e.target as HTMLInputElement).value)" />
-                      <div v-if="errors[field.path]" class="field-error">
-                        {{ errors[field.path] }}
+                      <div class="field-message">
+                        <div v-if="errors[field.path] && !isPreviewLoading" class="field-error">
+                          {{ errors[field.path] }}
+                        </div>
+                        <!-- 【新增】Cron 预览显示 -->
+                        <div v-if="field.path === 'download.cron_expr' && (nextRunTimePreview || isPreviewLoading)"
+                          class="field-preview">
+                          <span v-if="isPreviewLoading">正在计算下次运行时间...</span>
+                          <span v-else>预计下次运行: {{ new Date(nextRunTimePreview!).toLocaleString() }}</span>
+                        </div>
                       </div>
                     </div>
                   </template>
@@ -115,10 +120,12 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import AppLoading from '@/components/AppLoading.vue'
 import api from '@/api'
 import {
   NCM_CONFIG_UI_SCHEMA,
   validateNcmConfigDraft,
+  validateCronExpr,
   type ConfigValidationErrors,
   type NcmConfigDraft,
   type NcmConfigFieldSchema,
@@ -160,6 +167,12 @@ const errors = reactive<ConfigValidationErrors>({})
 
 // 【新增】本地滑块状态，Key为字段path，Value为浮点数
 const localSliderValues = reactive<Record<string, number>>({})
+// 【新增】Cron 预览相关状态
+const nextRunTimePreview = ref<string | null>(null)
+const isPreviewLoading = ref(false)
+let previewDebounceTimer: number | undefined
+const lastCheckedCronExpr = ref<string | null>(null)
+const isCronBackendInvalid = ref(false)
 
 const configGroups = NCM_CONFIG_UI_SCHEMA
 const activeGroupId = ref(configGroups[0]?.id ?? '')
@@ -183,13 +196,13 @@ onMounted(() => {
 watch(
   draftConfig,
   (next) => {
-    Object.keys(errors).forEach((k) => delete errors[k])
     if (!next) return
 
-    const nextErrors = validateNcmConfigDraft(next)
-    Object.entries(nextErrors).forEach(([k, v]) => {
-      errors[k] = v
-    })
+    // 先触发预览逻辑（如果 Cron 变了，会置空 preview）
+    handleCronPreview(next)
+
+    // 再运行校验（此时 preview 可能已被置空，校验会报错）
+    runValidation(next)
 
     // 【新增】当 draftConfig 变化时（例如通过数字输入框修改，或 reset），
     // 检查是否需要同步到 localSliderValues。
@@ -199,6 +212,90 @@ watch(
   },
   { deep: true },
 )
+
+// 【新增】监听预览结果/状态变化，重新校验
+watch([nextRunTimePreview, isCronBackendInvalid], () => {
+  if (draftConfig.value) {
+    runValidation(draftConfig.value)
+  }
+})
+
+function runValidation(draft: NcmConfigDraft) {
+  Object.keys(errors).forEach((k) => delete errors[k])
+
+  // 注入服务端预览状态作为校验上下文
+  const context = {
+    cronServerPreview: nextRunTimePreview.value,
+    isCronBackendInvalid: isCronBackendInvalid.value
+  }
+
+  const nextErrors = validateNcmConfigDraft(draft, context)
+  Object.entries(nextErrors).forEach(([k, v]) => {
+    errors[k] = v
+  })
+}
+
+// 【新增】处理 Cron 预览
+function handleCronPreview(draft: NcmConfigDraft) {
+  const cronPath = 'download.cron_expr'
+  const cronExpr = getValueByPath(draft, cronPath) as string | null
+
+  // 0. 检查是否真的变化了，防止无关字段修改导致重置
+  if (cronExpr === lastCheckedCronExpr.value) return
+  lastCheckedCronExpr.value = cronExpr
+
+  // 如果值没变（符合原配置），默认它是有效的（不阻断保存）
+  // 只要值变了（且不等于原配置），先假设它是无效的（阻断保存），直到服务端返回有效结果
+  const originalCron = originalConfig.value?.download.cron_expr
+  if (cronExpr === originalCron) {
+    isCronBackendInvalid.value = false
+  } else {
+    isCronBackendInvalid.value = true
+  }
+
+  // 清空预览
+  nextRunTimePreview.value = null
+
+  // 清除旧的 timer
+  if (previewDebounceTimer) {
+    clearTimeout(previewDebounceTimer)
+    previewDebounceTimer = undefined
+  }
+
+  // 1. 如果没有值，或格式校验不通过，直接返回（由 regex 校验负责报错）
+  if (!cronExpr) return
+  if (validateCronExpr(cronExpr)) return
+
+  // 2. 防抖调用后端接口
+  previewDebounceTimer = window.setTimeout(async () => {
+    try {
+      isPreviewLoading.value = true
+      const result = await api.download.daemonControl('preview_cron', cronExpr)
+
+      // 只有当明确返回 200 且 next_run_time 为 null 时，才标记为无效
+      if (result.success && result.data?.code === 200) {
+        if (result.data.data?.next_run_time) {
+          nextRunTimePreview.value = result.data.data.next_run_time
+          isCronBackendInvalid.value = false
+        } else {
+          // 明确无效
+          nextRunTimePreview.value = null
+          isCronBackendInvalid.value = true
+        }
+      } else {
+        // 接口错误（如网络问题），暂不阻拦保存，仅清空预览
+        nextRunTimePreview.value = null
+        isCronBackendInvalid.value = false
+      }
+    } catch (e) {
+      console.error('Failed to preview cron:', e)
+      nextRunTimePreview.value = null
+      isCronBackendInvalid.value = false
+    } finally {
+      isPreviewLoading.value = false
+    }
+  }, 300) // 50ms 防抖
+}
 
 // 辅助函数：获取嵌套属性值
 function getValueByPath(obj: unknown, path: string): unknown {
@@ -455,5 +552,22 @@ function deepClone<T>(value: T): T {
 
 .rounded {
   border-radius: 4px;
+}
+
+.field-message {
+  margin-top: 4px;
+}
+
+.field-error {
+  font-size: 0.85em;
+  color: var(--color-error);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.field-preview {
+  font-size: 0.85em;
+  color: var(--text-tertiary);
 }
 </style>

@@ -16,10 +16,7 @@
           <p class="text-secondary">共 {{ jobs.length }} 个订阅</p>
         </header>
 
-        <div v-if="isLoading" class="text-center py-2xl">
-          <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
-          <p class="text-secondary">正在加载订阅列表...</p>
-        </div>
+        <AppLoading v-if="isLoading" message="正在获取订阅信息" />
 
         <div v-else-if="jobs.length > 0" class="job-list-container">
           <div class="list-header">
@@ -233,6 +230,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import AppLoading from '@/components/AppLoading.vue'
 // import { useRoute, useRouter } from 'vue-router'
 import api from '@/api'
 import type { DownloadJobItem, UpdateJobParams } from '@/api/ncm/download'
@@ -536,9 +534,9 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
   /* 屏幕太小时允许横向滚动 */
   overflow-x: auto;
 
-  padding: 10px;        /* 为阴影留出空间 */
-  margin-left: -10px;   /* 抵消左侧空白，保持视觉对齐 */
-  margin-right: -10px;  /* 抵消右侧空白 */
+  padding: var(--spacing-lg);        /* 为阴影留出空间 */
+  margin-left: calc(-1 * var(--spacing-lg));   /* 抵消左侧空白，保持视觉对齐 */
+  margin-right: calc(-1 * var(--spacing-lg));  /* 抵消右侧空白 */
 
   /* 桌面端使用 Subgrid 实现跨行对齐 */
   @media (min-width: 769px) {
@@ -578,7 +576,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 .job-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);  
+  gap: var(--spacing-lg);  
 
   /* 桌面端移除布局容器身份，使子元素直接参与父 Grid */
   @media (min-width: 769px) {

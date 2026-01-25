@@ -38,7 +38,7 @@
   /* 确保在内容下方 */
 
   transition: filter 0.3s ease, transform 0.3s ease;
-  
+
 }
 
 .account-bg-cover:hover::before {
@@ -82,37 +82,57 @@
   justify-content: space-between;
   gap: 10px;
   /* 昵称和 ID 之间的间距 */
-  margin-bottom: 4px;
+  // margin-bottom: 4px;
   /* 如下方有其他元素，可增加间距 */
-
-  // color: #fff !important; /* 必须是纯白，反色效果最强 */
-  // mix-blend-mode: exclusion; /* 也可以尝试 difference */
-  // position: relative;
-  // z-index: 2;
-
-
+  flex-wrap: wrap;
 }
 
 .account-name {
   font-size: 1.8rem;
   font-weight: 700;
   transition: all 0.3s ease;
-
+  line-height: 1.2;
 }
 
 .account-meta {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: flex-end;
+}
 
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background-color: var(--bg-surface-hover);
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+
+.meta-tag .label {
+  margin-right: 6px;
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+.meta-tag .value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-family: monospace;
 }
 
 .account-id {
   font-size: 0.8rem;
   white-space: nowrap;
   transition: all 0.3s ease;
-
-
 }
 
 .login-type {
@@ -480,7 +500,7 @@
 /* 配置管理 - 新版卡片式布局 */
 .config-layout {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-lg);
   align-items: flex-start;
   flex-direction: column;
 }
@@ -514,7 +534,7 @@
 
 .config-nav-item {
   /* 关键代码 */
-  flex: 1 0 auto; 
+  flex: 1 0 auto;
   /* 解析：
      flex-grow: 1;    -> 填满剩余空间（实现整行占满）
      flex-shrink: 0;  -> 不压缩宽度（保证不挤压文字）
@@ -559,6 +579,7 @@
   container-name: configPanel;
   min-width: 0;
   width: 100%;
+  padding-bottom: 0;
 }
 
 .config-group {
@@ -566,7 +587,7 @@
 }
 
 .group-header {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 0;
 }
 
 .group-header h3 {
@@ -589,7 +610,7 @@
   padding: var(--spacing-lg) 0;
   border-bottom: 1px solid var(--border-color);
   transition: border-color 0.3s ease;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-lg);
 }
 
 .config-item:last-child {
@@ -814,7 +835,6 @@
 
   .config-item {
     flex-direction: column;
-    gap: var(--spacing-md);
   }
 
   .item-control {

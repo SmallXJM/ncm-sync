@@ -133,10 +133,7 @@
           </div>
 
           <!-- Loading State -->
-          <div v-if="isLoading" class="text-center py-2xl">
-            <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
-            <p class="text-secondary">正在加载音乐列表...</p>
-          </div>
+          <AppLoading v-if="isLoading" message="正在加载本地音乐" />
 
           <!-- Task Grid (Card Layout) -->
           <div v-else-if="tasks.length > 0" class="playlist-grid">
@@ -229,6 +226,7 @@ import api from '@/api'
 import type { DownloadJobItem, DownloadTaskItem } from '@/api/ncm/download'
 import { toast } from '@/utils/toast'
 import AppPagination from '@/components/AppPagination.vue'
+import AppLoading from '@/components/AppLoading.vue'
 import { useMusicQuery } from '@/composables/useMusicQuery'
 
 const router = useRouter()

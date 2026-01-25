@@ -59,6 +59,22 @@ class DownloadControllerDaemon:
                         }
                     }
                 )
+            elif action == 'preview_cron':
+                cron_expr = kwargs.get('cron_expr')
+                if not cron_expr:
+                    return APIResponse(status=400, body={"code": 400, "message": "Missing cron_expr"})
+                
+                next_run = self._scheduler.preview_next_run(cron_expr)
+                return APIResponse(
+                    status=200,
+                    body={
+                        "code": 200,
+                        "message": "Preview calculated",
+                        "data": {
+                            "next_run_time": next_run
+                        }
+                    }
+                )
         except Exception as e:
             logger.exception("Failed to control daemon")
             return APIResponse(

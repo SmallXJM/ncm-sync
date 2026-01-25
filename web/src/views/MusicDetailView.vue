@@ -2,10 +2,7 @@
   <div class="page">
     <main>
       <div class="container">
-        <div v-if="isLoading" class="text-center py-2xl">
-          <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
-          <p class="text-secondary">正在加载本地音乐详情...</p>
-        </div>
+        <AppLoading v-if="isLoading" message="正在加载本地音乐详情" />
 
         <div v-else-if="detail" class="detail-layout">
           <div class="glass-card detail-card">
@@ -156,6 +153,7 @@
 <script lang="ts" setup>
 // 暂时注释掉文件管理相关代码，等待后续完善
 import { computed, onMounted, ref } from 'vue'
+import AppLoading from '@/components/AppLoading.vue'
 import { useRoute } from 'vue-router'
 // import { useRoute, useRouter } from 'vue-router'
 import { http } from '@/api'

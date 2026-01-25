@@ -14,6 +14,8 @@ from ncm.client import APIResponse
 from ncm.core.logging import get_logger
 from ncm.server.decorators import ncm_service, ncm_ws_service
 from ncm.core.config import get_config_manager
+from ncm.core.path import get_cache_path
+from ncm.core.constants import DOWNLOAD_CACHE_DIR_NAME
 
 logger = get_logger(__name__)
 
@@ -35,7 +37,7 @@ class DownloadController:
 
         # 3. 初始化核心组件
         self.orchestrator = DownloadOrchestrator(
-            downloads_dir=cfg.download.temp_downloads_dir,
+            downloads_dir=str(get_cache_path(DOWNLOAD_CACHE_DIR_NAME)),
             max_concurrent_downloads=cfg.download.max_concurrent_downloads,
             max_threads_per_download=cfg.download.max_threads_per_download
         )
