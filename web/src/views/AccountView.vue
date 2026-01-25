@@ -3,7 +3,7 @@
     <!-- Main Content -->
     <main>
       <div class="container">
-        <div class="dashboard-grid mb-2xl">
+        <div class="dashboard-grid">
           <div class="dashboard-left">
             <!-- Current Account Section -->
             <section class="current-account-section">
@@ -32,14 +32,18 @@
                       <div class="account-info">
                         <h3 class="account-name">{{ currentSession.nickname || '未知用户' }}</h3>
                         <div class="account-meta">
-                          <p class="account-id">ID: {{ currentSession.user_id }}</p>
-                          <p class="login-type">
-                            {{ getLoginTypeText(currentSession?.login_type) }}登录
-                          </p>
+                          <div class="meta-tag">
+                            <span class="label">ID</span>
+                            <span class="value">{{ currentSession.user_id }}</span>
+                          </div>
+                          <div class="meta-tag">
+                            <span class="label">登录</span>
+                            <span class="value">{{ getLoginTypeText(currentSession?.login_type) }}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <button class="btn btn-secondary btn-sm" @click="refreshAccountStatus" :disabled="isRefreshing">
+                      <button class="btn btn-secondary btn-sm" style="margin-top: 8px;" @click="refreshAccountStatus" :disabled="isRefreshing">
                         <template v-if="isRefreshing">
                           <div class="loading-spinner"></div>
                         </template>
