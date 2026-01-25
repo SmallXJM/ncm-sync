@@ -444,7 +444,9 @@ function openSubscribe(playlist: Playlist) {
 
       // jobConfig.storage_path = `${prefix}/${sanitizeFilename(playlist.name)}`
       jobConfig.storage_path = prefix
+        .replace('{user_id}', String(playlist.creator.userId))
         .replace('{user_name}', playlist.creator.nickname)
+        .replace('{playlist_id}', String(playlist.id))
         .replace('{playlist_name}', playlist.name)
 
     } else {
