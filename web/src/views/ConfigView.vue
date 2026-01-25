@@ -3,10 +3,7 @@
     <main>
       <div class="container">
 
-        <div v-if="isLoading && !originalConfig" class="text-center py-2xl">
-          <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
-          <p class="text-secondary">正在加载配置...</p>
-        </div>
+        <AppLoading v-if="isLoading && !originalConfig" message="正在获取设置信息" />
 
         <div v-else-if="draftConfig && originalConfig" class="config-layout">
           <aside class="glass-card config-sidebar">
@@ -123,6 +120,7 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import AppLoading from '@/components/AppLoading.vue'
 import api from '@/api'
 import {
   NCM_CONFIG_UI_SCHEMA,

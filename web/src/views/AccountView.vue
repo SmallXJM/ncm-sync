@@ -12,7 +12,9 @@
 
                 <div v-if="currentSession" class="account-card-overlay"></div>
 
-                <div v-if="currentSession" class="current-account-info">
+                <AppLoading v-if="isProfileLoading && !currentSession" message="正在获取登录态" />
+
+                <div v-else-if="currentSession" class="current-account-info">
                   <div class="account-header">
                     <div class="avatar-container">
                       <div class="avatar avatar-xl">
@@ -83,7 +85,9 @@
                   </button>
                 </div>
 
-                <div v-if="sessions.length > 0" class="sessions-list">
+                <AppLoading v-if="isRefreshingSessions && sessions.length === 0" message="正在获取会话列表" />
+
+                <div v-else-if="sessions.length > 0" class="sessions-list">
                   <div v-for="session in sessions" :key="session.id" class="session-item"
                     :class="{ 'session-current': session.is_current }">
                     <div class="session-info">
@@ -246,6 +250,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import AppLoading from '@/components/AppLoading.vue'
 // 直接导入服务类
 import api from '@/api'
 import { toast } from '@/utils/toast'
@@ -306,6 +311,7 @@ const qrCode = reactive<QRCode>({
 
 // Loading states
 const isRefreshing = ref(false)
+const isProfileLoading = ref(false)
 const isStartingQR = ref(false)
 const isLoggingInWithCookie = ref(false)
 const isRefreshingSessions = ref(false)
@@ -320,6 +326,9 @@ let qrPollingTimer: number | null = null
 // Lifecycle hooks
 // ----------------------
 onMounted(async () => {
+  isProfileLoading.value = true
+  isRefreshingSessions.value = true
+
   await loadUserProfile()
   loadSessions()
 })
@@ -330,9 +339,11 @@ onUnmounted(() => {
 
 
 async function loadUserProfile(): Promise<void> {
-
   // Fetch profile for additional info
   try {
+    if (!currentSession.value) {
+      isProfileLoading.value = true
+    }
     const profileResult = await api.user.getUserProfile()
     const profile = getEnvelope<UserProfile>(profileResult.success ? profileResult.data : null)?.data
     const sessionResult = await api.user.getCurrentSession()
@@ -352,6 +363,8 @@ async function loadUserProfile(): Promise<void> {
   } catch (error) {
     console.error('Failed to load current account:', error)
     toast.show('加载当前账号失败', 'error')
+  } finally {
+    isProfileLoading.value = false
   }
 }
 
@@ -740,5 +753,4 @@ function formatTime(timeString?: string): string {
   padding-right: 8px;
   /* 为滚动条预留空间 */
 }
-
 </style>

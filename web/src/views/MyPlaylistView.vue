@@ -16,10 +16,8 @@
           <p class="text-secondary">共 {{ showPlaylists.length }} 个歌单</p>
           <p class="text-secondary">当前 {{ currentPage }} / {{ totalPages }} 页</p>
         </div>
-        <div v-if="isLoading && !playlists.length" class="text-center py-2xl">
-          <div class="loading-spinner mx-auto mb-md" style="width: 32px; height: 32px;"></div>
-          <p class="text-secondary">正在获取歌单列表...</p>
-        </div>
+        <AppLoading v-if="isLoading && !playlists.length" message="正在获取我的歌单信息" />
+        
 
         <div v-else-if="playlists.length > 0" class="playlist-grid">
           <div v-for="playlist in displayPlaylists" :key="playlist.id" class="playlist-card">
@@ -201,6 +199,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { nextTick } from 'vue'
 import { toast } from '@/utils/toast'
 import AppPagination from '@/components/AppPagination.vue'
+import AppLoading from '@/components/AppLoading.vue'
 
 const route = useRoute()
 const router = useRouter()
