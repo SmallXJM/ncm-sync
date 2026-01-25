@@ -69,7 +69,7 @@ import sys
 import os
 from pathlib import Path
 from typing import Union
-from ncm.core.constants import CONFIG_DIR_NAME
+from ncm.core.constants import CONFIG_DIR_NAME, CACHE_DIR_NAME
 
 # Type alias for path-like objects
 PathLike = Union[str, Path]
@@ -144,6 +144,22 @@ def get_config_path(filename: str = "") -> Path:
     if filename:
         return (config_dir / filename).resolve()
     return config_dir
+
+
+def get_cache_path(filename: str = "") -> Path:
+    """
+    Get the absolute path to the cache directory or a file within it.
+
+    Args:
+        filename: Optional filename to append to the cache directory path.
+
+    Returns:
+        Path: The absolute path to the cache directory or file.
+    """
+    cache_dir = get_data_path(CACHE_DIR_NAME)
+    if filename:
+        return (cache_dir / filename).resolve()
+    return cache_dir
 
 
 def prepare_path(path: PathLike) -> Path:

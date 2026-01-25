@@ -14,7 +14,6 @@ class DownloadSettings(BaseModel):
     max_concurrent_downloads: int = Field(default=3, ge=1, le=100)
     # 单个下载最大线程数
     max_threads_per_download: int = Field(default=4, ge=1, le=64)
-    temp_downloads_dir: str = Field(default="downloads")
 
     @field_validator("cron_expr")
     @classmethod

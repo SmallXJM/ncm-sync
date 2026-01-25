@@ -10,11 +10,12 @@ from .base import BaseMusicService
 from ncm.service.music.utils import extract_cover_bytes, guess_image_mime
 from ncm.service.music.exceptions import LocalMusicNotFoundError, LocalMusicNoCoverError
 
-from ncm.core.path import get_data_path, prepare_path
+from ncm.core.path import get_cache_path, prepare_path, sanitize_filename
+from ncm.core.constants import COVER_CACHE_DIR_NAME
 
 logger = get_logger(__name__)
 
-CACHE_DIR = get_data_path("cache/cover")
+CACHE_DIR = get_cache_path(COVER_CACHE_DIR_NAME)
 CACHE_EXPIRY_SECONDS = 7 * 24 * 3600  # 7 days
 
 
@@ -33,12 +34,18 @@ class CoverService(BaseMusicService):
         # Deprecated: Handled by prepare_path in init
         pass
 
-    async def _get_lock(self, music_id: str) -> asyncio.Lock:
-        """Get or create a lock for a specific music ID."""
+    def _get_cache_key(self, artist: str, album: str) -> str:
+        """Generate cache key from artist and album."""
+        safe_artist = sanitize_filename(artist) or "Unknown Artist"
+        safe_album = sanitize_filename(album) or "Unknown Album"
+        return f"{safe_artist}/{safe_album}"
+
+    async def _get_lock(self, key: str) -> asyncio.Lock:
+        """Get or create a lock for a specific cache key."""
         async with self._locks_lock:
-            if music_id not in self._locks:
-                self._locks[music_id] = asyncio.Lock()
-            return self._locks[music_id]
+            if key not in self._locks:
+                self._locks[key] = asyncio.Lock()
+            return self._locks[key]
 
     async def _cleanup_cache(self):
         """Cleanup expired cache files."""
@@ -54,22 +61,44 @@ class CoverService(BaseMusicService):
 
         now = time.time()
         try:
-            for entry in os.scandir(self._cache_dir):
-                if not entry.is_file():
-                    continue
-                try:
-                    if now - entry.stat().st_mtime > CACHE_EXPIRY_SECONDS:
-                        os.unlink(entry.path)
-                        logger.debug(f"Deleted expired cache: {entry.path}")
-                except Exception as e:
-                    logger.warning(f"Failed to delete expired cache {entry.path}: {e}")
+            # Recursively walk through cache directory
+            for root, dirs, files in os.walk(self._cache_dir):
+                for file in files:
+                    file_path = Path(root) / file
+                    try:
+                        if now - file_path.stat().st_mtime > CACHE_EXPIRY_SECONDS:
+                            file_path.unlink()
+                            logger.debug(f"Deleted expired cache: {file_path}")
+                    except Exception as e:
+                        logger.warning(f"Failed to delete expired cache {file_path}: {e}")
+                
+                # Try to remove empty directories (bottom-up is not guaranteed by os.walk unless topdown=False)
+                # But here we just try to clean up what we can.
+                
+            # Second pass to remove empty directories
+            for root, dirs, files in os.walk(self._cache_dir, topdown=False):
+                 for dir_name in dirs:
+                    dir_path = Path(root) / dir_name
+                    try:
+                        if not any(dir_path.iterdir()):
+                             dir_path.rmdir()
+                    except Exception:
+                        pass
+                        
         except Exception as e:
              logger.error(f"Error scanning cache dir: {e}")
 
-    def _find_cached_file(self, music_id: str) -> Optional[Path]:
-        """Find cached file for music_id (checking supported extensions)."""
+    def _get_cache_path(self, artist: str, album: str) -> Path:
+        """Get base path for cache file (without extension)."""
+        safe_artist = sanitize_filename(artist) or "Unknown Artist"
+        safe_album = sanitize_filename(album) or "Unknown Album"
+        return self._cache_dir / safe_artist / safe_album
+
+    def _find_cached_file(self, artist: str, album: str) -> Optional[Path]:
+        """Find cached file for artist/album (checking supported extensions)."""
+        base_path = self._get_cache_path(artist, album)
         for ext in [".jpg", ".png", ".jpeg"]:
-            p = self._cache_dir / f"{music_id}{ext}"
+            p = base_path.with_suffix(ext)
             if p.exists():
                 return p
         return None
@@ -84,7 +113,7 @@ class CoverService(BaseMusicService):
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, extract_cover_bytes, path)
 
-    async def _save_to_cache(self, music_id: str, data: bytes, media_type: str):
+    async def _save_to_cache(self, artist: str, album: str, data: bytes, media_type: str):
         """Save cover to cache asynchronously."""
         ext = ".jpg"
         if media_type == "image/png":
@@ -92,8 +121,11 @@ class CoverService(BaseMusicService):
         elif media_type == "image/jpeg":
             ext = ".jpg"
 
-        filename = f"{music_id}{ext}"
-        path = self._cache_dir / filename
+        base_path = self._get_cache_path(artist, album)
+        path = base_path.with_suffix(ext)
+        
+        # Ensure parent directory exists
+        prepare_path(path)
 
         try:
             loop = asyncio.get_running_loop()
@@ -122,11 +154,12 @@ class CoverService(BaseMusicService):
         if not task or not task.file_path:
             raise LocalMusicNotFoundError("not found")
 
-        # Use music_id if available, otherwise task_id
-        music_id = str(task.music_id) if task.music_id else f"task_{task_id}"
-
+        # Use music_album and music_artist if available, otherwise fallback to music_id/task_id
+        artist = task.music_artist or "Unknown Artist"
+        album = task.music_album or task.music_id or f"task_{task_id}"
+        
         # 1. Check cache
-        cached_file = self._find_cached_file(music_id)
+        cached_file = self._find_cached_file(artist, album)
         if cached_file:
             try:
                 content = await self._read_file(cached_file)
@@ -144,10 +177,11 @@ class CoverService(BaseMusicService):
             raise LocalMusicNotFoundError("not found")
 
         # 2. Extract with lock
-        lock = await self._get_lock(music_id)
+        lock_key = self._get_cache_key(artist, album)
+        lock = await self._get_lock(lock_key)
         async with lock:
             # Double check cache
-            cached_file = self._find_cached_file(music_id)
+            cached_file = self._find_cached_file(artist, album)
             if cached_file:
                 try:
                     content = await self._read_file(cached_file)
@@ -167,7 +201,7 @@ class CoverService(BaseMusicService):
             media_type = guess_image_mime(cover)
 
             # Save to cache
-            await self._save_to_cache(music_id, cover, media_type)
+            await self._save_to_cache(artist, album, cover, media_type)
 
             return {
                 "content": cover,
