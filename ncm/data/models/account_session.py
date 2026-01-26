@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from ncm.core.time import UTC_CLOCK, to_iso_format
-from ncm.data.engine import Base
+from ncm.data.models.base import Base
 
 
 class AccountSession(Base):

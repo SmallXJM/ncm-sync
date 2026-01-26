@@ -1,15 +1,14 @@
 """Database engine configuration and management."""
 
+from typing import Optional
 from sqlalchemy import create_engine, Engine, text
-from sqlalchemy.ext.declarative import declarative_base
 from ncm.core.path import prepare_path, get_config_path
 from ncm.core.constants import DATABASE_FILE_NAME
-
-# SQLAlchemy Base for all models
-Base = declarative_base()
+from ncm.data.models.base import Base
+from ncm.data.migration.auto import run_migrations
 
 # Global engine instance
-_engine: Engine = None
+_engine: Optional[Engine] = None
 
 
 def create_engine_instance(db_path: str = None) -> Engine:
@@ -20,9 +19,11 @@ def create_engine_instance(db_path: str = None) -> Engine:
     # Ensure database directory exists
     prepare_path(db_path)
     
+    db_url = f"sqlite:///{db_path}"
+    
     # Create engine with SQLite
     engine = create_engine(
-        f"sqlite:///{db_path}",
+        db_url,
         echo=False,  # Set to True for SQL debugging
         pool_pre_ping=True,
         connect_args={"check_same_thread": False}
@@ -34,7 +35,7 @@ def create_engine_instance(db_path: str = None) -> Engine:
         conn.execute(text("PRAGMA busy_timeout=5000;"))
         conn.commit()
     
-    return engine
+    return engine, db_url
 
 
 def get_engine(db_path: str = None) -> Engine:
@@ -42,10 +43,13 @@ def get_engine(db_path: str = None) -> Engine:
     global _engine
     
     if _engine is None:
-        _engine = create_engine_instance(db_path)
-        # Create all tables
-        Base.metadata.create_all(bind=_engine)
-        # Create recommended indexes
+        _engine, db_url = create_engine_instance(db_path)
+        
+        # Run automatic migrations
+        # This replaces Base.metadata.create_all(bind=_engine)
+        run_migrations(_engine, db_url)
+        
+        # Create recommended indexes (optional, can be moved to migration scripts later)
         _create_indexes(_engine)
     
     return _engine
