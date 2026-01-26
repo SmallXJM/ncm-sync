@@ -23,7 +23,10 @@ class AuthHandler:
         else:
             expire = time.time() + conf.access_token_expire_minutes * 60
         
-        to_encode.update({"exp": expire})
+        to_encode.update({
+            "exp": expire,
+            "iat": time.time()
+        })
         
         # Simple JWT implementation: Header.Payload.Signature
         header = {"alg": "HS256", "typ": "JWT"}
@@ -70,7 +73,21 @@ class AuthHandler:
             # Check expiration
             if "exp" in payload and payload["exp"] < time.time():
                 return None
+            
+            # Check if token is invalidated by password change
+            # Need to check 'sub' and verify against user.password_changed_at
+            if "sub" in payload and "iat" in payload:
+                username = payload["sub"]
+                token_iat = payload["iat"]
                 
+                # Find user
+                for user in conf.users:
+                    if user.username == username:
+                        # If password was changed after token issue, invalidate
+                        if token_iat < user.password_changed_at:
+                            return None
+                        break
+
             return payload
         except Exception:
             return None

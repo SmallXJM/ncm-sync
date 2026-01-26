@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 import asyncio
+import secrets
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, field_validator
@@ -44,11 +45,15 @@ class SubscriptionSettings(BaseModel):
 class User(BaseModel):
     username: str
     password: str  # 明文存储，启动时/运行时会进行哈希校验
+    password_changed_at: float = Field(default=0)
 
+
+def generate_secret_key() -> str:
+    return secrets.token_urlsafe(32)
 
 class AuthorizationSettings(BaseModel):
     enabled: bool = Field(default=True)
-    secret_key: str = Field(default="ncm-sync-secret-key-change-me")
+    secret_key: str = Field(default_factory=generate_secret_key)
     access_token_expire_minutes: int = Field(default=60 * 24 * 7)  # 7 days
     users: List[User] = Field(default_factory=lambda: [User(username="admin", password="password")])
 
