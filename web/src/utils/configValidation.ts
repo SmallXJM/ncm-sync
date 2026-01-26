@@ -1,3 +1,5 @@
+import {  } from '../api/ncm/config'
+
 export type ConfigValidationErrors = Record<string, string>
 
 export interface DownloadSettingsDraft {
@@ -12,9 +14,23 @@ export interface SubscriptionSettingsDraft {
   music_dir_playlist: string
 }
 
+export interface AuthUserDraft {
+  id?: string
+  username: string
+  password?: string
+}
+
+export interface AuthSettingsDraft {
+  enabled: boolean
+  access_token_expire_minutes: number
+  user: AuthUserDraft
+  rotate_secret_key?: boolean
+}
+
 export interface NcmConfigDraft {
   download: DownloadSettingsDraft
   subscription: SubscriptionSettingsDraft
+  auth: AuthSettingsDraft
 }
 
 export type NcmConfigFieldRule =
@@ -22,17 +38,18 @@ export type NcmConfigFieldRule =
   | { kind: 'intRange'; min: number; max: number; label: string }
   | { kind: 'pathLike'; label: string }
   | { kind: 'templateString'; label: string }
+  | { kind: 'string'; min: number; max: number; label: string; regex?: string; required?: boolean }
 
 export type NcmConfigFieldControl =
   | { type: 'cronToggle' }
-  | { type: 'switch' }
+  | { type: 'switch'; warning?: string }
   | { type: 'text'; placeholder?: string; mono?: boolean }
   | { type: 'intRange'; min: number; max: number }
   | { type: 'select'; options: { label: string; value: string }[] }
 
 export type NcmConfigVisibleWhen =
   | { path: string; operator: 'notNull' }
-  | { path: string; operator: 'equals'; value: string }
+  | { path: string; operator: 'equals'; value: string | boolean }
 
 export interface NcmConfigFieldSchema {
   id: string
@@ -196,6 +213,66 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
       },
     ],
   },
+  {
+    id: 'auth',
+    title: '安全设置',
+    description: 'WebUI 访问控制与认证',
+    fields: [
+      {
+        id: 'auth.enabled',
+        path: 'auth.enabled',
+        label: '启用认证',
+        description: '是否启用 WebUI 登录验证。开启后需登录才能访问 WebUI。',
+        control: { type: 'switch' },
+      },
+      {
+        id: 'auth.access_token_expire_minutes',
+        path: 'auth.access_token_expire_minutes',
+        label: '会话有效期 (分钟)',
+        description: '登录会话保持时间。默认值：10080分钟 (7天)。',
+        control: { type: 'intRange', min: 1, max: 43200 },
+        rule: { kind: 'intRange', min: 1, max: 43200, label: '会话有效期' },
+        visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
+      },
+      {
+        id: 'auth.user.username',
+        path: 'auth.user.username',
+        label: '登录用户名',
+        description: [
+          '登录时的用户名。如需修改，请输入新用户名。',
+          '用户名长度必须在 3-20 个字符之间，且只能包含字母、数字和下划线。',
+          '注意：修改用户名后将被强制下线。',
+        ].join('\n'),
+        control: { type: 'text', placeholder: '新用户名' },
+        rule: { kind: 'string', min: 3, max: 20, label: '用户名', regex: '^[a-zA-Z0-9_]+$' },
+        visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
+      },
+      {
+        id: 'auth.user.password',
+        path: 'auth.user.password',
+        label: '登录密码',
+        description: [
+          '登录时的密码。如需修改，请输入新密码。',
+          '密码长度必须在 3-20 个字符之间，且只能包含字母、数字和特殊字符。',
+          '注意：修改密码后将被强制下线。',
+        ].join('\n'),
+        control: { type: 'text', placeholder: '新密码' },
+        rule: { kind: 'string', min: 3, max: 20, label: '密码', regex: '^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{}|;:\'",.<>/?]+$' , required: false},
+        visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
+      },
+      {
+        id: 'auth.rotate_secret_key',
+        path: 'auth.rotate_secret_key',
+        label: '重置密钥',
+        description: [
+          '重置 API 签名密钥。',
+          '注意：如果签名密钥被重置，所有已登录用户将被强制下线。',
+        ].join('\n'),
+        control: { type: 'switch', warning: '注意：如果签名密钥被重置，所有已登录用户将被强制下线。' },
+        visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
+      }
+    ]
+  }
 ]
 
 export function validateCronExpr(value: string | null): string | null {
@@ -243,6 +320,26 @@ export function validateIntRange(
   return null
 }
 
+export function validateString(
+  value: unknown,
+  options: { min: number; max: number; label: string; regex?: string; required?: boolean },
+): string | null {
+  const str = typeof value === 'string' ? value : String(value ?? '')
+  if (!str.trim()) {
+    if (options.required === false) return null
+    return `${options.label} 不能为空`
+  }
+  if (str.length < options.min || str.length > options.max) {
+    return `${options.label} 需要在 ${options.min} ~ ${options.max} 之间`
+  }
+  if (options.regex && !new RegExp(options.regex).test(str)) {
+    return `${options.label} 格式错误`
+  }
+  return null
+}
+
+
+
 export function validateNonEmptyString(value: unknown, label: string): string | null {
   if (typeof value !== 'string') return `${label} 必须是字符串`
   if (!value.trim()) return `${label} 不能为空`
@@ -272,7 +369,7 @@ export function validateTemplateString(value: unknown, label: string): string | 
   return null
 }
 
-function getValueByPath(obj: unknown, path: string): unknown {
+export function getValueByPath(obj: unknown, path: string): unknown {
   let current: unknown = obj
   for (const part of path.split('.')) {
     if (!current || typeof current !== 'object') return undefined
@@ -283,7 +380,34 @@ function getValueByPath(obj: unknown, path: string): unknown {
   return current
 }
 
-function isVisibleByRule(draft: NcmConfigDraft, rule?: NcmConfigVisibleWhen): boolean {
+export function setValueByPath(obj: unknown, path: string, value: unknown): void {
+  if (!obj || typeof obj !== 'object') return
+  const parts = path.split('.')
+  const last = parts.pop()
+  if (!last) return
+
+  let current = obj as Record<string, unknown>
+  for (const part of parts) {
+    const next = current[part]
+    if (!next || typeof next !== 'object') return
+    current = next as Record<string, unknown>
+  }
+  current[last] = value
+}
+
+export function getIntRangeMin(control: NcmConfigFieldSchema['control']): number {
+  return control.type === 'intRange' ? control.min : 1
+}
+
+export function getIntRangeMax(control: NcmConfigFieldSchema['control']): number {
+  return control.type === 'intRange' ? control.max : 1
+}
+
+export function deepClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value))
+}
+
+export function isVisibleByRule(draft: NcmConfigDraft, rule?: NcmConfigVisibleWhen): boolean {
   if (!rule) return true
   const value = getValueByPath(draft, rule.path)
   if (rule.operator === 'notNull') return value !== null
@@ -298,7 +422,9 @@ function validateByRule(value: unknown, rule: NcmConfigFieldRule): string | null
   }
   if (rule.kind === 'intRange') return validateIntRange(value, rule)
   if (rule.kind === 'pathLike') return validatePathLike(value, rule.label)
-  return validateTemplateString(value, rule.label)
+  if (rule.kind === 'string') return validateString(value, rule)
+  if (rule.kind === 'templateString') return validateTemplateString(value, rule.label)
+  return null
 }
 
 export interface ValidationContext {

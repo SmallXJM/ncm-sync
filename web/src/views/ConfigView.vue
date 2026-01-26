@@ -89,6 +89,7 @@
                         @input="(e) => setDraftInt(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))" />
                     </div>
                   </template>
+
                 </div>
               </div>
 
@@ -126,39 +127,23 @@ import {
   NCM_CONFIG_UI_SCHEMA,
   validateNcmConfigDraft,
   validateCronExpr,
+  getValueByPath,
+  setValueByPath,
+  isVisibleByRule,
+  getIntRangeMin,
+  getIntRangeMax,
+  deepClone,
   type ConfigValidationErrors,
   type NcmConfigDraft,
   type NcmConfigFieldSchema,
   type NcmConfigGroupSchema,
+  type AuthUserDraft,
 } from '@/utils/configValidation'
 import { toast } from '@/utils/toast'
 import { formatTime } from '@/utils/time'
+import { type ApiEnvelope } from '@/api/request'
+import { type NcmConfig } from '@/api/ncm/config'
 
-
-
-// ... 保持原有 interface 定义不变 ...
-interface ApiEnvelope<T> {
-  code: number
-  message: string
-  data: T
-}
-
-interface DownloadSettings {
-  cron_expr: string | null
-  max_concurrent_downloads: number
-  max_threads_per_download: number
-  temp_downloads_dir: string
-}
-
-interface SubscriptionSettings {
-  filename: string
-  music_dir_playlist: string
-}
-
-interface NcmConfig {
-  download: DownloadSettings
-  subscription: SubscriptionSettings
-}
 
 
 const isLoading = ref(false)
@@ -176,6 +161,8 @@ const isPreviewLoading = ref(false)
 let previewDebounceTimer: number | undefined
 const lastCheckedCronExpr = ref<string | null>(null)
 const isCronBackendInvalid = ref(false)
+
+
 
 const configGroups = NCM_CONFIG_UI_SCHEMA
 const activeGroupId = ref(configGroups[0]?.id ?? '')
@@ -301,31 +288,7 @@ function handleCronPreview(draft: NcmConfigDraft) {
 }
 
 // 辅助函数：获取嵌套属性值
-function getValueByPath(obj: unknown, path: string): unknown {
-  let current: unknown = obj
-  for (const part of path.split('.')) {
-    if (!current || typeof current !== 'object') return undefined
-    const record = current as Record<string, unknown>
-    if (!(part in record)) return undefined
-    current = record[part]
-  }
-  return current
-}
-
-function setValueByPath(obj: unknown, path: string, value: unknown): void {
-  if (!obj || typeof obj !== 'object') return
-  const parts = path.split('.')
-  const last = parts.pop()
-  if (!last) return
-
-  let current = obj as Record<string, unknown>
-  for (const part of parts) {
-    const next = current[part]
-    if (!next || typeof next !== 'object') return
-    current = next as Record<string, unknown>
-  }
-  current[last] = value
-}
+// getValueByPath, setValueByPath 已从 @/utils/configValidation 导入
 
 function getDraftValue(path: string): unknown {
   if (!draftConfig.value) return null
@@ -395,21 +358,9 @@ function setDraftBool(path: string, value: boolean): void {
   setValueByPath(draftConfig.value, path, value)
 }
 
-function getIntRangeMin(control: NcmConfigFieldSchema['control']): number {
-  return control.type === 'intRange' ? control.min : 1
-}
-
-function getIntRangeMax(control: NcmConfigFieldSchema['control']): number {
-  return control.type === 'intRange' ? control.max : 1
-}
-
 function isFieldVisible(field: NcmConfigFieldSchema): boolean {
   if (!draftConfig.value) return false
-  const rule = field.visibleWhen
-  if (!rule) return true
-  const value = getValueByPath(draftConfig.value, rule.path)
-  if (rule.operator === 'notNull') return value !== null
-  return value === rule.value
+  return isVisibleByRule(draftConfig.value, field.visibleWhen)
 }
 
 // 【修改】样式计算现在依赖 localSliderValues 里的浮点数
@@ -448,6 +399,11 @@ async function reload(): Promise<void> {
     }
 
     originalConfig.value = payload.data
+    // 确保 rotate_secret_key 在 originalConfig 中存在（默认为 false），以保证脏检查正常
+    if (originalConfig.value?.auth) {
+      (originalConfig.value.auth as any).rotate_secret_key = false
+    }
+
     draftConfig.value = deepClone(payload.data) as NcmConfigDraft
 
     // 初始化本地滑块值
@@ -489,6 +445,8 @@ function toggleSwitch(event: Event): void {
 
 
 
+
+
 async function save(): Promise<void> {
   if (!draftConfig.value) return
   if (hasErrors.value) {
@@ -501,6 +459,7 @@ async function save(): Promise<void> {
     const partial = {
       download: draftConfig.value.download,
       subscription: draftConfig.value.subscription,
+      auth: draftConfig.value.auth
     }
 
     const result = await api.config.updateConfig(partial)
@@ -515,7 +474,7 @@ async function save(): Promise<void> {
       return
     }
 
-    originalConfig.value = payload.data
+    originalConfig.value = payload.data!
     draftConfig.value = deepClone(payload.data) as NcmConfigDraft
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
@@ -529,9 +488,6 @@ async function save(): Promise<void> {
   }
 }
 
-function deepClone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value))
-}
 
 </script>
 
@@ -572,5 +528,49 @@ function deepClone<T>(value: T): T {
 .field-preview {
   font-size: 0.85em;
   color: var(--text-tertiary);
+}
+
+/* 用户列表样式 */
+.user-list-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.user-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

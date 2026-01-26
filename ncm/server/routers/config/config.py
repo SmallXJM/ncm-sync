@@ -1,7 +1,10 @@
-from typing import Optional
+from typing import Optional, Dict, Any
+import time
 from ncm.client import APIResponse
 from ncm.core.logging import get_logger
 from ncm.server.decorators import ncm_service
+from ncm.core.time import UTC_CLOCK
+
 
 logger = get_logger(__name__)
 
@@ -10,6 +13,24 @@ class ConfigController:
     def __init__(self):
         from ncm.core.config import get_config_manager
         self._cfgm = get_config_manager()
+
+    def _scrub_sensitive_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Remove sensitive data from config dictionary before sending to client."""
+        import copy
+        safe_data = copy.deepcopy(data)
+        
+        if "auth" in safe_data:
+            auth = safe_data["auth"]
+            # Hide secret key
+            if "secret_key" in auth:
+                del auth["secret_key"]
+                
+            # Hide passwords
+            if "user" in auth:
+                del auth["user"]["password"]
+                del auth["user"]["password_changed_at"]
+        
+        return safe_data
 
     @ncm_service("/ncm/config", ["GET"])
     async def get_config(self, **kwargs) -> APIResponse:
@@ -20,7 +41,7 @@ class ConfigController:
                 body={
                     "code": 200,
                     "message": "Config loaded",
-                    "data": cfg.dict()
+                    "data": self._scrub_sensitive_data(cfg.model_dump())
                 }
             )
         except Exception as e:
@@ -33,10 +54,26 @@ class ConfigController:
                 }
             )
 
+    @ncm_service("/ncm/config/refresh_secret_key", ["POST"])
+    async def refresh_secret_key(self, **kwargs) -> APIResponse:
+        try:
+            from ncm.core.config import generate_secret_key
+            new_key = generate_secret_key()
+            # Update only secret_key
+            await self._cfgm.update({"auth": {"secret_key": new_key}})
+            return APIResponse(
+                status=200,
+                body={"code": 200, "message": "Secret key refreshed"}
+            )
+        except Exception as e:
+            logger.exception("Failed to refresh secret key")
+            return APIResponse(status=500, body={"code": 500, "message": str(e)})
+
     @ncm_service("/ncm/config", ["POST"])
     async def update_config(self,
                             download: Optional[dict] = None,
                             subscription: Optional[dict] = None,
+                            auth: Optional[dict] = None,
                             **kwargs) -> APIResponse:
         try:
             
@@ -48,6 +85,32 @@ class ConfigController:
             if subscription is not None:
                 partial["subscription"] = subscription
             
+            if auth is not None:
+                # Handle user password preservation logic
+                if "user" in auth and isinstance(auth["user"], dict):
+                    current_config = await self._cfgm.load()
+                    
+                    current_user = current_config.auth.user
+                    new_user = auth["user"].copy()
+                    
+                    # 密码为空表示未修改密码
+                    if "password" not in new_user:
+                        new_user["password"] = current_user.password
+                    else:
+                        new_user["password_changed_at"] = UTC_CLOCK.now().timestamp()
+
+                    auth["user"] = new_user
+                    
+                if "rotate_secret_key" in auth and auth["rotate_secret_key"]:
+                    del auth["rotate_secret_key"]
+                    # Rotate secret key
+                    from ncm.core.config import generate_secret_key
+                    new_key = generate_secret_key()
+                    auth["secret_key"] = new_key
+                
+                partial["auth"] = auth
+                logger.info(f"Updating auth with: {auth}")
+
             # Support flat update (backward compatibility)
             # Map flat keys to nested structure
             flat_download = {}
@@ -95,7 +158,7 @@ class ConfigController:
                 body={
                     "code": 200,
                     "message": "Config updated",
-                    "data": cfg.dict()
+                    "data": self._scrub_sensitive_data(cfg.model_dump())
                 }
             )
         except Exception as e:

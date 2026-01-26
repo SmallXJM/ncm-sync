@@ -5,7 +5,10 @@ import base64
 import json
 import time
 from typing import Optional, Dict
+from main import logger
+from ncm.core.time import UTC_CLOCK
 from ncm.core.config import get_config_manager
+
 
 class AuthHandler:
     @staticmethod
@@ -19,14 +22,16 @@ class AuthHandler:
         secret = conf.secret_key
         to_encode = data.copy()
         if expires_delta:
-            expire = time.time() + expires_delta * 60
+            expire = UTC_CLOCK.now().timestamp() + expires_delta * 60
         else:
-            expire = time.time() + conf.access_token_expire_minutes * 60
+            expire = UTC_CLOCK.now().timestamp() + conf.access_token_expire_minutes * 60
         
         to_encode.update({
             "exp": expire,
-            "iat": time.time()
+            "iat": UTC_CLOCK.now().timestamp()
         })
+        
+        logger.debug(f"Creating token with data: {to_encode}")
         
         # Simple JWT implementation: Header.Payload.Signature
         header = {"alg": "HS256", "typ": "JWT"}
@@ -71,7 +76,8 @@ class AuthHandler:
             payload = json.loads(payload_json)
             
             # Check expiration
-            if "exp" in payload and payload["exp"] < time.time():
+            if "exp" in payload and payload["exp"] < UTC_CLOCK.now().timestamp():
+                logger.debug(f"Token expired: {payload}")
                 return None
             
             # Check if token is invalidated by password change
@@ -81,21 +87,25 @@ class AuthHandler:
                 token_iat = payload["iat"]
                 
                 # Find user
-                for user in conf.users:
+                if conf.user:
+                    user = conf.user
                     if user.username == username:
                         # If password was changed after token issue, invalidate
                         if token_iat < user.password_changed_at:
                             return None
-                        break
+                        else:
+                            logger.debug(f"Token valid for user {username}")
+                            return payload
 
-            return payload
+            return None
         except Exception:
             return None
 
     @staticmethod
     def verify_credentials(username: str, password_hash: str) -> bool:
         conf = get_config_manager().model().auth
-        for user in conf.users:
+        if conf.user:
+            user = conf.user
             if user.username == username:
                 # Compare stored password (plaintext in config) hashed with SHA256 vs provided hash
                 # Server side calculation: sha256(config_password)
