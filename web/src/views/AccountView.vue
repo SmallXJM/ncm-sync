@@ -43,7 +43,7 @@
                         </div>
                       </div>
 
-                      <button class="btn btn-secondary btn-sm" style="margin-top: 8px;" @click="refreshAccountStatus" :disabled="isRefreshing">
+                      <!-- <button class="btn btn-secondary btn-sm" style="margin-top: 8px;" @click="refreshAccountStatus" :disabled="isRefreshing">
                         <template v-if="isRefreshing">
                           <div class="loading-spinner"></div>
                         </template>
@@ -55,7 +55,7 @@
                           </svg>
                           <span>登录状态</span>
                         </template>
-                      </button>
+                      </button> -->
                     </div>
 
                   </div>
@@ -314,7 +314,7 @@ const qrCode = reactive<QRCode>({
 })
 
 // Loading states
-const isRefreshing = ref(false)
+// const isRefreshing = ref(false)
 const isProfileLoading = ref(false)
 const isStartingQR = ref(false)
 const isLoggingInWithCookie = ref(false)
@@ -408,24 +408,24 @@ async function loadSessions(): Promise<void> {
   }
 }
 
-async function refreshAccountStatus(): Promise<void> {
-  try {
-    isRefreshing.value = true
-    const result = await api.user.getLoginStatus()
-    const payload = getEnvelope<unknown>(result.success ? result.data : null)
-    if (result.success && payload?.code === 200) {
-      await loadUserProfile()
-      toast.show('状态刷新成功', 'success')
-    } else {
-      toast.show('状态刷新失败', 'error')
-    }
-  } catch (error) {
-    console.error('Failed to refresh status:', error)
-    toast.show('状态刷新失败', 'error')
-  } finally {
-    isRefreshing.value = false
-  }
-}
+// async function refreshAccountStatus(): Promise<void> {
+//   try {
+//     isRefreshing.value = true
+//     const result = await api.user.getLoginStatus()
+//     const payload = getEnvelope<unknown>(result.success ? result.data : null)
+//     if (result.success && payload?.code === 200) {
+//       await loadUserProfile()
+//       toast.show('状态刷新成功', 'success')
+//     } else {
+//       toast.show('状态刷新失败', 'error')
+//     }
+//   } catch (error) {
+//     console.error('Failed to refresh status:', error)
+//     toast.show('状态刷新失败', 'error')
+//   } finally {
+//     isRefreshing.value = false
+//   }
+// }
 
 async function startQRLogin(): Promise<void> {
   try {
