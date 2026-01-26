@@ -246,8 +246,7 @@ class WebSocketClientService {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
-    const token = getToken()
-    const url = `${protocol}//${host}${this.endpointPath}${token ? `?token=${token}` : ''}`
+    const url = `${protocol}//${host}${this.endpointPath}`
 
     this.manualClose = false
     this.connectionStateRef.value = 'connecting'

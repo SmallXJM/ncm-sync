@@ -7,10 +7,13 @@ export function getToken(): string | null {
 
 export function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token)
+  // Sync to cookie for static resources (30 days)
+  document.cookie = `${TOKEN_KEY}=${token}; path=/; max-age=2592000; samesite=strict`
 }
 
 export function removeToken() {
   localStorage.removeItem(TOKEN_KEY)
+  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; samesite=strict`
 }
 
 export async function sha256(message: string, salt: string = '') {

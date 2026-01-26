@@ -6,6 +6,7 @@ from starlette.types import ASGIApp, Scope, Receive, Send
 from ncm.server.auth import AuthHandler
 from ncm.core.config import get_config_manager
 from starlette.middleware.base import BaseHTTPMiddleware
+from http.cookies import SimpleCookie
 logger = logging.getLogger(__name__)
 
 
@@ -48,27 +49,58 @@ class AuthMiddleware:
             return
 
         # Only enforce auth for API endpoints and WebSocket
-        if not (path.startswith("/api") or path.startswith("/ncm") or path.startswith("/ws") or path.startswith("/local")):
-             await self.app(scope, receive, send)
-             return
+        # if not (path.startswith("/api") or path.startswith("/ncm") or path.startswith("/ws") or path.startswith("/local")):
+        #      await self.app(scope, receive, send)
+        #      return
 
         token = None
         
-        # 1. HTTP Auth (Bearer Header)
+        # 1. HTTP Auth
         if scope["type"] == "http":
             headers = dict(scope["headers"])
             # Headers are lowercased in ASGI
             auth_header = headers.get(b"authorization", b"").decode()
             if auth_header.startswith("Bearer "):
                 token = auth_header.split(" ")[1]
+            
+            # Fallback to query param for static resources (images/audio)
+            if not token:
+                query_string = scope.get("query_string", b"").decode()
+                qs = parse_qs(query_string)
+                token_list = qs.get("token")
+                if token_list:
+                    token = token_list[0]
 
-        # 2. WebSocket Auth (Query Param)
+            # Fallback to Cookie for static resources
+            if not token:
+                cookie_header = headers.get(b"cookie", b"").decode()
+                if cookie_header:
+                    try:
+                        cookies = SimpleCookie(cookie_header)
+                        if "ncm_auth_token" in cookies:
+                            token = cookies["ncm_auth_token"].value
+                    except Exception:
+                        pass
+
+        # 2. WebSocket Auth (Query Param or Cookie)
         elif scope["type"] == "websocket":
             query_string = scope.get("query_string", b"").decode()
             qs = parse_qs(query_string)
             token_list = qs.get("token")
             if token_list:
                 token = token_list[0]
+            
+            # Fallback to Cookie
+            if not token:
+                headers = dict(scope["headers"])
+                cookie_header = headers.get(b"cookie", b"").decode()
+                if cookie_header:
+                    try:
+                        cookies = SimpleCookie(cookie_header)
+                        if "ncm_auth_token" in cookies:
+                            token = cookies["ncm_auth_token"].value
+                    except Exception:
+                        pass
 
         # Verify token
         if token:
