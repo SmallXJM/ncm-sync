@@ -11,7 +11,7 @@ class AuthorizationController:
     async def login(self, username: str, password: str, **kwargs) -> APIResponse:
         """
         Login endpoint.
-        Expects 'username' and 'password' (SHA256 hash).
+        Expects 'username' and 'password' (SHA256 hash of password + username).
         """
         if not username or not password:
             return APIResponse(status=400, body={"code": 400, "message": "用户名或密码不能为空"})

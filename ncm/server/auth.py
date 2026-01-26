@@ -12,9 +12,10 @@ from ncm.core.config import get_config_manager
 
 class AuthHandler:
     @staticmethod
-    def hash_password(password: str) -> str:
+    def hash_password(password: str, salt: str = "") -> str:
         # Use SHA256 for client-side compatibility and simplicity
-        return hashlib.sha256(password.encode()).hexdigest()
+        content = password + salt
+        return hashlib.sha256(content.encode()).hexdigest()
 
     @staticmethod
     def create_access_token(data: dict, expires_delta: int = None) -> str:
@@ -108,9 +109,10 @@ class AuthHandler:
             user = conf.user
             if user.username == username:
                 # Compare stored password (plaintext in config) hashed with SHA256 vs provided hash
-                # Server side calculation: sha256(config_password)
-                # This assumes client sends sha256(password)
-                stored_hash = hashlib.sha256(user.password.encode()).hexdigest()
+                # Server side calculation: sha256(config_password + username)
+                # This assumes client sends sha256(password + username)
+                content = user.password + username
+                stored_hash = hashlib.sha256(content.encode()).hexdigest()
                 if hmac.compare_digest(stored_hash, password_hash):
                     return True
         return False

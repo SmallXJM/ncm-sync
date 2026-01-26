@@ -21,7 +21,7 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const hashedPassword = await sha256(password.value)
+    const hashedPassword = await sha256(password.value, username.value)
     const res = await api.auth.login({
       username: username.value,
       password: hashedPassword
