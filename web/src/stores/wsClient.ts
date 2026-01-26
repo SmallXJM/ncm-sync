@@ -1,5 +1,6 @@
 import { ref, readonly, type Ref } from 'vue'
 import { toast } from '@/utils/toast'
+import { getToken } from '@/utils/auth'
 
 /**
  * WebSocket 连接状态
@@ -245,7 +246,8 @@ class WebSocketClientService {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
-    const url = `${protocol}//${host}${this.endpointPath}`
+    const token = getToken()
+    const url = `${protocol}//${host}${this.endpointPath}${token ? `?token=${token}` : ''}`
 
     this.manualClose = false
     this.connectionStateRef.value = 'connecting'
