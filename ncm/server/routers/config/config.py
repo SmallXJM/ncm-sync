@@ -94,10 +94,14 @@ class ConfigController:
                     new_user = auth["user"].copy()
                     
                     # 密码为空表示未修改密码
-                    if "password" not in new_user:
+                    if not new_user.get("password"):
                         new_user["password"] = current_user.password
+                        # Keep original password_changed_at if not changing password
+                        if hasattr(current_user, "password_changed_at"):
+                            new_user["password_changed_at"] = current_user.password_changed_at
                     else:
                         new_user["password_changed_at"] = UTC_CLOCK.now().timestamp()
+                        
 
                     auth["user"] = new_user
                     
@@ -108,6 +112,18 @@ class ConfigController:
                     new_key = generate_secret_key()
                     auth["secret_key"] = new_key
                 
+                if "logout" in auth:
+                    if auth["logout"]:
+                        # Force logout by updating password_changed_at
+                        if "user" in auth and isinstance(auth["user"], dict):
+                            auth["user"]["password_changed_at"] = UTC_CLOCK.now().timestamp()
+                        else:
+                            current_config = await self._cfgm.load()
+                            user_data = current_config.auth.user.model_dump()
+                            user_data["password_changed_at"] = UTC_CLOCK.now().timestamp()
+                            auth["user"] = user_data
+                    del auth["logout"]
+
                 partial["auth"] = auth
                 logger.info(f"Updating auth with: {auth}")
 

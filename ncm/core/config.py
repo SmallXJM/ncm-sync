@@ -56,7 +56,7 @@ class AuthorizationSettings(BaseModel):
     enabled: bool = Field(default=True)
     secret_key: str = Field(default_factory=generate_secret_key)
     access_token_expire_minutes: int = Field(default=60 * 24 * 7)  # 7 days
-    user: User = Field(default_factory=lambda: User(username="admin", password="password"))
+    user: User = Field(default_factory=lambda: User(username="admin", password="admin"))
 
 
 class NcmConfig(BaseModel):

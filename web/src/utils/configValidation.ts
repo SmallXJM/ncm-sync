@@ -1,4 +1,4 @@
-import {  } from '../api/ncm/config'
+import { } from '../api/ncm/config'
 
 export type ConfigValidationErrors = Record<string, string>
 
@@ -25,6 +25,7 @@ export interface AuthSettingsDraft {
   access_token_expire_minutes: number
   user: AuthUserDraft
   rotate_secret_key?: boolean
+  logout?: boolean
 }
 
 export interface NcmConfigDraft {
@@ -215,15 +216,28 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
   },
   {
     id: 'auth',
-    title: '安全设置',
+    title: '认证设置',
     description: 'WebUI 访问控制与认证',
     fields: [
       {
         id: 'auth.enabled',
         path: 'auth.enabled',
         label: '启用认证',
-        description: '是否启用 WebUI 登录验证。开启后需登录才能访问 WebUI。',
+        description: [
+          '是否启用 WebUI 登录验证。开启后需登录才能访问 WebUI。',
+          '<span class="text-error">警告⚠：如果关闭验证，可能导致安全风险，请谨慎操作。</span>',
+        ].join('\n'),
         control: { type: 'switch' },
+      },
+      {
+        id: 'auth.logout',
+        path: 'auth.logout',
+        label: '退出登录',
+        description: [
+          '如果启用并应用保存，将会立即退出当前登录会话。',
+        ].join('\n'),
+        control: { type: 'switch', warning: '注意：退出登录后，将需要重新登录才能访问 WebUI。' },
+        visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
       },
       {
         id: 'auth.access_token_expire_minutes',
@@ -241,7 +255,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         description: [
           '登录时的用户名。如需修改，请输入新用户名。',
           '用户名长度必须在 3-20 个字符之间，且只能包含字母、数字和下划线。',
-          '注意：修改用户名后将被强制下线。',
+          '<span class="text-warning">注意：修改用户名后将被强制下线。</span>',
         ].join('\n'),
         control: { type: 'text', placeholder: '新用户名' },
         rule: { kind: 'string', min: 3, max: 20, label: '用户名', regex: '^[a-zA-Z0-9_]+$' },
@@ -254,10 +268,10 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         description: [
           '登录时的密码。如需修改，请输入新密码。',
           '密码长度必须在 3-20 个字符之间，且只能包含字母、数字和特殊字符。',
-          '注意：修改密码后将被强制下线。',
+          '<span class="text-warning">注意：修改密码后将被强制下线。</span>',
         ].join('\n'),
         control: { type: 'text', placeholder: '新密码' },
-        rule: { kind: 'string', min: 3, max: 20, label: '密码', regex: '^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{}|;:\'",.<>/?]+$' , required: false},
+        rule: { kind: 'string', min: 3, max: 20, label: '密码', regex: '^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{}|;:\'",.<>/?]+$', required: false },
         visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
       },
       {
@@ -265,8 +279,8 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         path: 'auth.rotate_secret_key',
         label: '重置密钥',
         description: [
-          '重置 API 签名密钥。',
-          '注意：如果签名密钥被重置，所有已登录用户将被强制下线。',
+          '如果启用并应用保存，将会重置 API 签名密钥。',
+          '<span class="text-warning">注意：如果签名密钥被重置，所有已登录用户将被强制下线。</span>',
         ].join('\n'),
         control: { type: 'switch', warning: '注意：如果签名密钥被重置，所有已登录用户将被强制下线。' },
         visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }

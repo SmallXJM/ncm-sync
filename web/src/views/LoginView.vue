@@ -29,7 +29,7 @@ const handleLogin = async () => {
 
     if (res.success && res.data.code === 200 && res.data.data) {
       setToken(res.data.data.token)
-      toast.success('登录成功') 
+      // toast.success('登录成功') 
       router.push('/')
     } else {
       toast.error(res.success ? res.data.message || '登录失败' : res.error)
@@ -52,7 +52,7 @@ const handleLogin = async () => {
           </span>
           <h1 class="brand-title">NCM Sync</h1>
         </div>
-        <p class="login-subtitle">登录以继续</p>
+        <!-- <p class="login-subtitle">登录以继续</p> -->
       </div>
       
       <form @submit.prevent="handleLogin" class="login-form">

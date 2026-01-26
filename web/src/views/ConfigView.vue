@@ -25,7 +25,7 @@
               <div v-if="isFieldVisible(field)" class="config-item">
                 <div class="item-info">
                   <label>{{ field.label }}</label>
-                  <div v-if="field.description" class="item-desc">{{ field.description }}</div>
+                  <div v-if="field.description" class="item-desc" v-html="field.description"></div>
                 </div>
 
                 <div class="item-control">
@@ -106,7 +106,7 @@
     <div class="action-bar" :class="{ visible: isDirty }">
       <div class="action-info">
         <div class="changed-dot"></div>
-        <span>配置已修改</span>
+        <span>设置已修改</span>
       </div>
       <div class="action-buttons">
         <button class="btn btn-secondary btn-sm" @click="resetDraft">放弃修改</button>
@@ -401,7 +401,8 @@ async function reload(): Promise<void> {
     originalConfig.value = payload.data
     // 确保 rotate_secret_key 在 originalConfig 中存在（默认为 false），以保证脏检查正常
     if (originalConfig.value?.auth) {
-      (originalConfig.value.auth as any).rotate_secret_key = false
+      (originalConfig.value.auth as any).rotate_secret_key = false,
+      (originalConfig.value.auth as any).logout = false
     }
 
     draftConfig.value = deepClone(payload.data) as NcmConfigDraft
@@ -423,7 +424,7 @@ function resetDraft(): void {
   draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
   // 重置时同步本地滑块
   syncLocalFromDraft()
-  toast.show('已放弃所有未保存的修改', 'info')
+  toast.show('已恢复所有未保存的更改', 'info')
 }
 
 function toggleCron(event: Event): void {
@@ -479,7 +480,11 @@ async function save(): Promise<void> {
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
 
-    toast.show('配置已保存并生效', 'success')
+    toast.show('设置已保存并已生效', 'success')
+
+    // 验证授权有效性（如改密/重置密钥后）
+    // 如果返回 401，http 拦截器会自动跳转登录
+    await api.config.getConfig()
   } catch (error) {
     console.error('Failed to save config:', error)
     toast.show('保存失败', 'error')
@@ -528,6 +533,24 @@ async function save(): Promise<void> {
 .field-preview {
   font-size: 0.85em;
   color: var(--text-tertiary);
+}
+
+.item-desc {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin-top: 4px;
+}
+
+:deep(.text-warning) {
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+:deep(.text-error) {
+  color: var(--color-error);
+  font-weight: 700;
 }
 
 /* 用户列表样式 */
