@@ -4,7 +4,7 @@
             <div class="app-header__left">
                 <button class="sidebar-toggle" @click="toggleSidebar" :title="isNarrow ? '展开侧边栏' : '收起侧边栏'"
                     :aria-label="isNarrow ? '展开侧边栏' : '收起侧边栏'" aria-controls="app-sidebar" :aria-expanded="!isNarrow">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="9" y1="3" x2="9" y2="21"></line>
@@ -17,7 +17,7 @@
                                 class="breadcrumb-item breadcrumb-link" @click="goBreadcrumb(item.to)">
                                 {{ item.title }}
                             </button>
-                            <span v-else class="breadcrumb-item breadcrumb-current">{{ item.title }}</span>
+                            <button v-else class="breadcrumb-item breadcrumb-current">{{ item.title }}</button>
                             <span v-if="idx < breadcrumbs.length - 1" class="breadcrumb-sep">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -211,7 +211,7 @@ watch(isWsDisconnected, (newVal) => {
 
 /* 基础面包屑项样式提取 */
 .breadcrumb-item {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -237,11 +237,12 @@ watch(isWsDisconnected, (newVal) => {
 .breadcrumb-link {
     border-radius: $radius-sm;
     cursor: pointer;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
     transition: all 0.3s ease;
+    // border: 0px;
 
     &:hover {
-        background: var(--bg-surface-hover);
+        background: var(--bg-surface);
         color: var(--text-primary);
         border-color: var(--border-hover);
     }
@@ -267,7 +268,7 @@ watch(isWsDisconnected, (newVal) => {
 .app-header__left {
     display: flex;
     align-items: center;
-    gap: 12px; // 控制 sidebar-toggle 和 title 的间距
+    gap: var(--spacing-sm); // 控制 sidebar-toggle 和 title 的间距
 }
 
 .app-header__right {
@@ -293,12 +294,13 @@ watch(isWsDisconnected, (newVal) => {
 }
 
 .sidebar-toggle {
-    width: 36px;
-    height: 36px;
-    border-radius: $radius-lg;
-    border: 1px solid var(--border-color);
+    width: 32px;
+    height: 32px;
+    border-radius: $radius-full;
+    border: 0px solid var(--border-color);
     background: transparent;
     color: var(--text-secondary);
+    // background: var(--bg-surface);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -308,9 +310,9 @@ watch(isWsDisconnected, (newVal) => {
     touch-action: manipulation;
 
     &:hover {
-        background: var(--bg-surface-hover);
+        background: var(--bg-surface);
         color: var(--text-primary);
-        border-color: var(--text-secondary);
+        // border-color: var(--border-hover);
     }
 
     &:active {
