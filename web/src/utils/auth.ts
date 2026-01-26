@@ -14,9 +14,18 @@ export function removeToken() {
 }
 
 export async function sha256(message: string) {
-  const msgBuffer = new TextEncoder().encode(message)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-  return hashHex
+  // 检查原生支持
+  if (window.crypto && window.crypto.subtle) {
+    const msgBuffer = new TextEncoder().encode(message)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+  }
+  
+  // 降级方案：动态导入或直接使用 js-sha256
+  const { sha256: fallbackSha256 } = await import('js-sha256')
+  return fallbackSha256(message)
 }
+
+
