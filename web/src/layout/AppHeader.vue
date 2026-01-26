@@ -299,7 +299,7 @@ watch(isWsDisconnected, (newVal) => {
     border-radius: $radius-full;
     border: 0px solid var(--border-color);
     background: transparent;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     // background: var(--bg-surface);
     display: flex;
     align-items: center;
@@ -310,7 +310,7 @@ watch(isWsDisconnected, (newVal) => {
     touch-action: manipulation;
 
     &:hover {
-        background: var(--bg-surface);
+        background: var(--sidebar-hover);
         color: var(--text-primary);
         // border-color: var(--border-hover);
     }
