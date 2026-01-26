@@ -58,6 +58,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import api from '@/api'
 import { toast } from '@/utils/toast'
 import wsClient from '@/stores/wsClient'
+import { formatTime } from '@/utils/time'
 
 interface SchedulerSnapshot {
   is_running: boolean
@@ -76,25 +77,6 @@ const endTime = ref<string | null>(null)
 const nextRunTime = ref<string | null>(null)
 let debounceTimer: number | null = null
 
-const formatTime = (isoString: string | null) => {
-  if (!isoString) return '--/-- --:-- --'
-  const date = new Date(isoString)
-  if (isNaN(date.getTime())) return isoString
-
-  const month = (date.getMonth() + 1).toString().padStart(2, '0')
-  const day = date.getDate().toString().padStart(2, '0')
-
-  let hours = date.getHours()
-  const minutes = date.getMinutes().toString().padStart(2, '0')
-  const seconds = date.getSeconds().toString().padStart(2, '0')
-  const ampm = hours >= 12 ? 'PM' : 'AM'
-
-  hours = hours % 12
-  hours = hours ? hours : 12 // the hour '0' should be '12'
-  const hoursStr = hours.toString().padStart(2, '0')
-
-  return `${month}/${day} ${hoursStr}:${minutes}:${seconds} ${ampm}`
-}
 
 const schedulerSnapshot = computed<SchedulerSnapshot | null>(() => {
   const raw = wsClient.reactiveState.data.scheduler.value as SchedulerSnapshot | null

@@ -5,9 +5,12 @@
         <div class="sidebar__brand">
             <router-link to="/" class="brand-link" :title="isNarrow ? 'ncm-sync' : ''" @click="handleMenuItemClick">
                 <span class="brand-icon">
-                    <img alt="logo" width="24" height="24" />
+                    <img alt="logo" width="32" height="32" />
                 </span>
-                <span class="brand-text">ncm-sync</span>
+                <div class="brand-info">
+                    <span class="brand-title">NCM Sync</span>
+                    <span class="brand-subtitle">音乐同步工具</span>
+                </div>
             </router-link>
         </div>
 
@@ -128,32 +131,32 @@ onUnmounted(() => {
 const DashboardIcon = h(
     'svg',
     {
-      xmlns: 'http://www.w3.org/2000/svg',
-      width: 20,
-      height: 20,
-      viewBox: '0 0 24 24',
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: 20,
+        height: 20,
+        viewBox: '0 0 24 24',
     },
     [
-      h(
-        'g',
-        {
-          fill: 'none',
-          stroke: 'currentColor',
-          'stroke-linecap': 'round',
-          'stroke-linejoin': 'round',
-          'stroke-width': 2,
-        },
-        [
-          h('path', {
-            d: 'M10 3.2A9 9 0 1 0 20.8 14a1 1 0 0 0-1-1H13a2 2 0 0 1-2-2V4a.9.9 0 0 0-1-.8',
-          }),
-          h('path', {
-            d: 'M15 3.5A9 9 0 0 1 20.5 9H16a1 1 0 0 1-1-1z',
-          }),
-        ]
-      ),
+        h(
+            'g',
+            {
+                fill: 'none',
+                stroke: 'currentColor',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+                'stroke-width': 2,
+            },
+            [
+                h('path', {
+                    d: 'M10 3.2A9 9 0 1 0 20.8 14a1 1 0 0 0-1-1H13a2 2 0 0 1-2-2V4a.9.9 0 0 0-1-.8',
+                }),
+                h('path', {
+                    d: 'M15 3.5A9 9 0 0 1 20.5 9H16a1 1 0 0 1-1-1z',
+                }),
+            ]
+        ),
     ]
-  )
+)
 
 const UserIcon = h('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
@@ -443,7 +446,7 @@ onUnmounted(() => {
             display: none;
         }
 
-        .brand-text,
+        .brand-info,
         .menu-text {
             opacity: 0;
             width: 0;
@@ -516,26 +519,47 @@ onUnmounted(() => {
 }
 
 .brand-icon {
-    flex-shrink: 0;           /* 防止被压缩 */
-    display: inline-flex;     /* 让 img 或 svg 可以居中对齐 */
+    flex-shrink: 0;
+    /* 防止被压缩 */
+    display: inline-flex;
+    /* 让 img 或 svg 可以居中对齐 */
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
 }
 
 .brand-icon img {
-  content: var(--img-favicon)
+    content: var(--img-favicon);
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
 }
 
-
-
-.brand-text {
+.brand-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     transition: opacity 0.2s ease, max-width 0.2s ease;
     white-space: nowrap;
-    // 添加 max-width 以支持过渡
     max-width: 200px;
     overflow: hidden;
-    // font-size: 1.4rem;
+    gap: 2px;
+}
+
+.brand-title {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
+}
+
+.brand-subtitle {
+    font-size: 0.75rem;
     font-weight: 500;
+    line-height: 1.2;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
 }
 
 .sidebar__menu {
