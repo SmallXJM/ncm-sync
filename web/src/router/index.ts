@@ -1,9 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { getToken } from '@/utils/auth'
 // const DashboardView = () => import('../views/Dashboard.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+      meta: {
+        title: '登录',
+      },
+    },
     {
       path: '/',
       name: 'dashboard',
@@ -62,6 +71,25 @@ const router = createRouter({
       },
     },
   ],
+})
+
+// Navigation Guard
+router.beforeEach((to, from, next) => {
+  const token = getToken()
+
+  if (to.path === '/login') {
+    if (token) {
+      next('/')
+    } else {
+      next()
+    }
+  } else {
+    if (!token) {
+      next('/login')
+    } else {
+      next()
+    }
+  }
 })
 
 // 设置浏览器标签页标题

@@ -18,6 +18,7 @@ from .framework.auto_router import (
 )
 from .framework.vue_router import register_vue_routes
 from .framework.local_music_router import register_local_music_routes
+from .middleware.auth import AuthMiddleware
 from ncm.data.async_session import dispose_async_engine
 from ncm.data.engine import close_engine
 from ncm.client.protocol.session import close_session
@@ -164,6 +165,9 @@ def create_app(log_level: int = None) -> FastAPI:
     
     # Add GZip compression middleware
     app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+    # Add Auth Middleware
+    app.add_middleware(AuthMiddleware)
     
     # Register health check endpoints
     register_health_check(app)

@@ -2,7 +2,7 @@ from __future__ import annotations
 import json
 import asyncio
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, field_validator
 from ncm.core.constants import CONFIG_FILE_NAME
 
@@ -41,9 +41,22 @@ class SubscriptionSettings(BaseModel):
     music_dir_playlist: str = Field(default=r"歌单/{user_name}/{playlist_name}")
 
 
+class User(BaseModel):
+    username: str
+    password: str  # 明文存储，启动时/运行时会进行哈希校验
+
+
+class AuthorizationSettings(BaseModel):
+    enabled: bool = Field(default=True)
+    secret_key: str = Field(default="ncm-sync-secret-key-change-me")
+    access_token_expire_minutes: int = Field(default=60 * 24 * 7)  # 7 days
+    users: List[User] = Field(default_factory=lambda: [User(username="admin", password="password")])
+
+
 class NcmConfig(BaseModel):
     download: DownloadSettings = Field(default_factory=DownloadSettings)
     subscription: SubscriptionSettings = Field(default_factory=SubscriptionSettings)
+    auth: AuthorizationSettings = Field(default_factory=AuthorizationSettings)
 
 
 from ncm.core.path import get_data_path, normalize_path, get_config_path
