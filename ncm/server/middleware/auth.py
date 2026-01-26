@@ -25,8 +25,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         logger.info(f"Request path: {path}")
         
         # Public endpoints whitelist
-        # Allow /login (frontend), /api/auth/login, static files, and websocket
+        # Allow /login (frontend), /api/auth/login, /api/auth/config, static files, and websocket
         if (path.startswith("/api/auth/login") or 
+            path.startswith("/api/auth/config") or 
             path == "/" or 
             path.startswith("/assets") or 
             path.startswith("/@") or  # Vite specific

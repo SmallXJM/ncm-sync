@@ -3,9 +3,27 @@ from typing import Dict, Any
 from ncm.server.decorators import ncm_service
 from ncm.client import APIResponse
 from ncm.server.auth import AuthHandler
+from ncm.core.config import get_config_manager
 
 
 class AuthorizationController:
+
+    @ncm_service("/api/auth/config", ["GET"])
+    async def get_auth_config(self, **kwargs) -> APIResponse:
+        """
+        Get public authentication configuration.
+        """
+        conf = get_config_manager().model().auth
+        return APIResponse(
+            status=200,
+            body={
+                "code": 200,
+                "message": "Success",
+                "data": {
+                    "enabled": conf.enabled
+                }
+            }
+        )
 
     @ncm_service("/api/auth/login", ["POST"])
     async def login(self, username: str, password: str, **kwargs) -> APIResponse:

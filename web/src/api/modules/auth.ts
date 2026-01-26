@@ -10,6 +10,13 @@ export interface LoginResponse {
   token: string
 }
 
+export interface AuthConfig {
+  enabled: boolean
+}
+
+export const getAuthConfig = async (): Promise<ApiResult<ApiEnvelope<AuthConfig>>> =>
+  http.get<ApiEnvelope<AuthConfig>>('/api/auth/config')
+
 export const login = async (params: LoginParams): Promise<ApiResult<ApiEnvelope<LoginResponse>>> =>
   http.post<ApiEnvelope<LoginResponse>>('/api/auth/login', params)
 

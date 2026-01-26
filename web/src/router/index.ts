@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/utils/auth'
+import { useAuthStore } from '@/stores/auth'
 // const DashboardView = () => import('../views/Dashboard.vue')
 
 const router = createRouter({
@@ -75,8 +76,23 @@ const router = createRouter({
 })
 
 // Navigation Guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+  if (!authStore.isInitialized.value) {
+    await authStore.fetchAuthConfig()
+  }
+
   const token = getToken()
+  const requireAuth = authStore.isAuthEnabled.value
+
+  if (!requireAuth) {
+    if (to.path === '/login') {
+      next('/')
+    } else {
+      next()
+    }
+    return
+  }
 
   if (to.path === '/login') {
     if (token) {
