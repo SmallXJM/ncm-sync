@@ -1,7 +1,7 @@
 """Download task model for tracking individual music download tasks."""
 
 from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, ForeignKey
-from ncm.data.engine import Base
+from ncm.data.models.base import Base
 from ncm.core.time import UTC_CLOCK, to_iso_format
 
 

@@ -79,7 +79,8 @@
   display: flex;
   align-items: flex-start;
   /* 让 ID 的底部与昵称顶部对齐 */
-  justify-content: space-between;
+  // justify-content: space-between;
+  flex-direction: column;
   gap: 10px;
   /* 昵称和 ID 之间的间距 */
   // margin-bottom: 4px;

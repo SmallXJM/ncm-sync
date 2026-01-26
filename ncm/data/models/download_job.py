@@ -1,7 +1,7 @@
 """Download job configuration model."""
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from ncm.data.engine import Base
+from ncm.data.models.base import Base
 from ncm.core.time import UTC_CLOCK, to_iso_format
 
 
