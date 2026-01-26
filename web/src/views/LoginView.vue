@@ -9,7 +9,7 @@ import { toast } from '@/utils/toast'
 
 const router = useRouter()
 
-const username = ref('admin')
+const username = ref('')
 const password = ref('')
 const loading = ref(false)
 
@@ -35,7 +35,7 @@ const handleLogin = async () => {
       toast.error(res.success ? res.data.message || '登录失败' : res.error)
     }
   } catch (e) {
-    toast.error('登录出错')
+    toast.error(`登录出错: ${e}`)
   } finally {
     loading.value = false
   }
@@ -43,11 +43,16 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-box">
+  <div class="page login-page">
+    <div class="glass-card login-card">
       <div class="login-header">
-        <h1>NCM Sync</h1>
-        <p>登录以继续</p>
+        <div class="brand-container">
+          <span class="brand-icon">
+            <img alt="logo" width="48" height="48" />
+          </span>
+          <h1 class="brand-title">NCM Sync</h1>
+        </div>
+        <p class="login-subtitle">登录以继续</p>
       </div>
       
       <form @submit.prevent="handleLogin" class="login-form">
@@ -56,6 +61,7 @@ const handleLogin = async () => {
           <input 
             v-model="username" 
             type="text" 
+            class="input"
             placeholder="请输入用户名"
             :disabled="loading"
           />
@@ -66,13 +72,15 @@ const handleLogin = async () => {
           <input 
             v-model="password" 
             type="password" 
+            class="input"
             placeholder="请输入密码"
             :disabled="loading"
           />
         </div>
         
-        <button type="submit" :disabled="loading" class="login-btn">
-          {{ loading ? '登录中...' : '登录' }}
+        <button type="submit" :disabled="loading" class="btn btn-primary login-btn">
+          <div v-if="loading" class="loading-spinner"></div>
+          <span>{{ loading ? '登录中...' : '登录' }}</span>
         </button>
       </form>
     </div>
@@ -80,37 +88,69 @@ const handleLogin = async () => {
 </template>
 
 <style scoped lang="scss">
-.login-container {
+@use '@/assets/styles/variables' as *;
+
+.login-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  background-color: var(--color-background);
-  color: var(--color-text);
+  min-height: 100dvh;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  padding: var(--spacing-lg);
 }
 
-.login-box {
+.login-card {
   width: 100%;
   max-width: 400px;
-  padding: 2rem;
-  background-color: var(--color-surface);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
   
-  h1 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-    color: var(--color-primary);
+  .brand-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .brand-icon {
+    flex-shrink: 0;
+    /* 防止被压缩 */
+    display: inline-flex;
+    /* 让 img 或 svg 可以居中对齐 */
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+  .brand-icon img {
+    content: var(--img-favicon);
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
   }
   
-  p {
-    color: var(--color-text-secondary);
+  .brand-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+  
+  .login-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 0;
   }
 }
 
@@ -127,47 +167,17 @@ const handleLogin = async () => {
   
   label {
     font-size: 0.9rem;
-    color: var(--color-text-secondary);
-  }
-  
-  input {
-    padding: 0.75rem;
-    border-radius: 4px;
-    border: 1px solid var(--color-border);
-    background-color: var(--color-background);
-    color: var(--color-text);
-    transition: border-color 0.2s;
-    
-    &:focus {
-      outline: none;
-      border-color: var(--color-primary);
-    }
-    
-    &:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
+    font-weight: 500;
+    color: var(--text-primary);
   }
 }
 
 .login-btn {
-  padding: 0.75rem;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  width: 100%;
   margin-top: 1rem;
-  
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-  }
-  
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
+  justify-content: center;
 }
+
+
+
 </style>

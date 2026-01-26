@@ -11,6 +11,7 @@ const router = createRouter({
       component: () => import('../views/LoginView.vue'),
       meta: {
         title: '登录',
+        layout: false,
       },
     },
     {

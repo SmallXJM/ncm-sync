@@ -87,9 +87,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
-import { updateThemeColor } from "@/utils/theme"
+import { useTheme } from '@/composables/useTheme'
 
 const { isNarrow, isMobileOpen } = useSidebar()
+const { themeMode, cycleTheme } = useTheme()
 
 const mq = window.matchMedia('(max-width: 768px)')
 const isMobile = ref(mq.matches)
@@ -309,107 +310,14 @@ const menuGroups: MenuGroup[] = [
     }
 ]
 
-// const isDark = ref(false)
-
-// const toggleTheme = () => {
-//     isDark.value = !isDark.value
-//     const html = document.documentElement
-
-//     if (isDark.value) {
-//         html.classList.add('dark')
-//         html.classList.remove('light')
-//         localStorage.setItem('theme', 'dark')
-//     } else {
-//         html.classList.add('light')
-//         html.classList.remove('dark')
-//         localStorage.setItem('theme', 'light')
-//     }
-// }
-
-// onMounted(() => {
-//     const savedTheme = localStorage.getItem('theme')
-//     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-
-//     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-//         isDark.value = true
-//         document.documentElement.classList.add('dark')
-//     } else {
-//         isDark.value = false
-//         document.documentElement.classList.add('light')
-//     }
-// })
-
-
-// 1. 定义三态类型
-type ThemeMode = 'light' | 'dark' | 'system'
-const themeMode = ref<ThemeMode>('system')
-
-// 2. 媒体查询对象 (匹配深色模式)
-const colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
-
-// 3. 计算当前视觉上应该是深色还是浅色
-// const isActualDark = computed(() => {
-//     if (themeMode.value === 'system') {
-//         return colorSchemeMq.matches
-//     }
-//     return themeMode.value === 'dark'
-// })
-
-// 4. 核心渲染函数：根据计算结果修改 HTML 类名
-const applyTheme = () => {
-    const html = document.documentElement;
-    let targetIsDark: boolean;
-
-    if (themeMode.value === 'system') {
-        // 1. 移除显式类名，让 CSS 的 @media (prefers-color-scheme) 生效
-        html.classList.remove('dark', 'light');
-        // 2. 判定系统当前真实状态
-        targetIsDark = colorSchemeMq.matches;
-    } else {
-        targetIsDark = themeMode.value === 'dark';
-        // 3. 显式添加类名
-        html.classList.toggle('dark', targetIsDark);
-        html.classList.toggle('light', !targetIsDark);
-    }
-
-    // 4. 同步更新 iOS 状态栏颜色
-    // 这里的颜色值应与你 CSS 变量 --bg-base 的值保持绝对一致
-    const color = targetIsDark ? '#05070c' : '#f3f4f6';
-    updateThemeColor(color);
-};
-
-// 5. 监听器回调：当浏览器/系统主题改变时自动执行
-const handleSystemThemeChange = () => {
-    console.log("handleSystemThemeChange: " + themeMode.value)
-    if (themeMode.value === 'system') {
-        applyTheme()
-    }
-}
-
-// 6. 三态切换逻辑
-const cycleTheme = () => {
-    if (themeMode.value === 'light') themeMode.value = 'dark'
-    else if (themeMode.value === 'dark') themeMode.value = 'system'
-    else themeMode.value = 'light'
-
-    localStorage.setItem('theme-preference', themeMode.value)
-    applyTheme() // 切换模式后立即生效
-}
-
 onMounted(() => {
-    // 初始化模式
-    const saved = localStorage.getItem('theme-preference') as ThemeMode
-    if (saved) themeMode.value = saved
-
-    applyTheme()
-
-    // 【关键】注册监听器，实时捕获浏览器/系统配色变化
-    colorSchemeMq.addEventListener('change', handleSystemThemeChange)
+    mq.addEventListener('change', handleMqChange)
+    window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
-    // 清理监听器
-    colorSchemeMq.removeEventListener('change', handleSystemThemeChange)
+    mq.removeEventListener('change', handleMqChange)
+    window.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
