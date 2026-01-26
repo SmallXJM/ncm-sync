@@ -118,9 +118,9 @@ $bg-cover-blur: blur(2px);
   --bg-cover-filter: brightness(1) saturate(2);
   --bg-cover-bg: rgba(0, 0, 0, 0.3);
 
-
-
   --color-scheme: dark;
+
+  --img-favicon: url('/favicon-light.svg');
 }
 
 /* 定义浅色模式变量集合 */
@@ -173,6 +173,9 @@ $bg-cover-blur: blur(2px);
   --bg-cover-bg: rgba(255, 255, 255, 0.3);
 
   --color-scheme: light;
+
+  --img-favicon: url('/favicon-dark.svg');
+
 }
 
 /* CSS 变量定义 - 支持深浅模式 */

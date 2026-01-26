@@ -4,7 +4,9 @@
         :aria-hidden="isMobile && !isMobileOpen" :aria-modal="isMobile ? 'true' : 'false'" tabindex="-1">
         <div class="sidebar__brand">
             <router-link to="/" class="brand-link" :title="isNarrow ? 'ncm-sync' : ''" @click="handleMenuItemClick">
-                <span class="brand-icon">🎵</span>
+                <span class="brand-icon">
+                    <img alt="logo" width="24" height="24" />
+                </span>
                 <span class="brand-text">ncm-sync</span>
             </router-link>
         </div>
@@ -448,6 +450,7 @@ onUnmounted(() => {
             // display: none; // 移除 display: none 以支持过渡
             max-width: 0; // 使用 max-width 进行过渡
             overflow: hidden;
+
         }
 
         .brand-link {
@@ -487,7 +490,7 @@ onUnmounted(() => {
     .sidebar.sidebar--open {
         transform: translateX(0);
         z-index: 600; // 弹窗600
-        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s; // 进入时立即调高
+        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s, background-color 0.3s ease; // 进入时立即调高
     }
 }
 
@@ -509,13 +512,21 @@ onUnmounted(() => {
     overflow: hidden;
     /* 防止文字溢出 */
     transition: gap 0.3s ease, padding 0.3s ease;
+    padding: var(--spacing-sm);
 }
 
 .brand-icon {
-    font-size: 1.4rem;
-    flex-shrink: 0;
-    /* 防止图标被压缩 */
+    flex-shrink: 0;           /* 防止被压缩 */
+    display: inline-flex;     /* 让 img 或 svg 可以居中对齐 */
+    align-items: center;
+    justify-content: center;
 }
+
+.brand-icon img {
+  content: var(--img-favicon)
+}
+
+
 
 .brand-text {
     transition: opacity 0.2s ease, max-width 0.2s ease;
@@ -523,6 +534,8 @@ onUnmounted(() => {
     // 添加 max-width 以支持过渡
     max-width: 200px;
     overflow: hidden;
+    // font-size: 1.4rem;
+    font-weight: 500;
 }
 
 .sidebar__menu {
