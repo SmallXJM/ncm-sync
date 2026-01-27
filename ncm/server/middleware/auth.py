@@ -39,6 +39,8 @@ class AuthMiddleware:
             path.startswith("/node_modules") or # Vite specific
             path == "/favicon.ico" or
             path == "/favicon.svg" or
+            path == "/favicon-dark.svg" or
+            path == "/favicon-light.svg" or
             path == "/login" ):
             await self.app(scope, receive, send)
             return

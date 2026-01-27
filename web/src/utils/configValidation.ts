@@ -242,10 +242,10 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
       {
         id: 'auth.access_token_expire_minutes',
         path: 'auth.access_token_expire_minutes',
-        label: '会话有效期 (分钟)',
-        description: '登录会话保持时间。默认值：10080分钟 (7天)。',
-        control: { type: 'intRange', min: 1, max: 43200 },
-        rule: { kind: 'intRange', min: 1, max: 43200, label: '会话有效期' },
+        label: '会话有效期 (小时)',
+        description: '登录会话保持时间。默认值：168小时 (7天)。',
+        control: { type: 'intRange', min: 1, max: 720 },
+        rule: { kind: 'intRange', min: 1, max: 720, label: '会话有效期' },
         visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
       },
       {
@@ -255,7 +255,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         description: [
           '登录时的用户名。如需修改，请输入新用户名。',
           '用户名长度必须在 3-20 个字符之间，且只能包含字母、数字和下划线。',
-          '<span class="text-warning">注意：修改用户名后将被强制下线。</span>',
+          '<span class="text-warning">注意：修改用户名后将会退出当前会话。</span>',
         ].join('\n'),
         control: { type: 'text', placeholder: '新用户名' },
         rule: { kind: 'string', min: 3, max: 20, label: '用户名', regex: '^[a-zA-Z0-9_]+$' },
@@ -268,7 +268,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         description: [
           '登录时的密码。如需修改，请输入新密码。',
           '密码长度必须在 3-20 个字符之间，且只能包含字母、数字和特殊字符。',
-          '<span class="text-warning">注意：修改密码后将被强制下线。</span>',
+          '<span class="text-warning">注意：修改密码后将会退出当前会话。</span>',
         ].join('\n'),
         control: { type: 'text', placeholder: '新密码' },
         rule: { kind: 'string', min: 3, max: 20, label: '密码', regex: '^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{}|;:\'",.<>/?]+$', required: false },

@@ -106,10 +106,10 @@
     <div class="action-bar" :class="{ visible: isDirty }">
       <div class="action-info">
         <div class="changed-dot"></div>
-        <span>设置已修改</span>
+        <span>设置已更改</span>
       </div>
       <div class="action-buttons">
-        <button class="btn btn-secondary btn-sm" @click="resetDraft">放弃修改</button>
+        <button class="btn btn-secondary btn-sm" @click="resetDraft">放弃更改</button>
         <button class="btn btn-primary btn-sm" @click="save" :disabled="isLoading || hasErrors">
           应用保存
         </button>
@@ -381,6 +381,20 @@ function getRangeStyle(field: NcmConfigFieldSchema): Record<string, string> {
   }
 }
 
+// 【新增】配置转换：分钟 <-> 小时
+function transformConfigForUI(config: NcmConfig): NcmConfig {
+  const cloned = deepClone(config)
+  if (cloned.auth && typeof cloned.auth.access_token_expire_minutes === 'number') {
+    // 转换为小时，四舍五入
+    cloned.auth.access_token_expire_minutes = Math.round(cloned.auth.access_token_expire_minutes / 60)
+    // 确保至少为 1 小时
+    if (cloned.auth.access_token_expire_minutes < 1) {
+      cloned.auth.access_token_expire_minutes = 1
+    }
+  }
+  return cloned
+}
+
 async function reload(): Promise<void> {
   try {
     isLoading.value = true
@@ -398,14 +412,14 @@ async function reload(): Promise<void> {
       return
     }
 
-    originalConfig.value = payload.data
+    // 转换为 UI 格式（小时）
+    originalConfig.value = transformConfigForUI(payload.data)
     // 确保 rotate_secret_key 在 originalConfig 中存在（默认为 false），以保证脏检查正常
     if (originalConfig.value?.auth) {
-      (originalConfig.value.auth as any).rotate_secret_key = false,
-      (originalConfig.value.auth as any).logout = false
+      (originalConfig.value.auth as any).rotate_secret_key = false
     }
 
-    draftConfig.value = deepClone(payload.data) as NcmConfigDraft
+    draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
 
     // 初始化本地滑块值
     syncLocalFromDraft()
@@ -460,7 +474,14 @@ async function save(): Promise<void> {
     const partial = {
       download: draftConfig.value.download,
       subscription: draftConfig.value.subscription,
-      auth: draftConfig.value.auth
+      // 转换为 API 格式（分钟）
+      auth: (() => {
+        const auth = deepClone(draftConfig.value.auth)
+        if (typeof auth.access_token_expire_minutes === 'number') {
+          auth.access_token_expire_minutes = auth.access_token_expire_minutes * 60
+        }
+        return auth
+      })()
     }
 
     const result = await api.config.updateConfig(partial)
@@ -475,8 +496,9 @@ async function save(): Promise<void> {
       return
     }
 
-    originalConfig.value = payload.data!
-    draftConfig.value = deepClone(payload.data) as NcmConfigDraft
+    // 转换为 UI 格式（小时）
+    originalConfig.value = transformConfigForUI(payload.data!)
+    draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
 
