@@ -42,13 +42,15 @@ defineEmits(['close']);
   align-items: center;
   gap: 12px;
   
-  width: max-content; /* 避免在绝对定位父容器下 100% 造成计算异常 */
-  min-width: 300px;
-  max-width: 450px;
+  width: 350px; /* 避免在绝对定位父容器下 100% 造成计算异常 */
+  // min-width: 350px;
+  // max-width: 350px;
   padding: 12px;
   
   border-radius: 12px;
-  background: var(--bg-surface);
+  // background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface), transparent 30%);
+
   box-shadow: 
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -63,6 +65,11 @@ defineEmits(['close']);
   background-clip: padding-box;
   
   transition: all 0.3s ease;
+
+  @media (max-width: 768px) {
+    min-width: 200px;
+    width: 80dvw;
+  }
 }
 
 .toast-icon {
@@ -118,25 +125,25 @@ defineEmits(['close']);
 // Variants with Gradients
 // border会造成左边一条竖白线，原因不明
 .toast.success {
-  background: linear-gradient(to right, rgba(16, 185, 129, 0.1), var(--bg-surface) 50%);
+  // background: linear-gradient(to right, rgba(16, 185, 129, 0.1), var(--bg-surface) 50%);
   // border: 1px solid rgba(16, 185, 129, 0.1);
   .toast-icon { color: #10b981; }
 }
 
 .toast.error {
-  background: linear-gradient(to right, rgba(239, 68, 68, 0.1), var(--bg-surface) 50%);
+  // background: linear-gradient(to right, rgba(239, 68, 68, 0.1), var(--bg-surface) 50%);
   // border: 1px solid rgba(239, 68, 68, 0.1);
   .toast-icon { color: #ef4444; }
 }
 
 .toast.warning {
-  background: linear-gradient(to right, rgba(245, 158, 11, 0.1), var(--bg-surface) 50%);
+  // background: linear-gradient(to right, rgba(245, 158, 11, 0.1), var(--bg-surface) 50%);
   // border: 1px solid rgba(245, 158, 11, 0.1);
   .toast-icon { color: #f59e0b; }
 }
 
 .toast.info {
-  background: linear-gradient(to right, rgba(59, 130, 246, 0.1), var(--bg-surface) 50%);
+  // background: linear-gradient(to right, rgba(59, 130, 246, 0.1), var(--bg-surface) 50%);
   // border: 1px solid rgba(59, 130, 246, 0.1);
   .toast-icon { color: #3b82f6; }
 }

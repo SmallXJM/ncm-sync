@@ -1,8 +1,10 @@
 <template>
   <div
+    ref="containerRef"
     class="toast-container"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
+    @click="handleClick"
     :style="{ '--container-padding-bottom': isHovered ? '20px' : '40px' }"
   >
     <TransitionGroup name="toast-list">
@@ -24,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onBeforeUnmount, type CSSProperties, type ComponentPublicInstance, type Component } from 'vue';
+import { ref, computed, reactive, onBeforeUnmount, onMounted, watch, type CSSProperties, type ComponentPublicInstance, type Component } from 'vue';
 import Toast from './AppToast.vue';
 
 interface ToastItem {
@@ -51,12 +53,20 @@ const resizeObserver = new ResizeObserver((entries) => {
 });
 
 const setItemRef = (el: Element | ComponentPublicInstance | null, id: number) => {
-  if (el instanceof HTMLElement) {
-    el.setAttribute('data-toast-id', id.toString());
-    itemRefs.set(id, el);
-    resizeObserver.observe(el);
+  const htmlEl = el ? ((el instanceof HTMLElement) ? el : (el as ComponentPublicInstance).$el) : null;
+
+  const existingEl = itemRefs.get(id);
+
+  if (htmlEl instanceof HTMLElement) {
+    if (existingEl !== htmlEl) {
+      if (existingEl) {
+        resizeObserver.unobserve(existingEl);
+      }
+      htmlEl.setAttribute('data-toast-id', id.toString());
+      itemRefs.set(id, htmlEl);
+      resizeObserver.observe(htmlEl);
+    }
   } else {
-    const existingEl = itemRefs.get(id);
     if (existingEl) {
       resizeObserver.unobserve(existingEl);
       itemRefs.delete(id);
@@ -73,20 +83,61 @@ const displayToasts = computed(() => {
   return [...toasts.value].reverse();
 });
 
+const handleClick = () => {
+  if (!isHovered.value) {
+    handleMouseEnter();
+  }
+};
+
+const containerRef = ref<HTMLElement | null>(null);
+
+// 监听展开状态，动态绑定全局点击事件
+const handleOutsideAction = (e: Event) => {
+  // 判断点击或触摸的目标是否在容器外
+  if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
+    isHovered.value = false;
+  }
+};
+
+watch(isHovered, (newVal) => {
+  if (newVal) {
+    // 同时也监听 touchstart 和 scroll，确保拖动别处也能收回
+    setTimeout(() => {
+      document.addEventListener('click', handleOutsideAction);
+      document.addEventListener('touchstart', handleOutsideAction);
+      window.addEventListener('scroll', () => (isHovered.value = false), { once: true });
+    }, 0);
+  } else {
+    document.removeEventListener('click', handleOutsideAction);
+    document.removeEventListener('touchstart', handleOutsideAction);
+    // 注意：scroll 使用 once: true 会自动移除
+  }
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleOutsideAction);
+  resizeObserver.disconnect();
+});
+
+
 const handleMouseEnter = () => {
+  // 如果是触摸事件，防止触发浏览器的默认长按行为（可选）
+  // if (e?.type === 'touchstart') { ... }
   if (toasts.value.length > 1) {
     isHovered.value = true;
   }
 };
 
 const handleMouseLeave = () => {
-  isHovered.value = false;
+// 增加一点延迟，防止手指快速点击造成的频繁闪烁
+  setTimeout(() => {
+    isHovered.value = false;
+  }, 100);
 };
 
 const DURATION_MS = 400;
 const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
 const GAP = 6;
-const COLLAPSED_OFFSETS = [0, 8, 16];
 const COLLAPSED_SCALES = [1, 0.94, 0.89];
 
 const getExpandedOffset = (idx: number) => {
@@ -111,33 +162,53 @@ const getLayerStyle = (index: number): CSSProperties => {
       zIndex,
       // opacity: 1,
       transform: `${topAlign} translateY(${offsetY}px) scale(1)`,
-      transition: `transform ${DURATION_MS}ms ${EASING}, opacity ${DURATION_MS}ms ${EASING}`,
+      transition: `all 0.3s ease, transform ${DURATION_MS}ms ${EASING}, opacity ${DURATION_MS}ms ${EASING}`,
       pointerEvents: 'auto',
     };
   }
 
   if (index < 3) {
-    const offsetY = COLLAPSED_OFFSETS[index];
-    const scale = COLLAPSED_SCALES[index];
+    const scale = COLLAPSED_SCALES[index] ?? 1;
+    const gap = 8;
+    const topItem = displayToasts.value[0];
+    const currentItem = displayToasts.value[index];
+    
+    // 默认高度 60，避免未获取高度时计算错误
+    const h0 = topItem ? (itemHeights[topItem.id] ?? 60) : 60;
+    const hi = currentItem ? (itemHeights[currentItem.id] ?? 60) : 60;
+    
+    // 动态计算偏移量：保证底部堆叠间距一致
+    // Offset_i = H_0 - H_i * S_i + i * gap
+    const offsetY = h0 - hi * scale + index * gap;
+
     return {
       position: 'absolute',
       left: '50%',
       zIndex,
       // opacity: 1,
       transform: `${topAlign} translateY(${offsetY}px) scale(${scale})`,
-      transition: `transform ${DURATION_MS}ms ${EASING}, opacity ${DURATION_MS}ms ${EASING}`,
+      transition: `all 0.3s ease, transform ${DURATION_MS}ms ${EASING}, opacity ${DURATION_MS}ms ${EASING}`,
       pointerEvents: index === 0 ? 'auto' : 'none',
     };
   }
 
-  const hiddenOffset = (COLLAPSED_OFFSETS[2] ?? 24) + 2;
+  // 计算第3个位置（index=2）的偏移量作为隐藏元素的基准
+  const scale2 = COLLAPSED_SCALES[2] ?? 0.89;
+  const gap = 8;
+  const topItem = displayToasts.value[0];
+  const item2 = displayToasts.value[2];
+  const h0 = topItem ? (itemHeights[topItem.id] ?? 60) : 60;
+  const h2 = item2 ? (itemHeights[item2.id] ?? 60) : 60;
+  const offset2 = h0 - h2 * scale2 + 2 * gap;
+
+  const hiddenOffset = offset2 + 2;
   return {
     position: 'absolute',
     left: '50%',
     zIndex,
     opacity: 0,
     transform: `${topAlign} translateY(${hiddenOffset}px) scale(0.9)`,
-    transition: `transform ${DURATION_MS}ms ${EASING}, opacity ${DURATION_MS}ms ${EASING}`,
+    transition: `all 0.3s ease, transform ${DURATION_MS}ms ${EASING}, opacity ${DURATION_MS}ms ${EASING}`,
     pointerEvents: 'none',
   };
 };
