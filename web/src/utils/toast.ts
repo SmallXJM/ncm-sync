@@ -33,10 +33,20 @@ const getContainer = (): ToastContainerExposed => {
   return exposed;
 };
 
+type ToastType = 'info' | 'success' | 'warning' | 'error';
+
+// 核心 show 方法
+const show = (options: { type?: ToastType, message: string, title?: string, icon?: Component, duration?: number }) => {
+  const { type = 'info', message, title = '', icon, duration = 3000 } = options;
+  return getContainer().add(title, message, type, duration, icon);
+};
+
+// 导出对象
 export const toast = {
-  info: (msg: string, title: string = '', icon?: Component) => getContainer().add(title, msg, 'info', undefined, icon),
-  success: (msg: string, title: string = '', icon?: Component) => getContainer().add(title, msg, 'success', undefined, icon),
-  warning: (msg: string, title: string = '', icon?: Component) => getContainer().add(title, msg, 'warning', undefined, icon),
-  error: (msg: string, title: string = '', icon?: Component) => getContainer().add(title, msg, 'error', undefined, icon),
-  show: (msg: string, title: string = '', type: 'info' | 'success' | 'warning' | 'error' = 'info', icon?: Component) => getContainer().add(title, msg, type, undefined, icon),
+  show,
+  // 简写：直接通过 show 实现
+  info: (msg: string, title: string = '', icon?: Component) => show({ type: 'info', message: msg, title, icon }),
+  success: (msg: string, title: string = '', icon?: Component) => show({ type: 'success', message: msg, title, icon }),
+  warning: (msg: string, title: string = '', icon?: Component) => show({ type: 'warning', message: msg, title, icon }),
+  error: (msg: string, title: string = '', icon?: Component) => show({ type: 'error', message: msg, title, icon }), 
 };

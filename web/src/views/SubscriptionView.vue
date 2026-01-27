@@ -234,6 +234,7 @@ import AppLoading from '@/components/AppLoading.vue'
 // import { useRoute, useRouter } from 'vue-router'
 import api from '@/api'
 import type { DownloadJobItem, UpdateJobParams } from '@/api/ncm/download'
+import { sidebarIcons } from '@/layout/AppSidebar.vue'
 import { toast } from '@/utils/toast'
 
 // const route = useRoute()
@@ -443,33 +444,33 @@ async function updateJobStatus(params: DownloadJobItem) {
     const res = await api.download.updateJob(payload)
     if (res.success && res.data.code === 200) {
       if (res.data.data) {
-        toast.show('订阅状态更新', `${job_name}已${res.data.data.enabled ? '启用' : '关闭'}`, res.data.data.enabled ? 'success' : 'info')
+        toast.show({ type: res.data.data.enabled ? 'success' : 'info', title: job_name, message: `已${res.data.data.enabled ? '启用' : '关闭'}` })
         await syncLocalJobs(res.data.data)
       }
 
     } else if (!res.success) {
-      toast.error(`${job_name}状态更新失败: ${res.error}`)
+      toast.error(`状态更新失败: ${res.error}`, job_name, sidebarIcons.subscription)
     } else {
-      toast.error(`${job_name}状态更新失败: ${res.data.message || '未知错误'}`)
+      toast.error(`状态更新失败: ${res.data.message || '未知错误'}`, job_name, sidebarIcons.subscription)
     }
   } catch (e) {
     const err = e as Error
-    toast.error('订阅状态更新失败: ' + err.message)
+    toast.error('状态更新失败: ' + err.message, job_name, sidebarIcons.subscription)
   } finally {
   }
 }
 
 async function submitEdit() {
   if (!editForm.job_id) {
-    toast.error('无效的订阅 ID')
+    toast.error('无效的订阅 ID', "保存失败", sidebarIcons.subscription)
     return
   }
   if (!editForm.storage_path.trim()) {
-    toast.warning('存储路径不能为空')
+    toast.error('存储路径不能为空', "保存失败", sidebarIcons.subscription)
     return
   }
   if (!editForm.filename_template.trim()) {
-    toast.warning('音乐名模板不能为空')
+    toast.error('音乐名模板不能为空', "保存失败", sidebarIcons.subscription)
     return
   }
 
@@ -489,19 +490,19 @@ async function submitEdit() {
   isSaving.value = true
   try {
     const res = await api.download.updateJob(payload)
-    const job_name = `订阅：${formatSourceType(payload.source_type || '')} "${payload.job_name}"`
+    const job_name = `${formatSourceType(payload.source_type || '')} "${payload.job_name}"`
     if (res.success && res.data.code === 200) {
-      toast.success(`${job_name}保存成功`)
+      toast.success(`保存成功`, job_name, sidebarIcons.subscription)
       closeEditModal()
       if (res.data.data) await syncLocalJobs(res.data.data)
     } else if (!res.success) {
-      toast.error(`${job_name}保存失败: ${res.error}`)
+      toast.error(`保存失败: ${res.error}`, job_name, sidebarIcons.subscription)
     } else {
-      toast.error(`${job_name}保存失败: ${res.data.message || '未知错误'}`)
+      toast.error(`保存失败: ${res.data.message || '未知错误'}`, job_name, sidebarIcons.subscription)
     }
   } catch (e) {
     const err = e as Error
-    toast.error('订阅保存失败: ' + err.message)
+    toast.error(err.message, "保存失败", sidebarIcons.subscription)
   } finally {
     isSaving.value = false
   }

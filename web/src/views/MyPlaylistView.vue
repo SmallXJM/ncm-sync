@@ -400,10 +400,10 @@ async function fetchPlaylists() {
       }
     } else {
       const errorMsg = res.success ? `${res.data.code} ${res.data.message}` : (res.error || '未知错误')
-      toast.show(`获取歌单失败: ${errorMsg}`, 'error')
+      toast.error(`获取歌单失败: ${errorMsg}`)
     }
   } catch (e) {
-    toast.show('获取歌单失败:' + (e as Error).message, 'error')
+    toast.error('获取歌单失败:' + (e as Error).message)
   } finally {
     isLoading.value = false
   }
@@ -479,7 +479,7 @@ function closeDrawer() {
 
 async function submitJob() {
   if (!jobConfig.job_name || !jobConfig.storage_path) {
-    toast.show('请填写完整信息', 'warning')
+    toast.warning('请填写完整信息')
     return
   }
 
@@ -487,16 +487,16 @@ async function submitJob() {
   try {
     const res = await api.download.createJob(jobConfig)
     if (res.success && (res.data.code === 200 || res.data.code === 201)) {
-      toast.show(`订阅歌单 "${jobConfig.job_name}"成功`, 'success')
+      toast.success(`订阅歌单 "${jobConfig.job_name}"成功`)
       closeDrawer()
       fetchDownloadJob()
     } else {
       // 访问 res.data.message 前先判断 res.success
       const message = res.success ? res.data.message : res.error
-      toast.show('订阅失败: ' + (message || '未知错误'), 'error')
+      toast.error('订阅失败: ' + (message || '未知错误'))
     }
   } catch (e) {
-    toast.show('订阅失败:' + (e as Error).message, 'error')
+    toast.error('订阅失败:' + (e as Error).message)
   } finally {
     isSubmitting.value = false
   }

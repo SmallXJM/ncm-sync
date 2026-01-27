@@ -142,7 +142,7 @@ const getLayerStyle = (index: number): CSSProperties => {
   };
 };
 
-const add = (title: string, message = '', type: ToastItem['type'] = 'info', duration = 300000, icon?: Component) => {
+const add = (title: string, message = '', type: ToastItem['type'] = 'info', duration = 3000, icon?: Component) => {
   const id = count++;
   toasts.value.push({ id, title, message, type, icon });
 
