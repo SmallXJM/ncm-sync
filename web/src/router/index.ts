@@ -96,13 +96,19 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.path === '/login') {
     if (token) {
-      next('/')
+      // 如果已登录，跳转到 redirect 参数指定的页面，或者首页
+      const redirect = to.query.redirect as string
+      next(redirect || '/')
     } else {
       next()
     }
   } else {
     if (!token) {
-      next('/login')
+      // 未登录，跳转到登录页，并携带当前页面路径作为 redirect 参数
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
     } else {
       next()
     }

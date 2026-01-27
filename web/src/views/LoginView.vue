@@ -1,16 +1,18 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '@/api'
 import { sha256, setToken } from '@/utils/auth'
 import { toast } from '@/utils/toast'
 
 const router = useRouter()
+const route = useRoute()
 
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
+const isRedirecting = ref(false)
 
 const handleLogin = async () => {
   if (!username.value || !password.value) {
@@ -28,16 +30,29 @@ const handleLogin = async () => {
 
     if (res.success && res.data.code === 200 && res.data.data) {
       setToken(res.data.data.token)
-      // toast.success('登录成功') 
-      router.push('/')
+      
+      // 获取重定向路径
+      let redirect = (route.query.redirect as string) || '/'
+      
+      // 安全性检查：防止开放重定向漏洞 (Open Redirect)
+      // 必须以 / 开头，且不能以 // 开头（防止协议相对URL）
+      if (!redirect.startsWith('/') || redirect.startsWith('//')) {
+        redirect = '/'
+      }
+
+      isRedirecting.value = true
+      toast.success('登录成功，正在跳转...')
+      // 保持 loading 状态直到跳转完成，避免闪烁
+      router.push(redirect)
     } else {
+      loading.value = false // 只有失败时才手动关闭 loading
       toast.error(res.success ? res.data.message || '登录失败' : res.error)
     }
   } catch (e) {
-    toast.error(`登录出错: ${e}`)
-  } finally {
     loading.value = false
+    toast.error(`登录出错: ${e}`)
   }
+  // finally 块移除了，因为成功时我们需要保持 loading 状态直到跳转
 }
 </script>
 
@@ -62,7 +77,7 @@ const handleLogin = async () => {
             type="text" 
             class="input"
             placeholder="请输入用户名"
-            :disabled="loading"
+            :disabled="loading || isRedirecting"
           />
         </div>
         
@@ -73,13 +88,13 @@ const handleLogin = async () => {
             type="password" 
             class="input"
             placeholder="请输入密码"
-            :disabled="loading"
+            :disabled="loading || isRedirecting"
           />
         </div>
         
-        <button type="submit" :disabled="loading" class="btn btn-primary login-btn">
-          <div v-if="loading" class="loading-spinner"></div>
-          <span>{{ loading ? '登录中...' : '登录' }}</span>
+        <button type="submit" :disabled="loading || isRedirecting" class="btn btn-primary login-btn">
+          <div v-if="loading || isRedirecting" class="loading-spinner"></div>
+          <span>{{ isRedirecting ? '正在跳转回原页面...' : (loading ? '登录中...' : '登录') }}</span>
         </button>
       </form>
     </div>
