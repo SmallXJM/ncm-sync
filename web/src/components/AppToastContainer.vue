@@ -16,6 +16,7 @@
         :title="item.title"
           :message="item.message"
           :type="item.type"
+          :icon="item.icon"
           @close="remove(item.id)"
         />
     </TransitionGroup>
@@ -23,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onBeforeUnmount, type CSSProperties, type ComponentPublicInstance } from 'vue';
+import { ref, computed, reactive, onBeforeUnmount, type CSSProperties, type ComponentPublicInstance, type Component } from 'vue';
 import Toast from './AppToast.vue';
 
 interface ToastItem {
@@ -31,6 +32,7 @@ interface ToastItem {
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
+  icon?: Component;
 }
 
 const toasts = ref<ToastItem[]>([]);
@@ -140,9 +142,9 @@ const getLayerStyle = (index: number): CSSProperties => {
   };
 };
 
-const add = (title: string, message: string, type: ToastItem['type'] = 'info', duration = 300000) => {
+const add = (title: string, message = '', type: ToastItem['type'] = 'info', duration = 300000, icon?: Component) => {
   const id = count++;
-  toasts.value.push({ id, title, message, type });
+  toasts.value.push({ id, title, message, type, icon });
 
   if (duration > 0) {
     setTimeout(() => remove(id), duration);

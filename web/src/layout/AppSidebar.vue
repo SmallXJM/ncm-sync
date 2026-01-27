@@ -84,8 +84,147 @@
         aria-hidden="true" />
 </template>
 
+<script lang="ts">
+import { h, type Component } from 'vue'
+
+const DashboardIcon: Component = () => h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: 20,
+        height: 20,
+        viewBox: '0 0 24 24',
+    },
+    [
+        h(
+            'g',
+            {
+                fill: 'none',
+                stroke: 'currentColor',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+                'stroke-width': 2,
+            },
+            [
+                h('path', {
+                    d: 'M10 3.2A9 9 0 1 0 20.8 14a1 1 0 0 0-1-1H13a2 2 0 0 1-2-2V4a.9.9 0 0 0-1-.8',
+                }),
+                h('path', {
+                    d: 'M15 3.5A9 9 0 0 1 20.5 9H16a1 1 0 0 1-1-1z',
+                }),
+            ]
+        ),
+    ]
+)
+
+const UserIcon: Component = () => h('svg', {
+    xmlns: 'http://www.w3.org/2000/svg',
+    width: '20',
+    height: '20',
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round'
+}, [
+    h('path', { d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' }),
+    h('circle', { cx: '12', cy: '7', r: '4' })
+])
+
+const PlaylistIcon: Component = () => h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: '20',
+        height: '20',
+        viewBox: '0 0 24 24',
+    },
+    [
+        h('path', {
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '2',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round',
+            d: 'M11 17a3 3 0 1 0 6 0a3 3 0 1 0-6 0m6 0V4h4m-8 1H3m0 4h10m-4 4H3',
+        }),
+    ]
+)
+
+const FileMusicIcon: Component = () => h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: '20',
+        height: '20',
+        viewBox: '0 0 24 24',
+    },
+    [
+        h(
+            'g',
+            {
+                fill: 'none',
+                stroke: 'currentColor',
+                'stroke-width': '2',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+            },
+            [
+                h('path', {
+                    d: 'M14 3v4a1 1 0 0 0 1 1h4',
+                }),
+                h('path', {
+                    d: 'M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2',
+                }),
+                h('path', {
+                    d: 'M10 16a1 1 0 1 0 2 0a1 1 0 0 0-2 0m2 0v-5l2 1',
+                }),
+            ]
+        ),
+    ]
+)
+
+const BellIcon: Component = () => h(
+    'svg',
+    {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: '20',
+        height: '20',
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        stroke: 'currentColor',
+        'stroke-width': '2',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+    },
+    [
+        h('path', {
+            d: 'M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6',
+        }),
+        h('path', {
+            d: 'M9 17v1a3 3 0 0 0 6 0v-1',
+        }),
+        h('path', {
+            d: 'M21 6.727A11.05 11.05 0 0 0 18.206 3',
+        }),
+        h('path', {
+            d: 'M3 6.727A11.05 11.05 0 0 1 5.792 3',
+        }),
+    ]
+)
+
+export const sidebarIcons = {
+    dashboard: DashboardIcon,
+    account: UserIcon,
+    music: FileMusicIcon,
+    subscription: BellIcon,
+    playlist: PlaylistIcon,
+} as const
+</script>
+
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
 import { useTheme } from '@/composables/useTheme'
 
@@ -128,135 +267,6 @@ onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown)
 })
 
-// 定义图标组件
-const DashboardIcon = h(
-    'svg',
-    {
-        xmlns: 'http://www.w3.org/2000/svg',
-        width: 20,
-        height: 20,
-        viewBox: '0 0 24 24',
-    },
-    [
-        h(
-            'g',
-            {
-                fill: 'none',
-                stroke: 'currentColor',
-                'stroke-linecap': 'round',
-                'stroke-linejoin': 'round',
-                'stroke-width': 2,
-            },
-            [
-                h('path', {
-                    d: 'M10 3.2A9 9 0 1 0 20.8 14a1 1 0 0 0-1-1H13a2 2 0 0 1-2-2V4a.9.9 0 0 0-1-.8',
-                }),
-                h('path', {
-                    d: 'M15 3.5A9 9 0 0 1 20.5 9H16a1 1 0 0 1-1-1z',
-                }),
-            ]
-        ),
-    ]
-)
-
-const UserIcon = h('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    width: '20',
-    height: '20',
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': '2',
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round'
-}, [
-    h('path', { d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' }),
-    h('circle', { cx: '12', cy: '7', r: '4' })
-])
-
-const PlaylistIcon = h(
-    'svg',
-    {
-        xmlns: 'http://www.w3.org/2000/svg',
-        width: '20',
-        height: '20',
-        viewBox: '0 0 24 24',
-    },
-    [
-        h('path', {
-            fill: 'none',
-            stroke: 'currentColor',
-            'stroke-width': '2',
-            'stroke-linecap': 'round',
-            'stroke-linejoin': 'round',
-            d: 'M11 17a3 3 0 1 0 6 0a3 3 0 1 0-6 0m6 0V4h4m-8 1H3m0 4h10m-4 4H3',
-        }),
-    ]
-)
-
-const FileMusicIcon = h(
-    'svg',
-    {
-        xmlns: 'http://www.w3.org/2000/svg',
-        width: '20',
-        height: '20',
-        viewBox: '0 0 24 24',
-    },
-    [
-        h(
-            'g',
-            {
-                fill: 'none',
-                stroke: 'currentColor',
-                'stroke-width': '2',
-                'stroke-linecap': 'round',
-                'stroke-linejoin': 'round',
-            },
-            [
-                h('path', {
-                    d: 'M14 3v4a1 1 0 0 0 1 1h4',
-                }),
-                h('path', {
-                    d: 'M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2',
-                }),
-                h('path', {
-                    d: 'M10 16a1 1 0 1 0 2 0a1 1 0 0 0-2 0m2 0v-5l2 1',
-                }),
-            ]
-        ),
-    ]
-)
-
-
-const BellIcon = h(
-    'svg',
-    {
-        xmlns: 'http://www.w3.org/2000/svg',
-        width: '20',
-        height: '20',
-        viewBox: '0 0 24 24',
-        fill: 'none',
-        stroke: 'currentColor',
-        'stroke-width': '2',
-        'stroke-linecap': 'round',
-        'stroke-linejoin': 'round',
-    },
-    [
-        h('path', {
-            d: 'M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6',
-        }),
-        h('path', {
-            d: 'M9 17v1a3 3 0 0 0 6 0v-1',
-        }),
-        h('path', {
-            d: 'M21 6.727A11.05 11.05 0 0 0 18.206 3',
-        }),
-        h('path', {
-            d: 'M3 6.727A11.05 11.05 0 0 1 5.792 3',
-        }),
-    ]
-)
-
 // const TaskIcon = h(
 //     'svg',
 //     {
@@ -276,10 +286,12 @@ const BellIcon = h(
 //     ]
 // )
 
+type SidebarIcon = (typeof sidebarIcons)[keyof typeof sidebarIcons]
+
 interface MenuItem {
     title: string
     path: string
-    icon: Component
+    icon: SidebarIcon
 }
 
 interface MenuGroup {
@@ -291,21 +303,21 @@ const menuGroups: MenuGroup[] = [
     {
         title: '总览',
         items: [
-            { title: '仪表盘', path: '/', icon: DashboardIcon },
-            { title: '登录态', path: '/account', icon: UserIcon },
+            { title: '仪表盘', path: '/', icon: sidebarIcons.dashboard },
+            { title: '登录态', path: '/account', icon: sidebarIcons.account },
         ]
     },
     {
         title: '内容管理',
         items: [
-            { title: '音乐', path: '/music', icon: FileMusicIcon },
-            { title: '订阅', path: '/subscription', icon: BellIcon },
+            { title: '音乐', path: '/music', icon: sidebarIcons.music },
+            { title: '订阅', path: '/subscription', icon: sidebarIcons.subscription },
         ]
     },
     {
         title: '快捷订阅',
         items: [
-            { title: '我的歌单', path: '/my/playlist', icon: PlaylistIcon },
+            { title: '我的歌单', path: '/my/playlist', icon: sidebarIcons.playlist },
         ]
     }
 ]
