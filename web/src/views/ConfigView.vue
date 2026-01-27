@@ -90,6 +90,16 @@
                     </div>
                   </template>
 
+                  <template v-else-if="field.control.type === 'button'">
+                    <button 
+                      type="button" 
+                      :class="['btn','btn-sm', field.control.variant ? `btn-${field.control.variant}` : 'btn-secondary']"
+                      @click="handleFieldAction(field)"
+                    >
+                      {{ field.control.buttonLabel }}
+                    </button>
+                  </template>
+
                 </div>
               </div>
 
@@ -121,6 +131,7 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import AppLoading from '@/components/AppLoading.vue'
 import api from '@/api'
 import {
@@ -140,6 +151,7 @@ import {
   // type AuthUserDraft,
 } from '@/utils/configValidation'
 import { toast } from '@/utils/toast'
+import { removeToken } from '@/utils/auth'
 import { formatTime } from '@/utils/time'
 import { type ApiEnvelope } from '@/api/request'
 import { type NcmConfig } from '@/api/ncm/config'
@@ -148,6 +160,7 @@ import { type NcmConfig } from '@/api/ncm/config'
 
 const isLoading = ref(false)
 const loadError = ref<string | null>(null)
+const router = useRouter()
 
 const originalConfig = ref<NcmConfig | null>(null)
 const draftConfig = ref<NcmConfigDraft | null>(null)
@@ -459,6 +472,23 @@ function toggleSwitch(event: Event): void {
   setDraftBool((event.target as HTMLInputElement).dataset.path || '', checked)
 }
 
+function handleFieldAction(field: NcmConfigFieldSchema) {
+  if (field.control.type !== 'button') return
+  
+  if (field.control.confirmMessage) {
+    if (!confirm(field.control.confirmMessage + '\n' + (isDirty.value ? '（当前有未保存的更改，确认执行此操作吗？）' : ''))) return
+  }
+  
+  if (field.control.actionId === 'logout') {
+    performLogout()
+  }
+}
+
+function performLogout() {
+  removeToken()
+  toast.show('已退出登录', 'success')
+  router.push('/login')
+}
 
 
 
@@ -472,6 +502,10 @@ async function save(): Promise<void> {
 
   try {
     isLoading.value = true
+    
+    // 检查是否包含退出登录指令 (Legacy: 现在的 logout 是按钮触发，这里保留是为了兼容性或清理)
+    // 实际上新的 button 逻辑不走 save，但 schema 里可能还有残留值，可以忽略
+
     const partial = {
       download: draftConfig.value.download,
       subscription: draftConfig.value.subscription,
@@ -480,6 +514,10 @@ async function save(): Promise<void> {
         const auth = deepClone(draftConfig.value.auth)
         if (typeof auth.access_token_expire_minutes === 'number') {
           auth.access_token_expire_minutes = auth.access_token_expire_minutes * 60
+        }
+        // 如果包含 logout，不要传给服务端
+        if (auth.logout !== undefined) {
+          delete auth.logout
         }
         return auth
       })()
@@ -619,4 +657,6 @@ async function save(): Promise<void> {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+
 </style>

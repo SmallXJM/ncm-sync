@@ -47,6 +47,7 @@ export type NcmConfigFieldControl =
   | { type: 'text'; placeholder?: string; mono?: boolean }
   | { type: 'intRange'; min: number; max: number }
   | { type: 'select'; options: { label: string; value: string }[] }
+  | { type: 'button'; buttonLabel: string; confirmMessage?: string; actionId?: string; variant?: 'primary' | 'secondary' | 'danger' }
 
 export type NcmConfigVisibleWhen =
   | { path: string; operator: 'notNull' }
@@ -233,10 +234,14 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         id: 'auth.logout',
         path: 'auth.logout',
         label: '退出登录',
-        description: [
-          '如果启用并应用保存，将会立即退出当前登录会话。',
-        ].join('\n'),
-        control: { type: 'switch', warning: '注意：退出登录后，将需要重新登录才能访问 WebUI。' },
+        description: '点击按钮将立即清除当前会话并退出登录。',
+        control: { 
+          type: 'button', 
+          buttonLabel: '退出登录', 
+          confirmMessage: '确定要退出登录吗？', 
+          actionId: 'logout',
+          variant: 'danger'
+        },
         visibleWhen: { path: 'auth.enabled', operator: 'equals', value: true }
       },
       {
