@@ -436,3 +436,24 @@ div[onclick],
   transition: filter 0.3s ease;
   filter: var(--img-filter-brightness);
 }
+
+
+.text-warning {
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+.text-error {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.text-success {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.text-hover {
+  color: var(--color-info);
+  font-weight: 500;
+}

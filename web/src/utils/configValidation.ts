@@ -47,7 +47,7 @@ export type NcmConfigFieldControl =
   | { type: 'text'; placeholder?: string; mono?: boolean }
   | { type: 'intRange'; min: number; max: number }
   | { type: 'select'; options: { label: string; value: string }[] }
-  | { type: 'button'; buttonLabel: string; confirmMessage?: string; actionId?: string; variant?: 'primary' | 'secondary' | 'danger' }
+  | { type: 'button'; buttonLabel: string; confirm?: {message: string; dirtyWarn?: string}; actionId?: string; variant?: 'primary' | 'secondary' | 'danger' }
 
 export type NcmConfigVisibleWhen =
   | { path: string; operator: 'notNull' }
@@ -238,7 +238,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         control: { 
           type: 'button', 
           buttonLabel: '退出登录', 
-          confirmMessage: '确定要退出登录吗？', 
+          confirm: {message: '确定要退出登录吗？', dirtyWarn: '\n<span class="text-warning">当前有未保存的更改，退出登录将会丢失更改。</span>'}, 
           actionId: 'logout',
           variant: 'danger'
         },

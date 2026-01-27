@@ -126,6 +126,14 @@
       </div>
     </div>
 
+    <AppConfirmModal
+      v-model:isOpen="isConfirmModalOpen"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :variant="confirmModalVariant"
+      @confirm="handleModalConfirm"
+    />
+
   </div>
 </template>
 
@@ -133,6 +141,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLoading from '@/components/AppLoading.vue'
+import AppConfirmModal from '@/components/AppConfirmModal.vue'
 import api from '@/api'
 import {
   NCM_CONFIG_UI_SCHEMA,
@@ -472,14 +481,41 @@ function toggleSwitch(event: Event): void {
   setDraftBool((event.target as HTMLInputElement).dataset.path || '', checked)
 }
 
+// Modal state
+const isConfirmModalOpen = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalVariant = ref<'primary' | 'danger'>('primary')
+const confirmModalActionId = ref<string | null>(null)
+
+
 function handleFieldAction(field: NcmConfigFieldSchema) {
   if (field.control.type !== 'button') return
   
-  if (field.control.confirmMessage) {
-    if (!confirm(field.control.confirmMessage + '\n' + (isDirty.value ? '（当前有未保存的更改，确认执行此操作吗？）' : ''))) return
+  if (field.control.confirm) {
+      confirmModalTitle.value = field.label
+      let message = field.control.confirm.message
+      if (isDirty.value && field.control.confirm.dirtyWarn) {
+        message += field.control.confirm.dirtyWarn
+      }
+      confirmModalMessage.value = message
+      confirmModalVariant.value = field.control.variant === 'danger' ? 'danger' : 'primary'
+    confirmModalActionId.value = field.control.actionId || null
+    isConfirmModalOpen.value = true
+  } else {
+    executeAction(field.control.actionId)
   }
-  
-  if (field.control.actionId === 'logout') {
+}
+
+function handleModalConfirm() {
+  if (confirmModalActionId.value) {
+    executeAction(confirmModalActionId.value)
+  }
+  isConfirmModalOpen.value = false
+}
+
+function executeAction(actionId?: string) {
+  if (actionId === 'logout') {
     performLogout()
   }
 }
@@ -602,16 +638,6 @@ async function save(): Promise<void> {
   line-height: 1.5;
   white-space: pre-wrap;
   margin-top: 4px;
-}
-
-:deep(.text-warning) {
-  color: var(--color-warning);
-  font-weight: 500;
-}
-
-:deep(.text-error) {
-  color: var(--color-error);
-  font-weight: 700;
 }
 
 /* 用户列表样式 */
