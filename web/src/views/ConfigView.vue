@@ -15,7 +15,7 @@
             </nav>
           </aside>
 
-          <section v-if="activeGroup" class="glass-card config-panel">
+          <section v-if="activeGroup" class="glass-card config-panel" :class="{ 'has-unsaved-changes': isDirty }" :style="panelStyle">
             <div class="group-header">
               <h3>{{ activeGroup.title }}</h3>
               <p v-if="activeGroup.description">{{ activeGroup.description }}</p>
@@ -113,7 +113,7 @@
       </div>
     </main>
 
-    <div class="action-bar" :class="{ visible: isDirty }">
+    <div ref="actionBarRef" class="action-bar" :class="{ visible: isDirty }">
       <div class="action-info">
         <div class="changed-dot"></div>
         <span>设置已更改</span>
@@ -138,7 +138,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLoading from '@/components/AppLoading.vue'
 import AppConfirmModal from '@/components/AppConfirmModal.vue'
@@ -455,6 +455,63 @@ async function reload(): Promise<void> {
     isLoading.value = false
   }
 }
+
+// 动态计算 Action Bar 高度，避免遮挡内容
+const actionBarRef = ref<HTMLElement | null>(null)
+const actionBarHeight = ref(0)
+
+onMounted(() => {
+  if (actionBarRef.value) {
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // 使用 borderBoxSize 获取包含 padding/border 的高度
+        const height = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
+        actionBarHeight.value = height
+      }
+    })
+    observer.observe(actionBarRef.value)
+    
+    onUnmounted(() => observer.disconnect())
+  }
+})
+
+const panelStyle = computed(() => {
+  if (!isDirty.value) return {}
+  return {
+    '--action-bar-height': `${actionBarHeight.value}px`
+  }
+})
+
+// 监听 isDirty 变化，当 Action Bar 出现且页面在底部时，自动跟随滚动
+watch(isDirty, (newVal) => {
+  if (newVal) {
+    // 检查是否在底部（允许 50px 误差）
+    // 参考 MyPlaylistView.vue，滚动容器是 .layout__content
+    const scrollContainer = document.querySelector('.layout__content')
+    if (!scrollContainer) return
+
+    const distanceToBottom = scrollContainer.scrollHeight - (scrollContainer.clientHeight + scrollContainer.scrollTop)
+    const isAtBottom = distanceToBottom <= 50
+    
+    if (isAtBottom) {
+      // 持续跟随底部，配合 CSS transition (0.3s)
+      const duration = 350
+      const startTime = performance.now()
+      
+      const followBottom = (now: number) => {
+        const elapsed = now - startTime
+        // 强制滚动到底部
+        scrollContainer.scrollTo({ top: scrollContainer.scrollHeight })
+        
+        if (elapsed < duration) {
+          requestAnimationFrame(followBottom)
+        }
+      }
+      
+      requestAnimationFrame(followBottom)
+    }
+  }
+})
 
 function resetDraft(): void {
   if (!originalConfig.value) return
