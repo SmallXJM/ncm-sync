@@ -111,8 +111,8 @@ router.beforeEach(async (to, from, next) => {
 
 // 设置浏览器标签页标题
 router.afterEach((to) => {
-  const title = to.meta.title ?? 'ncm-sync'
-  document.title = `${title} - ncm sync`
+  const title = to.meta.title ?? 'NCM Sync'
+  document.title = `${title} - NCM Sync`
 })
 
 export default router
