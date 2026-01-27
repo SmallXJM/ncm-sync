@@ -3,7 +3,7 @@ import ToastContainer from '@/components/AppToastContainer.vue';
 
 
 interface ToastContainerExposed {
-  add: (message: string, type: 'info' | 'success' | 'warning' | 'error', duration?: number) => void;
+  add: (title: string, message: string, type: 'info' | 'success' | 'warning' | 'error', duration?: number) => void;
 }
 
 let containerVNode: VNode | null = null;
@@ -34,9 +34,9 @@ const getContainer = (): ToastContainerExposed => {
 };
 
 export const toast = {
-  info: (msg: string) => getContainer().add(msg, 'info'),
-  success: (msg: string) => getContainer().add(msg, 'success'),
-  warning: (msg: string) => getContainer().add(msg, 'warning'),
-  error: (msg: string) => getContainer().add(msg, 'error'),
-  show: (msg: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => getContainer().add(msg, type),
+  info: (title: string, msg: string) => getContainer().add(title, msg, 'info'),
+  success: (title: string, msg: string) => getContainer().add(title, msg, 'success'),
+  warning: (title: string, msg: string) => getContainer().add(title, msg, 'warning'),
+  error: (title: string, msg: string) => getContainer().add(title, msg, 'error'),
+  show: (title: string, msg: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => getContainer().add(title, msg, type),
 };

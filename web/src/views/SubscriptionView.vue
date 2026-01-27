@@ -437,13 +437,13 @@ async function updateJobStatus(params: DownloadJobItem) {
     return
   }
 
-  const job_name = `订阅：${formatSourceType(payload.source_type || '')} "${payload.job_name}"`
+  const job_name = `${formatSourceType(payload.source_type || '')} "${payload.job_name}"`
 
   try {
     const res = await api.download.updateJob(payload)
     if (res.success && res.data.code === 200) {
       if (res.data.data) {
-        toast.show(`${job_name}已${res.data.data.enabled ? '启用' : '关闭'}`, res.data.data.enabled ? 'success' : 'info')
+        toast.show('订阅状态更新', `${job_name}已${res.data.data.enabled ? '启用' : '关闭'}`, res.data.data.enabled ? 'success' : 'info')
         await syncLocalJobs(res.data.data)
       }
 

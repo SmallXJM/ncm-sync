@@ -12,6 +12,7 @@
     </div>
 
     <div class="toast-content">
+      <span class="title">{{ title }}</span>
       <span class="message">{{ message }}</span>
     </div>
 
@@ -23,6 +24,7 @@
 
 <script setup lang="ts">
 defineProps<{
+  title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
 }>();
@@ -42,7 +44,7 @@ defineEmits(['close']);
   width: max-content; /* 避免在绝对定位父容器下 100% 造成计算异常 */
   min-width: 300px;
   max-width: 450px;
-  padding: 16px;
+  padding: 12px;
   
   border-radius: 12px;
   background: var(--bg-surface);
@@ -77,13 +79,20 @@ defineEmits(['close']);
 .toast-content {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
 }
 
 .message {
   font-weight: 500;
   font-size: 0.95rem;
-  line-height: 1.5;
+  line-height: 1.2;
 }
 
 .toast-close {

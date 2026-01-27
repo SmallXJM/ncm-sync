@@ -13,6 +13,7 @@
         class="toast-layer"
         :ref="(el) => setItemRef(el, item.id)"
         :style="getLayerStyle(index)"
+        :title="item.title"
           :message="item.message"
           :type="item.type"
           @close="remove(item.id)"
@@ -27,6 +28,7 @@ import Toast from './AppToast.vue';
 
 interface ToastItem {
   id: number;
+  title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
 }
@@ -81,7 +83,7 @@ const handleMouseLeave = () => {
 
 const DURATION_MS = 400;
 const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
-const GAP = 3;
+const GAP = 6;
 const COLLAPSED_OFFSETS = [0, 8, 16];
 const COLLAPSED_SCALES = [1, 0.94, 0.89];
 
@@ -138,9 +140,9 @@ const getLayerStyle = (index: number): CSSProperties => {
   };
 };
 
-const add = (message: string, type: ToastItem['type'] = 'info', duration = 300000) => {
+const add = (title: string, message: string, type: ToastItem['type'] = 'info', duration = 300000) => {
   const id = count++;
-  toasts.value.push({ id, message, type });
+  toasts.value.push({ id, title, message, type });
 
   if (duration > 0) {
     setTimeout(() => remove(id), duration);
@@ -164,6 +166,8 @@ defineExpose({ add });
   width: max-content;
   pointer-events: auto;
   padding-bottom: var(--container-padding-bottom);
+  //左对齐
+  
   transition: padding-bottom 0.3s ease;
 }
 
