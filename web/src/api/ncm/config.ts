@@ -19,14 +19,30 @@ export interface SubscriptionSettings {
   music_dir_playlist: string
 }
 
+export interface AuthUser {
+  username: string
+  password?: string
+  password_changed_at?: number
+}
+
+export interface AuthSettings {
+  enabled: boolean
+  access_token_expire_minutes: number
+  user: AuthUser
+  rotate_secret_key: boolean
+  logout: boolean
+}
+
 export interface NcmConfig {
   download: DownloadSettings
   subscription: SubscriptionSettings
+  auth: AuthSettings
 }
 
 export type UpdateConfigPayload = {
   download?: Partial<DownloadSettings>
   subscription?: Partial<SubscriptionSettings>
+  auth?: Partial<AuthSettings>
 }
 
 export const getConfig = async (): Promise<ApiResult<ApiEnvelope<NcmConfig>>> => {
@@ -36,4 +52,3 @@ export const getConfig = async (): Promise<ApiResult<ApiEnvelope<NcmConfig>>> =>
 export const updateConfig = async (partialConfig: UpdateConfigPayload): Promise<ApiResult<ApiEnvelope<NcmConfig>>> => {
   return http.post<ApiEnvelope<NcmConfig>>(CONFIG.UPDATE, partialConfig)
 }
-

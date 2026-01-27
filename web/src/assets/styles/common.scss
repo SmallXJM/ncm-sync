@@ -166,7 +166,7 @@ div[onclick],
   text-decoration: none;
   font-size: 1rem;
   box-shadow: var(--shadow-sm);
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
 }
 
 .btn-sm {
@@ -435,4 +435,25 @@ div[onclick],
 .image-filter-brightness {
   transition: filter 0.3s ease;
   filter: var(--img-filter-brightness);
+}
+
+
+.text-warning {
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+.text-error {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.text-success {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.text-hover {
+  color: var(--color-info);
+  font-weight: 500;
 }

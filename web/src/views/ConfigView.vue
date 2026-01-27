@@ -15,7 +15,7 @@
             </nav>
           </aside>
 
-          <section v-if="activeGroup" class="glass-card config-panel">
+          <section v-if="activeGroup" class="glass-card config-panel" :class="{ 'has-unsaved-changes': isDirty }" :style="panelStyle">
             <div class="group-header">
               <h3>{{ activeGroup.title }}</h3>
               <p v-if="activeGroup.description">{{ activeGroup.description }}</p>
@@ -25,7 +25,7 @@
               <div v-if="isFieldVisible(field)" class="config-item">
                 <div class="item-info">
                   <label>{{ field.label }}</label>
-                  <div v-if="field.description" class="item-desc">{{ field.description }}</div>
+                  <div v-if="field.description" class="item-desc" v-html="field.description"></div>
                 </div>
 
                 <div class="item-control">
@@ -89,6 +89,17 @@
                         @input="(e) => setDraftInt(field.path, (e.target as HTMLInputElement).value, getIntRangeMin(field.control))" />
                     </div>
                   </template>
+
+                  <template v-else-if="field.control.type === 'button'">
+                    <button 
+                      type="button" 
+                      :class="['btn','btn-sm', field.control.variant ? `btn-${field.control.variant}` : 'btn-secondary']"
+                      @click="handleFieldAction(field)"
+                    >
+                      {{ field.control.buttonLabel }}
+                    </button>
+                  </template>
+
                 </div>
               </div>
 
@@ -102,67 +113,63 @@
       </div>
     </main>
 
-    <div class="action-bar" :class="{ visible: isDirty }">
+    <div ref="actionBarRef" class="action-bar" :class="{ visible: isDirty }">
       <div class="action-info">
         <div class="changed-dot"></div>
-        <span>配置已修改</span>
+        <span>设置已更改</span>
       </div>
       <div class="action-buttons">
-        <button class="btn btn-secondary btn-sm" @click="resetDraft">放弃修改</button>
+        <button class="btn btn-secondary btn-sm" @click="resetDraft">放弃更改</button>
         <button class="btn btn-primary btn-sm" @click="save" :disabled="isLoading || hasErrors">
           应用保存
         </button>
       </div>
     </div>
 
+    <AppConfirmModal
+      v-model:isOpen="isConfirmModalOpen"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :variant="confirmModalVariant"
+      @confirm="handleModalConfirm"
+    />
+
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import AppLoading from '@/components/AppLoading.vue'
+import AppConfirmModal from '@/components/AppConfirmModal.vue'
 import api from '@/api'
 import {
   NCM_CONFIG_UI_SCHEMA,
   validateNcmConfigDraft,
   validateCronExpr,
+  getValueByPath,
+  setValueByPath,
+  isVisibleByRule,
+  getIntRangeMin,
+  getIntRangeMax,
+  deepClone,
   type ConfigValidationErrors,
   type NcmConfigDraft,
   type NcmConfigFieldSchema,
   type NcmConfigGroupSchema,
+  // type AuthUserDraft,
 } from '@/utils/configValidation'
 import { toast } from '@/utils/toast'
+import { removeToken } from '@/utils/auth'
 import { formatTime } from '@/utils/time'
+import { type ApiEnvelope } from '@/api/request'
+import { type NcmConfig } from '@/api/ncm/config'
 
-
-
-// ... 保持原有 interface 定义不变 ...
-interface ApiEnvelope<T> {
-  code: number
-  message: string
-  data: T
-}
-
-interface DownloadSettings {
-  cron_expr: string | null
-  max_concurrent_downloads: number
-  max_threads_per_download: number
-  temp_downloads_dir: string
-}
-
-interface SubscriptionSettings {
-  filename: string
-  music_dir_playlist: string
-}
-
-interface NcmConfig {
-  download: DownloadSettings
-  subscription: SubscriptionSettings
-}
 
 
 const isLoading = ref(false)
 const loadError = ref<string | null>(null)
+const router = useRouter()
 
 const originalConfig = ref<NcmConfig | null>(null)
 const draftConfig = ref<NcmConfigDraft | null>(null)
@@ -176,6 +183,8 @@ const isPreviewLoading = ref(false)
 let previewDebounceTimer: number | undefined
 const lastCheckedCronExpr = ref<string | null>(null)
 const isCronBackendInvalid = ref(false)
+
+
 
 const configGroups = NCM_CONFIG_UI_SCHEMA
 const activeGroupId = ref(configGroups[0]?.id ?? '')
@@ -301,31 +310,7 @@ function handleCronPreview(draft: NcmConfigDraft) {
 }
 
 // 辅助函数：获取嵌套属性值
-function getValueByPath(obj: unknown, path: string): unknown {
-  let current: unknown = obj
-  for (const part of path.split('.')) {
-    if (!current || typeof current !== 'object') return undefined
-    const record = current as Record<string, unknown>
-    if (!(part in record)) return undefined
-    current = record[part]
-  }
-  return current
-}
-
-function setValueByPath(obj: unknown, path: string, value: unknown): void {
-  if (!obj || typeof obj !== 'object') return
-  const parts = path.split('.')
-  const last = parts.pop()
-  if (!last) return
-
-  let current = obj as Record<string, unknown>
-  for (const part of parts) {
-    const next = current[part]
-    if (!next || typeof next !== 'object') return
-    current = next as Record<string, unknown>
-  }
-  current[last] = value
-}
+// getValueByPath, setValueByPath 已从 @/utils/configValidation 导入
 
 function getDraftValue(path: string): unknown {
   if (!draftConfig.value) return null
@@ -395,21 +380,9 @@ function setDraftBool(path: string, value: boolean): void {
   setValueByPath(draftConfig.value, path, value)
 }
 
-function getIntRangeMin(control: NcmConfigFieldSchema['control']): number {
-  return control.type === 'intRange' ? control.min : 1
-}
-
-function getIntRangeMax(control: NcmConfigFieldSchema['control']): number {
-  return control.type === 'intRange' ? control.max : 1
-}
-
 function isFieldVisible(field: NcmConfigFieldSchema): boolean {
   if (!draftConfig.value) return false
-  const rule = field.visibleWhen
-  if (!rule) return true
-  const value = getValueByPath(draftConfig.value, rule.path)
-  if (rule.operator === 'notNull') return value !== null
-  return value === rule.value
+  return isVisibleByRule(draftConfig.value, field.visibleWhen)
 }
 
 // 【修改】样式计算现在依赖 localSliderValues 里的浮点数
@@ -430,6 +403,20 @@ function getRangeStyle(field: NcmConfigFieldSchema): Record<string, string> {
   }
 }
 
+// 【新增】配置转换：分钟 <-> 小时
+function transformConfigForUI(config: NcmConfig): NcmConfig {
+  const cloned = deepClone(config)
+  if (cloned.auth && typeof cloned.auth.access_token_expire_minutes === 'number') {
+    // 转换为小时，四舍五入
+    cloned.auth.access_token_expire_minutes = Math.round(cloned.auth.access_token_expire_minutes / 60)
+    // 确保至少为 1 小时
+    if (cloned.auth.access_token_expire_minutes < 1) {
+      cloned.auth.access_token_expire_minutes = 1
+    }
+  }
+  return cloned
+}
+
 async function reload(): Promise<void> {
   try {
     isLoading.value = true
@@ -447,8 +434,15 @@ async function reload(): Promise<void> {
       return
     }
 
-    originalConfig.value = payload.data
-    draftConfig.value = deepClone(payload.data) as NcmConfigDraft
+    // 转换为 UI 格式（小时）
+    originalConfig.value = transformConfigForUI(payload.data)
+    // 确保 rotate_secret_key 在 originalConfig 中存在（默认为 false），以保证脏检查正常
+    if (originalConfig.value?.auth) {
+      originalConfig.value.auth.rotate_secret_key = false
+      originalConfig.value.auth.logout = false
+    }
+
+    draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
 
     // 初始化本地滑块值
     syncLocalFromDraft()
@@ -462,12 +456,69 @@ async function reload(): Promise<void> {
   }
 }
 
+// 动态计算 Action Bar 高度，避免遮挡内容
+const actionBarRef = ref<HTMLElement | null>(null)
+const actionBarHeight = ref(0)
+
+onMounted(() => {
+  if (actionBarRef.value) {
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // 使用 borderBoxSize 获取包含 padding/border 的高度
+        const height = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
+        actionBarHeight.value = height
+      }
+    })
+    observer.observe(actionBarRef.value)
+    
+    onUnmounted(() => observer.disconnect())
+  }
+})
+
+const panelStyle = computed(() => {
+  if (!isDirty.value) return {}
+  return {
+    '--action-bar-height': `${actionBarHeight.value}px`
+  }
+})
+
+// 监听 isDirty 变化，当 Action Bar 出现且页面在底部时，自动跟随滚动
+watch(isDirty, (newVal) => {
+  if (newVal) {
+    // 检查是否在底部（允许 50px 误差）
+    // 参考 MyPlaylistView.vue，滚动容器是 .layout__content
+    const scrollContainer = document.querySelector('.layout__content')
+    if (!scrollContainer) return
+
+    const distanceToBottom = scrollContainer.scrollHeight - (scrollContainer.clientHeight + scrollContainer.scrollTop)
+    const isAtBottom = distanceToBottom <= 50
+    
+    if (isAtBottom) {
+      // 持续跟随底部，配合 CSS transition (0.3s)
+      const duration = 350
+      const startTime = performance.now()
+      
+      const followBottom = (now: number) => {
+        const elapsed = now - startTime
+        // 强制滚动到底部
+        scrollContainer.scrollTo({ top: scrollContainer.scrollHeight })
+        
+        if (elapsed < duration) {
+          requestAnimationFrame(followBottom)
+        }
+      }
+      
+      requestAnimationFrame(followBottom)
+    }
+  }
+})
+
 function resetDraft(): void {
   if (!originalConfig.value) return
   draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
   // 重置时同步本地滑块
   syncLocalFromDraft()
-  toast.show('已放弃所有未保存的修改', 'info')
+  toast.show('已恢复所有未保存的更改', 'info')
 }
 
 function toggleCron(event: Event): void {
@@ -487,6 +538,52 @@ function toggleSwitch(event: Event): void {
   setDraftBool((event.target as HTMLInputElement).dataset.path || '', checked)
 }
 
+// Modal state
+const isConfirmModalOpen = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalVariant = ref<'primary' | 'danger'>('primary')
+const confirmModalActionId = ref<string | null>(null)
+
+
+function handleFieldAction(field: NcmConfigFieldSchema) {
+  if (field.control.type !== 'button') return
+  
+  if (field.control.confirm) {
+      confirmModalTitle.value = field.label
+      let message = field.control.confirm.message
+      if (isDirty.value && field.control.confirm.dirtyWarn) {
+        message += field.control.confirm.dirtyWarn
+      }
+      confirmModalMessage.value = message
+      confirmModalVariant.value = field.control.variant === 'danger' ? 'danger' : 'primary'
+    confirmModalActionId.value = field.control.actionId || null
+    isConfirmModalOpen.value = true
+  } else {
+    executeAction(field.control.actionId)
+  }
+}
+
+function handleModalConfirm() {
+  if (confirmModalActionId.value) {
+    executeAction(confirmModalActionId.value)
+  }
+  isConfirmModalOpen.value = false
+}
+
+function executeAction(actionId?: string) {
+  if (actionId === 'logout') {
+    performLogout()
+  }
+}
+
+function performLogout() {
+  removeToken()
+  toast.show('已退出登录', 'success')
+  router.push('/login')
+}
+
+
 
 
 async function save(): Promise<void> {
@@ -498,9 +595,25 @@ async function save(): Promise<void> {
 
   try {
     isLoading.value = true
+    
+    // 检查是否包含退出登录指令 (Legacy: 现在的 logout 是按钮触发，这里保留是为了兼容性或清理)
+    // 实际上新的 button 逻辑不走 save，但 schema 里可能还有残留值，可以忽略
+
     const partial = {
       download: draftConfig.value.download,
       subscription: draftConfig.value.subscription,
+      // 转换为 API 格式（分钟）
+      auth: (() => {
+        const auth = deepClone(draftConfig.value.auth)
+        if (typeof auth.access_token_expire_minutes === 'number') {
+          auth.access_token_expire_minutes = auth.access_token_expire_minutes * 60
+        }
+        // 如果包含 logout，不要传给服务端
+        if (auth.logout !== undefined) {
+          delete auth.logout
+        }
+        return auth
+      })()
     }
 
     const result = await api.config.updateConfig(partial)
@@ -515,12 +628,17 @@ async function save(): Promise<void> {
       return
     }
 
-    originalConfig.value = payload.data
-    draftConfig.value = deepClone(payload.data) as NcmConfigDraft
+    // 转换为 UI 格式（小时）
+    originalConfig.value = transformConfigForUI(payload.data!)
+    draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
 
-    toast.show('配置已保存并生效', 'success')
+    toast.show('设置已保存并已生效', 'success')
+
+    // 验证授权有效性（如改密/重置密钥后）
+    // 如果返回 401，http 拦截器会自动跳转登录
+    await api.config.getConfig()
   } catch (error) {
     console.error('Failed to save config:', error)
     toast.show('保存失败', 'error')
@@ -529,9 +647,6 @@ async function save(): Promise<void> {
   }
 }
 
-function deepClone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value))
-}
 
 </script>
 
@@ -573,4 +688,58 @@ function deepClone<T>(value: T): T {
   font-size: 0.85em;
   color: var(--text-tertiary);
 }
+
+.item-desc {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin-top: 4px;
+}
+
+/* 用户列表样式 */
+.user-list-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.user-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 </style>

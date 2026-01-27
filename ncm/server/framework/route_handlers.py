@@ -164,6 +164,8 @@ def create_service_handler(service_method: Callable) -> Callable:
             raise HTTPException(status_code=500, detail={"code": 500, "message": str(e)})
         except Exception as e:
             logger.exception("Unhandled exception occurred")
+            logger.error(f"Service method: {service_method.__name__}, params: {params}")
             raise HTTPException(status_code=500, detail={"code": 500, "message": f"Internal http error: {str(e)}"})
+        
     
     return handler

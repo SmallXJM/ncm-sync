@@ -581,6 +581,12 @@
   min-width: 0;
   width: 100%;
   padding-bottom: 0;
+  transition: margin-bottom 0.3s ease;
+
+  &.has-unsaved-changes {
+    /* 动态计算底部间距：bottom(2rem) + 高度 + 缓冲(1rem) */
+    margin-bottom: calc(2rem + var(--action-bar-height, 60px) + 0rem);
+  }
 }
 
 .config-group {
@@ -665,7 +671,7 @@
   left: 50%;
 
   /* 初始位置：水平居中，垂直隐藏 */
-  transform: translate(-50%, 150%);
+  transform: translate(-50%, 160%);
 
   /* 宽度控制：关键点 */
   width: max-content;
@@ -825,7 +831,7 @@
 }
 
 .range-input {
-  width: 80px !important;
+  width: auto !important;
   text-align: center;
   color-scheme: var(--color-scheme);
 }

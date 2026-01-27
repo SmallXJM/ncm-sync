@@ -319,14 +319,24 @@ watch(isWsDisconnected, (newVal) => {
         background: var(--bg-surface-active); // 增加按下时的视觉反馈
         transform: scale(0.92);
     }
+
+    svg {
+        flex-shrink: 0;
+        /* 告诉浏览器：无论如何都不要挤压我 */
+    }
 }
+
+
 
 .connection-status-badge {
     position: sticky;
     bottom: 0px;
     right: 0px;
-    font-size: auto;
-    font-weight: auto;
+    /* 1. 明确字号，移动端建议不小于 12px */
+    font-size: 14px;
+
+    /* 2. 明确字重，500或600能让状态文本更清晰 */
+    font-weight: 600;
     margin-left: $space-md;
 }
 

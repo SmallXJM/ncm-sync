@@ -1,4 +1,5 @@
 import { API_CONFIG } from './config'
+import { getToken, removeToken } from '@/utils/auth'
 
 export type ApiSuccess<T> = {
   success: true
@@ -14,7 +15,7 @@ export type ApiFailure = {
 }
 
 export type ApiErrorResponse = {
-  detail?: string | { message?: string; [key: string]: unknown }
+  detail?: string | { message?: string;[key: string]: unknown }
   message?: string
   [key: string]: unknown
 }
@@ -62,9 +63,14 @@ class HttpClient {
   }
 
   async request<T>(url: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
-    const headers = {
+    const token = getToken()
+    const headers: Record<string, string> = {
       ...this.defaultHeaders,
       ...headersToRecord(options.headers),
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     const config: RequestInit & { body?: BodyInit | null } = {
@@ -97,6 +103,13 @@ class HttpClient {
 
       clearTimeout(timeoutId)
 
+      if (response.status === 401) {
+        removeToken()
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login'
+        }
+      }
+
       if (!response.ok) {
         let errorMessage = `HTTP Error: ${response.status} ${response.statusText}`
         try {
@@ -120,7 +133,7 @@ class HttpClient {
         } catch {
           // ignore JSON parse error
         }
-        
+
         return {
           success: false,
           error: errorMessage,

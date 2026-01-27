@@ -1,10 +1,12 @@
 from __future__ import annotations
 import json
 import asyncio
+import secrets
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, field_validator
 from ncm.core.constants import CONFIG_FILE_NAME
+from ncm.core.time import UTC_CLOCK
 
 
 class DownloadSettings(BaseModel):
@@ -41,9 +43,26 @@ class SubscriptionSettings(BaseModel):
     music_dir_playlist: str = Field(default=r"歌单/{user_name}/{playlist_name}")
 
 
+class User(BaseModel):
+    username: str
+    password: str  # 明文存储，启动时/运行时会进行哈希校验
+    password_changed_at: float = Field(default_factory=lambda: UTC_CLOCK.now().timestamp())
+
+
+def generate_secret_key() -> str:
+    return secrets.token_urlsafe(32)
+
+class AuthorizationSettings(BaseModel):
+    enabled: bool = Field(default=True)
+    secret_key: str = Field(default_factory=generate_secret_key)
+    access_token_expire_minutes: int = Field(default=60 * 24 * 7)  # 7 days
+    user: User = Field(default_factory=lambda: User(username="admin", password="admin"))
+
+
 class NcmConfig(BaseModel):
     download: DownloadSettings = Field(default_factory=DownloadSettings)
     subscription: SubscriptionSettings = Field(default_factory=SubscriptionSettings)
+    auth: AuthorizationSettings = Field(default_factory=AuthorizationSettings)
 
 
 from ncm.core.path import get_data_path, normalize_path, get_config_path
@@ -74,7 +93,7 @@ class ConfigManager:
         return normalize_path(self._path)
 
     def get(self) -> Dict[str, Any]:
-        return self._config.dict()
+        return self._config.model_dump()
 
     def model(self) -> NcmConfig:
         return self._config
@@ -117,7 +136,7 @@ class ConfigManager:
         async with self._lock:
             try:
                 with open(self.path(), "w", encoding="utf-8") as f:
-                    json.dump(self._config.dict(), f, ensure_ascii=False, indent=2)
+                    json.dump(self._config.model_dump(), f, ensure_ascii=False, indent=2)
                 return True
             except Exception:
                 return False
@@ -125,14 +144,14 @@ class ConfigManager:
     def save_sync(self) -> bool:
         try:
             with open(self.path(), "w", encoding="utf-8") as f:
-                json.dump(self._config.dict(), f, ensure_ascii=False, indent=2)
+                json.dump(self._config.model_dump(), f, ensure_ascii=False, indent=2)
             return True
         except Exception:
             return False
 
     async def update(self, partial: Dict[str, Any]) -> NcmConfig:
         async with self._lock:
-            current_dict = self._config.dict()
+            current_dict = self._config.model_dump()
             self._deep_update(current_dict, partial or {})
             self._config = NcmConfig(**current_dict)
         await self.save()
