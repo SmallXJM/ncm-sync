@@ -4,7 +4,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import { sha256, setToken } from '@/utils/auth'
-import AppToast from '@/components/AppToast.vue'
 import { toast } from '@/utils/toast'
 
 const router = useRouter()

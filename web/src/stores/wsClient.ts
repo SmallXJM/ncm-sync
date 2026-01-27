@@ -1,6 +1,5 @@
 import { ref, readonly, type Ref } from 'vue'
 import { toast } from '@/utils/toast'
-import { getToken } from '@/utils/auth'
 
 /**
  * WebSocket 连接状态

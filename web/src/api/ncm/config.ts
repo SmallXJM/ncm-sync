@@ -29,6 +29,8 @@ export interface AuthSettings {
   enabled: boolean
   access_token_expire_minutes: number
   user: AuthUser
+  rotate_secret_key: boolean
+  logout: boolean
 }
 
 export interface NcmConfig {

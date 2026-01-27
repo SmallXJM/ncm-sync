@@ -137,7 +137,7 @@ import {
   type NcmConfigDraft,
   type NcmConfigFieldSchema,
   type NcmConfigGroupSchema,
-  type AuthUserDraft,
+  // type AuthUserDraft,
 } from '@/utils/configValidation'
 import { toast } from '@/utils/toast'
 import { formatTime } from '@/utils/time'
@@ -416,8 +416,8 @@ async function reload(): Promise<void> {
     originalConfig.value = transformConfigForUI(payload.data)
     // 确保 rotate_secret_key 在 originalConfig 中存在（默认为 false），以保证脏检查正常
     if (originalConfig.value?.auth) {
-      (originalConfig.value.auth as any).rotate_secret_key = false,
-      (originalConfig.value.auth as any).logout = false
+      originalConfig.value.auth.rotate_secret_key = false
+      originalConfig.value.auth.logout = false
     }
 
     draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft

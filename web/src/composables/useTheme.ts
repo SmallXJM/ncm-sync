@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { updateThemeColor } from "@/utils/theme"
 
 export type ThemeMode = 'light' | 'dark' | 'system'
