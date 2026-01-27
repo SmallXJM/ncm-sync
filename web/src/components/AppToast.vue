@@ -47,7 +47,7 @@ defineEmits(['close']);
   // max-width: 350px;
   padding: 12px;
   
-  border-radius: 12px;
+  border-radius: 20px;
   // background: var(--bg-surface);
   background: color-mix(in srgb, var(--bg-surface), transparent 30%);
 
