@@ -416,7 +416,8 @@ async function reload(): Promise<void> {
     originalConfig.value = transformConfigForUI(payload.data)
     // 确保 rotate_secret_key 在 originalConfig 中存在（默认为 false），以保证脏检查正常
     if (originalConfig.value?.auth) {
-      (originalConfig.value.auth as any).rotate_secret_key = false
+      (originalConfig.value.auth as any).rotate_secret_key = false,
+      (originalConfig.value.auth as any).logout = false
     }
 
     draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
