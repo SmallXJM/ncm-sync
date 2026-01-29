@@ -128,7 +128,7 @@ const triggerNow = async () => {
       const code = res.data.code
       const message = res.data.message || '任务已触发'
       if (code === 200 || code === 202) {
-        toast.success("开始执行下载任务")
+        toast.success("开始执行下载任务", "下载服务")
         const payload = (res.data).data || {}
         if (payload.is_running !== undefined) {
           isRunning.value = !!payload.is_running
@@ -137,14 +137,14 @@ const triggerNow = async () => {
           nextRunTime.value = payload.next_run_time
         }
       } else {
-        toast.error(message || '触发任务失败')
+        toast.error(message || '触发任务失败', "下载服务")
       }
     } else {
-      toast.error(res.error || '触发任务失败')
+      toast.error(res.error || '触发任务失败', "下载服务")
     }
   } catch (e) {
     console.error(e)
-    toast.error('网络请求失败')
+    toast.error('网络请求失败', "下载服务")
   } finally {
     isStarting.value = false
   }
