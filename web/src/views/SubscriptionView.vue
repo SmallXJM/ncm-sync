@@ -373,7 +373,7 @@ function closeDeleteModal() {
 
 
 async function submitDelete() {
-  const job_name = `订阅：${formatSourceType(deleteForm.source_type || '')} "${deleteForm.job_name}"`
+  const job_name = `${formatSourceType(deleteForm.source_type || '')} "${deleteForm.job_name}"`
   // const confirm = window.confirm(`确定要删除${job_name}吗？\n该操作<span style="color: red;">无法撤销</span>，请谨慎选择！`)
   // if (!confirm) return
   if (!deleteForm.job_id) {
@@ -385,17 +385,17 @@ async function submitDelete() {
     const res = await api.download.deleteJob(deleteForm.job_id)
 
     if (res.success && res.data.code === 200) {
-      toast.success(`${job_name}删除成功`)
+      toast.success(`删除成功`, job_name, sidebarIcons.subscription)
       closeDeleteModal()
       jobs.value = jobs.value.filter((j) => j.id !== deleteForm.job_id)
     } else if (!res.success) {
-      toast.error(`${job_name}删除失败: ${res.error}`)
+      toast.error(`删除失败: ${res.error}`, job_name, sidebarIcons.subscription)
     } else {
-      toast.error(`${job_name}删除失败: ${res.data.message || '未知错误'}`)
+      toast.error(`删除失败: ${res.data.message || '未知错误'}`, job_name, sidebarIcons.subscription)
     }
   } catch (e) {
     const err = e as Error
-    toast.error('订阅删除失败: ' + err.message)
+    toast.error(`删除失败: ${err.message}`, job_name, sidebarIcons.subscription)
   } finally {
     isDeleting.value = false
   }
