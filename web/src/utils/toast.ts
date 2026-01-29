@@ -37,7 +37,7 @@ type ToastType = 'info' | 'success' | 'warning' | 'error';
 
 // 核心 show 方法
 const show = (options: { type?: ToastType, message: string, title?: string, icon?: Component, duration?: number }) => {
-  const { type = 'info', message, title = '', icon, duration = 3000 } = options;
+  const { type = 'info', message, title = '', icon, duration = 5000 } = options;
   return getContainer().add(title, message, type, duration, icon);
 };
 

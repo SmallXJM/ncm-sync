@@ -48,7 +48,7 @@ async def get_session(
 
         if need_recreate:
             if _session is not None and not _session.is_closed:
-                logger.info(
+                logger.debug(
                     "Proxy changed (%s -> %s), closing old session",
                     _session_proxy,
                     options.proxy,

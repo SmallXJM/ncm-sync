@@ -41,7 +41,7 @@ const handleLogin = async () => {
       }
 
       isRedirecting.value = true
-      toast.success('登录成功，正在跳转...')
+      // toast.success('登录成功，正在跳转...')
       // 保持 loading 状态直到跳转完成，避免闪烁
       router.push(redirect)
     } else {

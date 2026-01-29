@@ -25,6 +25,7 @@ from ncm.client.protocol.session import close_session
 from ncm.core.logging import get_logger, setup_logging
 from ncm.core.constants import PACKAGE_CLIENT_APIS, PACKAGE_SERVER_ROUTERS
 from ncm.service.cookie import get_cookie_manager
+from ncm import __version__, __url__
 
 logger = get_logger(__name__)
 
@@ -35,7 +36,8 @@ async def lifespan(app: FastAPI):
     Lifespan events handler for FastAPI.
     Handles startup and shutdown logic.
     """
-    logger.info("Application startup: initializing resources...")
+    logger.debug("Application startup: initializing resources...")
+    # logger.info("应用正在初始化资源")
     try:
         # Startup logic here (if needed)
         # 异步刷新 CookieManager 中的用户信息
@@ -45,9 +47,11 @@ async def lifespan(app: FastAPI):
         yield
     except asyncio.CancelledError:
         # Handle cancellation gracefully
-        logger.info("Application shutdown requested (Cancelled)...")
+        logger.debug("Application shutdown requested (Cancelled)...")
+        logger.info("应用收到关闭请求")
     finally:
-        logger.info("Application shutdown: cleaning up resources...")
+        logger.debug("Application shutdown: cleaning up resources...")
+        logger.info("应用关闭触发")
         
         # Cleanup service instances with cleanup method
         instances = getattr(app.state, "service_instances", [])
@@ -126,7 +130,12 @@ async def lifespan(app: FastAPI):
         # except Exception as e:
         #     logger.error(f"Error during final cleanup: {e}")
             
-        logger.info("Application shutdown complete.")
+        logger.debug("Application shutdown complete.")
+        logger.info("应用关闭流程结束")
+
+
+
+
 
 
 def create_app(log_level: int = None) -> FastAPI:
@@ -144,7 +153,7 @@ def create_app(log_level: int = None) -> FastAPI:
     app = FastAPI(
         title="NCM Sync Server",
         description="NCM Sync - A Python implementation of Netease Cloud Music Sync Service",
-        version="0.1.0",
+        version=__version__,
         lifespan=lifespan,
         docs_url=None,
         redoc_url=None,

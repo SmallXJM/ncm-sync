@@ -16,6 +16,7 @@ import logging
 import argparse
 import re
 from pathlib import Path
+from ncm import __version__, __url__
 from ncm.core.logging import setup_logging, get_logger
 from ncm.core.path import get_app_base
 
@@ -53,6 +54,7 @@ def parse_args(argv=None):
 
     return args
 
+
 def setup_environment():
     """Prepare system environment."""
     # Add current directory to Python path
@@ -74,18 +76,23 @@ def ensure_config():
     if not Path(cfg_path).exists():
         ok = cfgm.save_sync()
         if ok:
-            logger.info("已生成默认配置: %s", cfg_path)
+            logger.info("似乎是第一次启用，已生成默认配置: %s", cfg_path)
+            logger.info(
+                f"WebUI默认登录账号: {cfgm._config.auth.user.username}，密码: {cfgm._config.auth.user.password}，请及时修改"
+            )
 
 
 def init_database():
     """Initialize database session and engine."""
     from ncm.data.session import initialize_session_manager
+
     initialize_session_manager()
 
 
 def close_database():
     """Close database engine."""
     from ncm.data.engine import close_engine
+
     try:
         close_engine()
         logger.info("主进程资源已释放")
@@ -96,6 +103,8 @@ def close_database():
 def start_server(host: str, port: int, debug: bool):
     """Start the API server via uvicorn."""
     import uvicorn
+
+    logger.info(f"启动WebUI，开始监听: http://{host}:{port}/")
 
     uvicorn.run(
         "ncm.server.app:create_app",
@@ -110,6 +119,12 @@ def start_server(host: str, port: int, debug: bool):
     )
 
 
+def show_version():
+    logger.info(f"欢迎使用 NCM Sync")
+    logger.info(f"当前版本: {__version__}")
+    logger.info(f"项目主页: {__url__}")
+
+
 def main(argv=None):
     """Main entry point."""
     args = parse_args(argv)
@@ -117,6 +132,9 @@ def main(argv=None):
     log_level = logging.DEBUG if args.debug else logging.INFO
     os.environ["NCM_LOG_LEVEL"] = str(log_level)
     setup_logging(log_level)
+
+    show_version()
+
     ensure_config()
     init_database()
 

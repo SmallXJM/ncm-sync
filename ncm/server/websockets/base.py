@@ -167,7 +167,7 @@ class SnapshotDiffer:
             self._last_hash = self._compute_hash(snapshot)
             self._stats.changes += 1
             if self._config.debug:
-                logger.info(f"SnapshotDiffer[{self._name}] initial snapshot recorded")
+                logger.debug(f"SnapshotDiffer[{self._name}] initial snapshot recorded")
             return True
 
         new_hash = self._compute_hash(snapshot)
@@ -190,7 +190,7 @@ class SnapshotDiffer:
         if self._config.debug:
             elapsed = now - self._stats.first_check_ts if self._stats.first_check_ts > 0 else 0.0
             frequency = float(self._stats.changes) / elapsed if elapsed > 0 else 0.0
-            logger.info(
+            logger.debug(
                 f"SnapshotDiffer[{self._name}] change detected at {changed_path}, "
                 f"checks={self._stats.checks}, changes={self._stats.changes}, "
                 f"freq={frequency:.2f}/s"

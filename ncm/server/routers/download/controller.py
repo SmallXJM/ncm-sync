@@ -68,7 +68,8 @@ class DownloadController:
     # --- 统一的生命周期管理 ---
     async def cleanup(self):
         """统一销毁资源，确保所有组件被正确清理"""
-        logger.info("Starting DownloadController cleanup...")
+        logger.debug("Starting DownloadController cleanup...")
+        logger.info("开始清理下载控制器...")
         
         # 1. 移除配置监听
         try:
@@ -82,7 +83,7 @@ class DownloadController:
         try:
             if hasattr(self, "_scheduler") and self._scheduler:
                 await self._scheduler.cleanup()
-                logger.info("Scheduler cleaned up")
+                logger.debug("Scheduler cleaned up")
         except Exception as e:
             logger.error(f"Scheduler cleanup failed: {e}")
 
@@ -91,7 +92,7 @@ class DownloadController:
             if hasattr(self, "process") and self.process:
                 if hasattr(self.process, "cleanup"):
                     await self.process.cleanup()
-                    logger.info("DownloadProcess cleaned up")
+                    logger.debug("DownloadProcess cleaned up")
         except Exception as e:
             logger.error(f"DownloadProcess cleanup failed: {e}")
 
@@ -99,11 +100,12 @@ class DownloadController:
         try:
             if hasattr(self, "orchestrator") and self.orchestrator:
                 await self.orchestrator.close()
-                logger.info("DownloadOrchestrator closed")
+                logger.debug("DownloadOrchestrator closed")
         except Exception as e:
             logger.error(f"DownloadOrchestrator cleanup failed: {e}")
             
-        logger.info("DownloadController cleanup completed")
+        logger.debug("DownloadController cleanup completed")
+        logger.info("下载控制器清理完成")
 
     async def _on_config_update(self, config):
         """Handle dynamic config updates safely and efficiently."""
@@ -125,7 +127,7 @@ class DownloadController:
             )
 
             if should_update_scheduler:
-                logger.info(
+                logger.debug(
                     f"Config change detected: Cron '{self._current_cron}'->'{new_cron}', Batch {self._current_batch_size}->{new_batch_size}")
 
                 if new_cron:

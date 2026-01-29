@@ -950,11 +950,19 @@ onUnmounted(() => {
 .card-cover {
   /* Adjust for status overlay */
   position: relative;
+  overflow: visible; /* 关键：允许子元素溢出 */
+}
+
+.card-cover img {
+  border-radius: inherit; /* 让图片继承圆角 */
+  width: 100%;
+  display: block;
 }
 
 .default-cover {
   width: 100%;
   height: 100%;
+  border-radius: inherit; /* 继承圆角 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -971,8 +979,7 @@ onUnmounted(() => {
 
 .status-overlay {
   position: absolute;
-  bottom: 0px;
-  right: 0px;
+
   padding: 2px 6px;
   border-radius: 12px;
   font-size: 0.75rem;

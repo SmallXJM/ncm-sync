@@ -57,7 +57,7 @@ class CookieManager:
 
                 # Pick the most recently selected one
                 session = sessions[0]
-                logger.info(f"Initializing with session ID: {session.id} (user_id: {session.account_id})")
+                logger.debug(f"Initializing with session ID: {session.id} (user_id: {session.account_id})")
 
                 # Verify and cache status
                 resp = await login.status(cookie=session.cookie)
@@ -70,7 +70,7 @@ class CookieManager:
                     await self._async_repo.update_session_selected_time(uow.session, session.id)
                     await uow.commit()
 
-                    logger.info(f"{self._login_status_cache.profile.nickname}: {session.account_id} initialized and verified.")
+                    logger.debug(f"{self._login_status_cache.profile.nickname}: {session.account_id} initialized and verified.")
                 else:
                     logger.warning(f"user_id: {session.account_id} failed verification during initialization.")
                     data = resp.body.get("data", {})
@@ -79,7 +79,7 @@ class CookieManager:
                         self._current_session = session
                         await self._async_repo.update_session_selected_time(uow.session, session.id)
                         await uow.commit()
-                        logger.info(f"{self._login_status_cache.profile.nickname}: {session.account_id} re-initialized and verified.")
+                        logger.debug(f"{self._login_status_cache.profile.nickname}: {session.account_id} re-initialized and verified.")
                     else:
                         logger.warning(f"Session {session.id} appears to be expired or invalid (no account data).")
                         self._login_status_cache = LoginStatusResponse.model_validate(resp.body)
@@ -123,7 +123,7 @@ class CookieManager:
             self._current_session = new_session
             self._login_status_cache = LoginStatusResponse.model_validate(body)
 
-            logger.info(f"Added and switched to new session {session_id} for account {self._login_status_cache.profile.nickname}")
+            logger.debug(f"Added and switched to new session {session_id} for account {self._login_status_cache.profile.nickname}")
 
             return session_dict
 
@@ -145,7 +145,7 @@ class CookieManager:
         resp = await login.status(cookie=session.cookie)
         if resp.success:
             self._login_status_cache = LoginStatusResponse.model_validate(resp.body)
-            logger.info(f"Refreshed status for account {self._login_status_cache.profile.nickname}")    
+            logger.debug(f"Refreshed status for account {self._login_status_cache.profile.nickname}")    
             return self._login_status_cache
         return None
 

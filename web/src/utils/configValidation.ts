@@ -238,7 +238,7 @@ export const NCM_CONFIG_UI_SCHEMA: NcmConfigGroupSchema[] = [
         control: { 
           type: 'button', 
           buttonLabel: '退出登录', 
-          confirm: {message: '确定要退出登录吗？', dirtyWarn: '\n<span class="text-warning">当前有未保存的更改，退出登录将会丢失更改。</span>'}, 
+          confirm: {message: '确定要退出登录吗？', dirtyWarn: '\n<span class="text-warning">当前有未保存的更改，退出登录将会丢失这些更改。</span>'}, 
           actionId: 'logout',
           variant: 'danger'
         },

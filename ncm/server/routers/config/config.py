@@ -105,12 +105,14 @@ class ConfigController:
 
                     auth["user"] = new_user
                     
-                if "rotate_secret_key" in auth and auth["rotate_secret_key"]:
+                if "rotate_secret_key" in auth:
+                    if auth["rotate_secret_key"]:
+                        # Rotate secret key
+                        from ncm.core.config import generate_secret_key
+                        new_key = generate_secret_key()
+                        auth["secret_key"] = new_key
                     del auth["rotate_secret_key"]
-                    # Rotate secret key
-                    from ncm.core.config import generate_secret_key
-                    new_key = generate_secret_key()
-                    auth["secret_key"] = new_key
+                    
                 
                 if "logout" in auth:
                     if auth["logout"]:
@@ -125,7 +127,7 @@ class ConfigController:
                     del auth["logout"]
 
                 partial["auth"] = auth
-                logger.info(f"Updating auth with: {auth}")
+                logger.debug(f"Updating auth with: {auth}")
 
             # Support flat update (backward compatibility)
             # Map flat keys to nested structure
@@ -166,7 +168,7 @@ class ConfigController:
                     }
                 )
 
-            logger.info(f"Updating config with: {partial}")
+            logger.debug(f"Updating config with: {partial}")
             cfg = await self._cfgm.update(partial)
 
             return APIResponse(

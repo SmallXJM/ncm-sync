@@ -48,7 +48,7 @@ class UserController:
         if cache_key in self._cache:
             ts, resp = self._cache[cache_key]
             if now - ts < 2.0:
-                logger.info(f"Returning cached playlist for {uid}")
+                logger.debug(f"Returning cached playlist for {uid}")
                 return resp
             # Remove stale entry
             del self._cache[cache_key]

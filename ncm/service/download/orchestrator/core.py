@@ -1,5 +1,6 @@
 """Core download orchestrator implementation."""
 
+import logging
 import asyncio
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -106,7 +107,7 @@ class DownloadOrchestrator:
         async with self.uow_factory() as uow:
             existing_task = await self.task_repo.get_by_job_and_music(uow.session, job_id, music_id)
             if existing_task:
-                logger.info(f"Task already exists for music {music_id} in job {job_id}")
+                logger.debug(f"Task already exists for music {music_id} in job {job_id}")
                 return existing_task.id
             task = await self.task_repo.create(uow.session, music_id=music_id, job_id=job_id)
             if not task:
@@ -115,7 +116,7 @@ class DownloadOrchestrator:
         await registry.prefetch(task.id, music_id)
         future = asyncio.create_task(self._execute_download_workflow(task.id, target_quality))
         self.task_manager.register_task(task.id, future)
-        logger.info(f"Submitted download task {task.id} for music_id: {music_id}")
+        logger.debug(f"Submitted download task {task.id} for music_id: {music_id}")
         return task.id
 
     async def get_task(self, task_id: int) -> Optional[DownloadTask]:
@@ -137,7 +138,7 @@ class DownloadOrchestrator:
         async with self.uow_factory() as uow:
             task = await self.task_repo.update_status(uow.session, task_id, "cancelled")
             if task:
-                logger.info(f"Cancelled task {task_id}")
+                logger.debug(f"Cancelled task {task_id}")
                 return True
 
         return memory_cancelled
@@ -150,7 +151,7 @@ class DownloadOrchestrator:
                 # Clear progress flags related to completion
                 task.progress_flags = 0
                 await uow.session.flush()
-                logger.info(f"Reset task {task_id} to pending")
+                logger.debug(f"Reset task {task_id} to pending")
                 return True
         return False
 
@@ -255,7 +256,7 @@ class DownloadOrchestrator:
             )
             if not job:
                 raise RuntimeError(f"Failed to create download job: {job_name}")
-            logger.info(f"Created download job: {job_name} (ID: {job.id})")
+            logger.debug(f"Created download job: {job_name} (ID: {job.id})")
             return job.id
 
     async def get_download_job(self, job_id: int) -> Optional[DownloadJob]:
@@ -324,7 +325,7 @@ class DownloadOrchestrator:
         async with self.uow_factory() as uow:
             await self.job_repo.update_statistics(uow.session, job_id, total_tasks=len(task_ids))
 
-        logger.info(f"Submitted {len(task_ids)} tasks for job {job_id}")
+        logger.debug(f"Submitted {len(task_ids)} tasks for job {job_id}")
         return task_ids
 
 
@@ -345,15 +346,15 @@ class DownloadOrchestrator:
             if existing_task:
                 await self.cancel_task(existing_task.id)
                 await self.task_repo.delete(uow.session, existing_task.id)
-                logger.info(f"Removed existing task {existing_task.id} for quality upgrade")
+                logger.debug(f"Removed existing task {existing_task.id} for quality upgrade")
             # job = await self.job_repo.get_by_id(uow.session, job_id)
             # if job and job.target_quality != new_target_quality:
                 # await self.job_repo.update(uow.session, job_id, target_quality=new_target_quality)
-                # logger.info(f"Updated job {job_id} target quality to {new_target_quality}")
+                # logger.debug(f"Updated job {job_id} target quality to {new_target_quality}")
 
         # 创建新任务
         new_task_id = await self.submit_download(music_id, job_id, new_target_quality)
-        logger.info(f"Created new task {new_task_id} for quality upgrade to {new_target_quality}")
+        logger.debug(f"Created new task {new_task_id} for quality upgrade to {new_target_quality}")
 
         registry = get_task_cache_registry()
         await registry.prefetch(new_task_id, music_id)
@@ -401,7 +402,7 @@ class DownloadOrchestrator:
                     logger.warning(f"Failed to restart task {task.id}: {e}")
 
 
-        logger.info(f"Restarted {len(restarted_tasks)} failed tasks for job {job_id}")
+        logger.debug(f"Restarted {len(restarted_tasks)} failed tasks for job {job_id}")
         return restarted_tasks
 
     def cleanup_completed_tasks(self):
@@ -483,7 +484,10 @@ class DownloadOrchestrator:
             await self.workflow_engine.execute(task_id)
 
         except Exception as e:
-            logger.exception(f"Download workflow failed for task {task_id}: {str(e)}")
+            if logger.level == logging.INFO:
+                logger.exception(f"Download workflow failed for task {task_id}: {str(e)}")
+            else:
+                logger.info(f"任务ID：{task_id} 下载失败，原因: {str(e)}")
             async with self.uow_factory() as uow:
                 await self.task_repo.update_status(uow.session, task_id, "failed", str(e))
         finally:
@@ -608,16 +612,16 @@ class DownloadOrchestrator:
     async def close(self):
         """关闭编排器并清理资源"""
         await self.downloader.close()
-        logger.info("Download orchestrator closed")
+        logger.debug("Download orchestrator closed")
 
     def update_concurrency_settings(self, max_concurrent: int, max_threads: int):
         """线程安全的更新并发设置"""
         # 这里可以是简单的赋值，也可以包含更复杂的锁逻辑
         if self.downloader:
             if self.downloader.max_concurrent != max_concurrent:
-                logger.info(f"Updating max_concurrent: {self.downloader.max_concurrent} -> {max_concurrent}")
+                logger.debug(f"Updating max_concurrent: {self.downloader.max_concurrent} -> {max_concurrent}")
                 self.downloader.set_max_concurrent(max_concurrent)
 
             if self.downloader.max_threads != max_threads:
-                logger.info(f"Updating max_threads: {self.downloader.max_threads} -> {max_threads}")
+                logger.debug(f"Updating max_threads: {self.downloader.max_threads} -> {max_threads}")
                 self.downloader.set_max_threads(max_threads)

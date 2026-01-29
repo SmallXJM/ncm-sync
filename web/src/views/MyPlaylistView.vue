@@ -17,7 +17,7 @@
           <p class="text-secondary">当前 {{ currentPage }} / {{ totalPages }} 页</p>
         </div>
         <AppLoading v-if="isLoading && !playlists.length" message="正在获取我的歌单信息" />
-        
+
 
         <div v-else-if="playlists.length > 0" class="playlist-grid">
           <div v-for="playlist in displayPlaylists" :key="playlist.id" class="playlist-card">
@@ -74,12 +74,8 @@
         </div>
 
         <!-- Pagination -->
-        <AppPagination 
-          :total-items="showPlaylists.length" 
-          :current-page="currentPage" 
-          :page-size="pageSize" 
-          @page-change="(page) => currentPage = page" 
-        />
+        <AppPagination :total-items="showPlaylists.length" :current-page="currentPage" :page-size="pageSize"
+          @page-change="(page) => currentPage = page" />
       </div>
     </main>
 
@@ -200,6 +196,7 @@ import { nextTick } from 'vue'
 import { toast } from '@/utils/toast'
 import AppPagination from '@/components/AppPagination.vue'
 import AppLoading from '@/components/AppLoading.vue'
+import { sidebarIcons } from '@/layout/AppSidebar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -254,7 +251,7 @@ const showPlaylists = computed(() => {
 
 const totalPages = computed(() => Math.ceil(showPlaylists.value.length / pageSize))
 
-console.log('currentPage', currentPage.value, totalPages.value, showPlaylists.value.length,Number(route.query.page))
+console.log('currentPage', currentPage.value, totalPages.value, showPlaylists.value.length, Number(route.query.page))
 const displayPlaylists = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return showPlaylists.value.slice(start, start + pageSize)
@@ -267,7 +264,7 @@ onMounted(async () => {
   // fetchGlobalConfig(),
   await fetchDownloadJob()
   await fetchPlaylists()
-  
+
   // 修正正确页码逻辑
   if (Number(route.query.group) < 1) {
     activeGroupId.value = 1
@@ -346,7 +343,7 @@ watch(() => route.query, (newQuery) => {
   const qGroup = Number(newQuery.group) > selectGroups.value.length ? selectGroups.value.length : Number(newQuery.group) || 1
   const qPage = Number(newQuery.page) > totalPages.value ? totalPages.value : Number(newQuery.page) || 1
 
-  
+
   if (activeGroupId.value !== qGroup) {
     activeGroupId.value = qGroup
   }
@@ -400,10 +397,10 @@ async function fetchPlaylists() {
       }
     } else {
       const errorMsg = res.success ? `${res.data.code} ${res.data.message}` : (res.error || '未知错误')
-      toast.error(`获取歌单失败: ${errorMsg}`)
+      toast.error(`获取歌单失败: ${errorMsg}`, "我的歌单", sidebarIcons.playlist)
     }
   } catch (e) {
-    toast.error('获取歌单失败:' + (e as Error).message)
+    toast.error('获取歌单失败:' + (e as Error).message, "我的歌单", sidebarIcons.playlist)
   } finally {
     isLoading.value = false
   }
@@ -454,7 +451,7 @@ function openSubscribe(playlist: Playlist) {
 
     jobConfig.filename_template = globalConfig.value?.subscription?.filename || jobConfig.filename_template
   })
-  
+
   if (!isDrawerOpen.value) {
     window.history.pushState({ drawer: 'open' }, '')
     isDrawerOpen.value = true
@@ -479,7 +476,7 @@ function closeDrawer() {
 
 async function submitJob() {
   if (!jobConfig.job_name || !jobConfig.storage_path) {
-    toast.warning('请填写完整信息')
+    toast.warning('请填写完整信息', `歌单 "${jobConfig.job_name}"`, sidebarIcons.playlist)
     return
   }
 
@@ -487,16 +484,16 @@ async function submitJob() {
   try {
     const res = await api.download.createJob(jobConfig)
     if (res.success && (res.data.code === 200 || res.data.code === 201)) {
-      toast.success(`订阅歌单 "${jobConfig.job_name}"成功`)
+      toast.success(`订阅成功`, `歌单 "${jobConfig.job_name}"`, sidebarIcons.playlist)
       closeDrawer()
       fetchDownloadJob()
     } else {
       // 访问 res.data.message 前先判断 res.success
       const message = res.success ? res.data.message : res.error
-      toast.error('订阅失败: ' + (message || '未知错误'))
+      toast.error('订阅失败: ' + (message || '未知错误'), `歌单 "${jobConfig.job_name}"`, sidebarIcons.playlist)
     }
   } catch (e) {
-    toast.error('订阅失败:' + (e as Error).message)
+    toast.error('订阅失败:' + (e as Error).message, `歌单 "${jobConfig.job_name}"`, sidebarIcons.playlist)
   } finally {
     isSubmitting.value = false
   }
@@ -571,11 +568,12 @@ function sanitizeFilename(name: string): string {
   }
 
 }
-  @media (max-width: 768px) {
-    .drawer {
-      width: 100%;
-      max-width: 100dvw;
-    }
+
+@media (max-width: 768px) {
+  .drawer {
+    width: 100%;
+    max-width: 100dvw;
+  }
 }
 
 .drawer-header {

@@ -7,18 +7,54 @@ from typing import Optional
 _LOGGING_INITIALIZED = False
 
 
+class CustomFormatter(logging.Formatter):
+    """
+    Log format rules:
+    - INFO:    time level message
+    - Others: time level logger message
+    """
+
+    TIME_FMT = "%m-%d %H:%M:%S"
+
+    def __init__(self):
+        super().__init__()
+        self.info_fmt = logging.Formatter(
+            "%(asctime)s %(levelname)-5s %(message)s",
+            datefmt=self.TIME_FMT,
+        )
+        self.full_fmt = logging.Formatter(
+            "%(asctime)s %(levelname)-5s %(name)s %(message)s",
+            datefmt=self.TIME_FMT,
+        )
+
+    def format(self, record: logging.LogRecord) -> str:
+        # DEBUG 模式 → 全部 full
+        root_level = logging.getLogger().level
+        if root_level == logging.INFO:
+            return self.full_fmt.format(record)
+
+        # DEBUG 模式下才区分 INFO
+        if record.levelno == logging.INFO:
+            return self.info_fmt.format(record)
+
+        return self.full_fmt.format(record)
+
+def get_log_level() -> int:
+    return logging.getLogger().level
+
 def setup_logging(level: int = logging.INFO) -> None:
     global _LOGGING_INITIALIZED
     if _LOGGING_INITIALIZED:
         return
 
     other_level = "DEBUG" if level == logging.DEBUG else "WARNING"
+
     config = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
             "default": {
-                "format": "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",
+                "()": "ncm.core.logging.CustomFormatter",
             },
         },
         "handlers": {
@@ -33,6 +69,10 @@ def setup_logging(level: int = logging.INFO) -> None:
             "level": "INFO" if level == logging.DEBUG else "WARNING",
         },
         "loggers": {
+            "__main__": {
+                "level": level,
+                "propagate": True,
+            },
             # ncm 自定义 日志等级
             "ncm": {
                 "level": level,
