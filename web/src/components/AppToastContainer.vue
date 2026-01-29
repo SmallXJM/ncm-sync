@@ -161,6 +161,7 @@ const getLayerStyle = (index: number): CSSProperties => {
       left: '50%',
       zIndex,
       // opacity: 1,
+      'box-shadow': '0 2px 8px rgba(0, 0, 0, 0.12)',
       transform: `${topAlign} translateY(${offsetY}px) scale(1)`,
       transition: `all 0.3s ease, transform ${DURATION_MS}ms ${EASING}, opacity ${DURATION_MS}ms ${EASING}`,
       pointerEvents: 'auto',

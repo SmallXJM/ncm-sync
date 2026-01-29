@@ -444,7 +444,14 @@ async function updateJobStatus(params: DownloadJobItem) {
     const res = await api.download.updateJob(payload)
     if (res.success && res.data.code === 200) {
       if (res.data.data) {
-        toast.show({ type: res.data.data.enabled ? 'success' : 'info', title: job_name, message: `已${res.data.data.enabled ? '启用' : '关闭'}` })
+        toast.show(
+          {
+            type: res.data.data.enabled ? 'success' : 'info',
+            title: job_name,
+            message: `已${res.data.data.enabled ? '启用' : '关闭'}`,
+            icon: sidebarIcons.subscription
+          }
+        )
         await syncLocalJobs(res.data.data)
       }
 
@@ -535,9 +542,12 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
   /* 屏幕太小时允许横向滚动 */
   overflow-x: auto;
 
-  padding: var(--spacing-lg);        /* 为阴影留出空间 */
-  margin-left: calc(-1 * var(--spacing-lg));   /* 抵消左侧空白，保持视觉对齐 */
-  margin-right: calc(-1 * var(--spacing-lg));  /* 抵消右侧空白 */
+  padding: var(--spacing-lg);
+  /* 为阴影留出空间 */
+  margin-left: calc(-1 * var(--spacing-lg));
+  /* 抵消左侧空白，保持视觉对齐 */
+  margin-right: calc(-1 * var(--spacing-lg));
+  /* 抵消右侧空白 */
 
   /* 桌面端使用 Subgrid 实现跨行对齐 */
   @media (min-width: 769px) {
@@ -577,7 +587,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 .job-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);  
+  gap: var(--spacing-lg);
 
   /* 桌面端移除布局容器身份，使子元素直接参与父 Grid */
   @media (min-width: 769px) {
@@ -590,7 +600,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
   padding: var(--spacing-md);
   transition: transform 0.2s, background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 
-  
+
 
   &:hover {
     // transform: translateY(-2px);
