@@ -156,7 +156,7 @@ class DownloadJobRepository:
             session.add(job)
             session.flush()
             session.refresh(job)
-            logger.info(f"Created download job: {job_name}")
+            logger.debug(f"Created download job: {job_name}")
             return job
         except Exception as e:
             logger.exception(f"Error creating download job: {str(e)}")
@@ -190,7 +190,7 @@ class DownloadJobRepository:
             
             session.flush()
             session.refresh(job)
-            logger.info(f"Updated download job: {job_id}")
+            logger.debug(f"Updated download job: {job_id}")
             return job
         except Exception as e:
             logger.exception(f"Error updating download job: {str(e)}")
@@ -256,7 +256,7 @@ class DownloadJobRepository:
                 return False
             
             session.delete(job)
-            logger.info(f"Deleted download job: {job_id}")
+            logger.debug(f"Deleted download job: {job_id}")
             return True
         except Exception as e:
             logger.exception(f"Error deleting download job: {str(e)}")

@@ -81,7 +81,7 @@ def run_migrations(engine: Engine, db_url: str):
         engine: SQLAlchemy Engine instance
         db_url: Database connection URL
     """
-    logger.info("Checking database schema status...")
+    logger.debug("Checking database schema status...")
     
     try:
         # Create Alembic config
@@ -97,7 +97,7 @@ def run_migrations(engine: Engine, db_url: str):
             
             if has_alembic_version:
                 # Normal case: Alembic is managing this DB
-                logger.info("Found version table. Running upgrades...")
+                logger.debug("Found version table. Running upgrades...")
                 command.upgrade(alembic_cfg, "head")
                 
             elif has_data_tables:
@@ -114,10 +114,10 @@ def run_migrations(engine: Engine, db_url: str):
                 
             else:
                 # Fresh install: No tables
-                logger.info("No tables found. Initializing database schema...")
+                logger.debug("No tables found. Initializing database schema...")
                 command.upgrade(alembic_cfg, "head")
                 
-        logger.info("Database schema is up to date.")
+        logger.debug("Database schema is up to date.")
         
     except Exception as e:
         logger.error(f"Automatic migration failed: {str(e)}")

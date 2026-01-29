@@ -64,18 +64,18 @@ class WsRouter:
                         module = self._registry.get(name)
                         if module is not None:
                             module.on_subscribe()
-                    logger.info("WS subscribe all modules")
+                    logger.debug("WS subscribe all modules")
                 elif subscribe_target == "none":
                     for name in self._registry.names():
                         module = self._registry.get(name)
                         if module is not None:
                             module.on_unsubscribe()
-                    logger.info("WS clear all subscriptions")
+                    logger.debug("WS clear all subscriptions")
                 elif isinstance(subscribe_target, str):
                     module = self._registry.get(subscribe_target)
                     if module is not None:
                         module.on_subscribe()
-                        logger.info(f"WS subscribe module: {subscribe_target}")
+                        logger.debug(f"WS subscribe module: {subscribe_target}")
 
                 unsubscribe_target = message.get("unsubscribe")
                 if unsubscribe_target == "all":
@@ -83,12 +83,12 @@ class WsRouter:
                         module = self._registry.get(name)
                         if module is not None:
                             module.on_unsubscribe()
-                    logger.info("WS unsubscribe all modules")
+                    logger.debug("WS unsubscribe all modules")
                 elif isinstance(unsubscribe_target, str):
                     module = self._registry.get(unsubscribe_target)
                     if module is not None:
                         module.on_unsubscribe()
-                        logger.info(f"WS unsubscribe module: {unsubscribe_target}")
+                        logger.debug(f"WS unsubscribe module: {unsubscribe_target}")
 
                 if message.get("reload") is True:
                     load_ws_modules(self._registry, reload=True)

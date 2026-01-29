@@ -27,7 +27,7 @@ class TaskManager:
         future = self._task_futures.get(task_id)
         if future and not future.done():
             future.cancel()
-            logger.info(f"Cancelled async task {task_id}")
+            logger.debug(f"Cancelled async task {task_id}")
             return True
         return False
     
@@ -53,7 +53,7 @@ class TaskManager:
             del self._task_futures[task_id]
         
         if completed_tasks:
-            logger.info(f"Cleaned up {len(completed_tasks)} completed futures")
+            logger.debug(f"Cleaned up {len(completed_tasks)} completed futures")
     
     def get_stats(self) -> Dict[str, int]:
         """获取内存任务统计信息"""

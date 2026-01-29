@@ -167,7 +167,7 @@ class DownloadTaskRepository:
             session.add(task)
             session.flush()
             session.refresh(task)
-            logger.info(f"Created download task: {task.id} ({music_id}) for job {job_id}")
+            logger.debug(f"Created download task: {task.id} ({music_id}) for job {job_id}")
             return task
         except Exception as e:
             logger.exception(f"Error creating download task: {str(e)}")
@@ -203,7 +203,7 @@ class DownloadTaskRepository:
             for task in tasks:
                 session.refresh(task)
             
-            logger.info(f"Created {len(tasks)} download tasks in batch")
+            logger.debug(f"Created {len(tasks)} download tasks in batch")
             return tasks
         except Exception as e:
             logger.exception(f"Error creating tasks in batch: {str(e)}")
@@ -332,7 +332,7 @@ class DownloadTaskRepository:
                 return False
             
             session.delete(task)
-            logger.info(f"Deleted download task: {task_id}")
+            logger.debug(f"Deleted download task: {task_id}")
             return True
         except Exception as e:
             logger.exception(f"Error deleting download task: {str(e)}")
@@ -354,7 +354,7 @@ class DownloadTaskRepository:
                 DownloadTask.job_id == job_id
             ).delete()
             
-            logger.info(f"Deleted {deleted_count} tasks for job {job_id}")
+            logger.debug(f"Deleted {deleted_count} tasks for job {job_id}")
             return deleted_count
         except Exception as e:
             logger.exception(f"Error deleting tasks by job: {str(e)}")
