@@ -512,7 +512,7 @@ function resetDraft(): void {
   draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
   // 重置时同步本地滑块
   syncLocalFromDraft()
-  toast.info('已恢复所有未保存的更改')
+  toast.info('已恢复所有未保存的更改',"设置")
 }
 
 function toggleCron(event: Event): void {
@@ -573,7 +573,7 @@ function executeAction(actionId?: string) {
 
 function performLogout() {
   removeToken()
-  toast.success('已退出登录')
+  toast.success('已退出登录',"认证")
   router.push('/login')
 }
 
@@ -583,7 +583,7 @@ function performLogout() {
 async function save(): Promise<void> {
   if (!draftConfig.value) return
   if (hasErrors.value) {
-    toast.error('请先修复校验错误后再保存')
+    toast.error('请先修复校验错误后再保存',"设置")
     return
   }
 
@@ -612,13 +612,13 @@ async function save(): Promise<void> {
 
     const result = await api.config.updateConfig(partial)
     if (!result.success) {
-      toast.error(result.error || '保存失败')
+      toast.error(result.error || '保存失败',"设置")  
       return
     }
 
     const payload = result.data as ApiEnvelope<NcmConfig>
     if (payload.code !== 200) {
-      toast.error(payload.message || '保存失败')
+      toast.error(payload.message || '保存失败',"设置")  
       return
     }
 
@@ -628,14 +628,14 @@ async function save(): Promise<void> {
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
 
-    toast.success('设置已保存并已生效')
+    toast.success('已保存并已生效',"设置")
 
     // 验证授权有效性（如改密/重置密钥后）
     // 如果返回 401，http 拦截器会自动跳转登录
     await api.config.getConfig()
   } catch (error) {
     console.error('Failed to save config:', error)
-    toast.error('保存失败')
+    toast.error('保存失败',"设置")
   } finally {
     isLoading.value = false
   }
