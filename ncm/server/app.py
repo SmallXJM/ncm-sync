@@ -25,6 +25,7 @@ from ncm.client.protocol.session import close_session
 from ncm.core.logging import get_logger, setup_logging
 from ncm.core.constants import PACKAGE_CLIENT_APIS, PACKAGE_SERVER_ROUTERS
 from ncm.service.cookie import get_cookie_manager
+from ncm import __version__
 
 logger = get_logger(__name__)
 
@@ -144,7 +145,7 @@ def create_app(log_level: int = None) -> FastAPI:
     app = FastAPI(
         title="NCM Sync Server",
         description="NCM Sync - A Python implementation of Netease Cloud Music Sync Service",
-        version="0.1.0",
+        version=__version__,
         lifespan=lifespan,
         docs_url=None,
         redoc_url=None,
