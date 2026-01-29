@@ -15,7 +15,8 @@
             </nav>
           </aside>
 
-          <section v-if="activeGroup" class="glass-card config-panel" :class="{ 'has-unsaved-changes': isDirty }" :style="panelStyle">
+          <section v-if="activeGroup" class="glass-card config-panel" :class="{ 'has-unsaved-changes': isDirty }"
+            :style="panelStyle">
             <div class="group-header">
               <h3>{{ activeGroup.title }}</h3>
               <p v-if="activeGroup.description">{{ activeGroup.description }}</p>
@@ -91,11 +92,9 @@
                   </template>
 
                   <template v-else-if="field.control.type === 'button'">
-                    <button 
-                      type="button" 
-                      :class="['btn','btn-sm', field.control.variant ? `btn-${field.control.variant}` : 'btn-secondary']"
-                      @click="handleFieldAction(field)"
-                    >
+                    <button type="button"
+                      :class="['btn', 'btn-sm', field.control.variant ? `btn-${field.control.variant}` : 'btn-secondary']"
+                      @click="handleFieldAction(field)">
                       {{ field.control.buttonLabel }}
                     </button>
                   </template>
@@ -126,13 +125,8 @@
       </div>
     </div>
 
-    <AppConfirmModal
-      v-model:isOpen="isConfirmModalOpen"
-      :title="confirmModalTitle"
-      :message="confirmModalMessage"
-      :variant="confirmModalVariant"
-      @confirm="handleModalConfirm"
-    />
+    <AppConfirmModal v-model:isOpen="isConfirmModalOpen" :title="confirmModalTitle" :message="confirmModalMessage"
+      :variant="confirmModalVariant" @confirm="handleModalConfirm" />
 
   </div>
 </template>
@@ -470,7 +464,7 @@ onMounted(() => {
       }
     })
     observer.observe(actionBarRef.value)
-    
+
     onUnmounted(() => observer.disconnect())
   }
 })
@@ -492,22 +486,22 @@ watch(isDirty, (newVal) => {
 
     const distanceToBottom = scrollContainer.scrollHeight - (scrollContainer.clientHeight + scrollContainer.scrollTop)
     const isAtBottom = distanceToBottom <= 50
-    
+
     if (isAtBottom) {
       // 持续跟随底部，配合 CSS transition (0.3s)
       const duration = 350
       const startTime = performance.now()
-      
+
       const followBottom = (now: number) => {
         const elapsed = now - startTime
         // 强制滚动到底部
         scrollContainer.scrollTo({ top: scrollContainer.scrollHeight })
-        
+
         if (elapsed < duration) {
           requestAnimationFrame(followBottom)
         }
       }
-      
+
       requestAnimationFrame(followBottom)
     }
   }
@@ -518,7 +512,7 @@ function resetDraft(): void {
   draftConfig.value = deepClone(originalConfig.value) as NcmConfigDraft
   // 重置时同步本地滑块
   syncLocalFromDraft()
-  toast.show('已恢复所有未保存的更改', 'info')
+  toast.info('已恢复所有未保存的更改')
 }
 
 function toggleCron(event: Event): void {
@@ -548,15 +542,15 @@ const confirmModalActionId = ref<string | null>(null)
 
 function handleFieldAction(field: NcmConfigFieldSchema) {
   if (field.control.type !== 'button') return
-  
+
   if (field.control.confirm) {
-      confirmModalTitle.value = field.label
-      let message = field.control.confirm.message
-      if (isDirty.value && field.control.confirm.dirtyWarn) {
-        message += field.control.confirm.dirtyWarn
-      }
-      confirmModalMessage.value = message
-      confirmModalVariant.value = field.control.variant === 'danger' ? 'danger' : 'primary'
+    confirmModalTitle.value = field.label
+    let message = field.control.confirm.message
+    if (isDirty.value && field.control.confirm.dirtyWarn) {
+      message += field.control.confirm.dirtyWarn
+    }
+    confirmModalMessage.value = message
+    confirmModalVariant.value = field.control.variant === 'danger' ? 'danger' : 'primary'
     confirmModalActionId.value = field.control.actionId || null
     isConfirmModalOpen.value = true
   } else {
@@ -579,7 +573,7 @@ function executeAction(actionId?: string) {
 
 function performLogout() {
   removeToken()
-  toast.show('已退出登录', 'success')
+  toast.success('已退出登录')
   router.push('/login')
 }
 
@@ -589,13 +583,13 @@ function performLogout() {
 async function save(): Promise<void> {
   if (!draftConfig.value) return
   if (hasErrors.value) {
-    toast.show('请先修复校验错误后再保存', 'error')
+    toast.error('请先修复校验错误后再保存')
     return
   }
 
   try {
     isLoading.value = true
-    
+
     // 检查是否包含退出登录指令 (Legacy: 现在的 logout 是按钮触发，这里保留是为了兼容性或清理)
     // 实际上新的 button 逻辑不走 save，但 schema 里可能还有残留值，可以忽略
 
@@ -618,13 +612,13 @@ async function save(): Promise<void> {
 
     const result = await api.config.updateConfig(partial)
     if (!result.success) {
-      toast.show(result.error || '保存失败', 'error')
+      toast.error(result.error || '保存失败')
       return
     }
 
     const payload = result.data as ApiEnvelope<NcmConfig>
     if (payload.code !== 200) {
-      toast.show(payload.message || '保存失败', 'error')
+      toast.error(payload.message || '保存失败')
       return
     }
 
@@ -634,14 +628,14 @@ async function save(): Promise<void> {
     // 保存后同步一次（虽然理论上值一样，但保持一致性）
     syncLocalFromDraft()
 
-    toast.show('设置已保存并已生效', 'success')
+    toast.success('设置已保存并已生效')
 
     // 验证授权有效性（如改密/重置密钥后）
     // 如果返回 401，http 拦截器会自动跳转登录
     await api.config.getConfig()
   } catch (error) {
     console.error('Failed to save config:', error)
-    toast.show('保存失败', 'error')
+    toast.error('保存失败')
   } finally {
     isLoading.value = false
   }
@@ -740,6 +734,4 @@ async function save(): Promise<void> {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
-
 </style>

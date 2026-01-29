@@ -1,9 +1,9 @@
-import { render, h, type VNode } from 'vue';
+import { render, h, type VNode, type Component } from 'vue';
 import ToastContainer from '@/components/AppToastContainer.vue';
 
 
 interface ToastContainerExposed {
-  add: (message: string, type: 'info' | 'success' | 'warning' | 'error', duration?: number) => void;
+  add: (message: string, title?: string, type?: 'info' | 'success' | 'warning' | 'error', duration?: number, icon?: Component) => void;
 }
 
 let containerVNode: VNode | null = null;
@@ -33,10 +33,20 @@ const getContainer = (): ToastContainerExposed => {
   return exposed;
 };
 
+type ToastType = 'info' | 'success' | 'warning' | 'error';
+
+// 核心 show 方法
+const show = (options: { type?: ToastType, message: string, title?: string, icon?: Component, duration?: number }) => {
+  const { type = 'info', message, title = '', icon, duration = 3000 } = options;
+  return getContainer().add(title, message, type, duration, icon);
+};
+
+// 导出对象
 export const toast = {
-  info: (msg: string) => getContainer().add(msg, 'info'),
-  success: (msg: string) => getContainer().add(msg, 'success'),
-  warning: (msg: string) => getContainer().add(msg, 'warning'),
-  error: (msg: string) => getContainer().add(msg, 'error'),
-  show: (msg: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => getContainer().add(msg, type),
+  show,
+  // 简写：直接通过 show 实现
+  info: (msg: string, title: string = '', icon?: Component) => show({ type: 'info', message: msg, title, icon }),
+  success: (msg: string, title: string = '', icon?: Component) => show({ type: 'success', message: msg, title, icon }),
+  warning: (msg: string, title: string = '', icon?: Component) => show({ type: 'warning', message: msg, title, icon }),
+  error: (msg: string, title: string = '', icon?: Component) => show({ type: 'error', message: msg, title, icon }), 
 };

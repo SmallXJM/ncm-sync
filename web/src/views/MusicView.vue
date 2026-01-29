@@ -329,11 +329,11 @@ const fetchTasks = async () => {
         totalTasks.value = res.data.data.total
       }
     } else {
-      toast.show('获取任务列表失败', 'error')
+      toast.error('获取任务列表失败')
     }
   } catch (e) {
     console.error('Failed to load tasks', e)
-    toast.show('获取任务列表失败', 'error')
+    toast.error('获取任务列表失败')
   } finally {
     isLoading.value = false
   }
@@ -458,14 +458,14 @@ const resetTask = async (task: DownloadTaskItem) => {
   try {
     const res = await api.download.resetTask(task.id)
     if (res.success && res.data.code === 200) {
-      toast.show('任务已重置', 'success')
+      toast.success('任务已重置')
       task.status = 'pending'
       task.error_message = ''
     } else {
-      toast.show('重置失败', 'error')
+      toast.error('重置失败')
     }
   } catch {
-    toast.show('重置失败', 'error')
+    toast.error('重置失败')
   } finally {
     processingTasks.value.delete(task.id)
   }

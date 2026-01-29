@@ -1,16 +1,33 @@
 <template>
   <div class="toast" :class="type">
-    <div class="toast-content">
-      <span class="message">{{ message }}</span>
-      <button class="toast-close" @click="$emit('close')">×</button>
+    <div class="toast-icon">
+      <component v-if="icon" :is="icon" />
+      <template v-else>
+        <svg v-if="type === 'success'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <svg v-else-if="type === 'error'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <svg v-else-if="type === 'warning'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      </template>
     </div>
+
+    <div class="toast-content">
+      <span class="title">{{ title }}</span>
+      <span class="message">{{ message }}</span>
+    </div>
+
+    <button class="toast-close" @click="$emit('close')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Component } from 'vue'
 defineProps<{
+  title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
+  icon?: Component;
 }>();
 
 defineEmits(['close']);
@@ -18,69 +35,116 @@ defineEmits(['close']);
 
 <style scoped lang="scss">
 .toast {
-  pointer-events: auto; // 恢复点击
-  position: relative; // 移除之前的 fixed 定位
-  top: auto;
-  right: auto;
-  z-index: 2000;
-  max-width: 400px;
-  padding: var(--spacing-md);
-  border-radius: 0.75rem;
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-lg);
-  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 0;
-}
-
-.toast.info {
-    // 信息 toast 背景与边框颜色一致
-  border-left: 4px solid var(--border-color);
-}
-
-.toast.success {
-  border-left: 4px solid var(--color-success);
-}
-
-.toast.error {
-  border-left: 4px solid var(--color-error);
-}
-
-.toast.warning {
-  border-left: 4px solid var(--color-warning);
-}
-
-.toast-content {
+  box-sizing: border-box;
+  pointer-events: auto;
+  position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-md);
-  font-weight: 500;
+  gap: 12px;
+  
+  width: 350px; /* 避免在绝对定位父容器下 100% 造成计算异常 */
+  // min-width: 350px;
+  // max-width: 350px;
+  padding: 12px;
+  
+  border-radius: 20px;
+  // background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface), transparent 30%);
+
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.06),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+  color: var(--text-primary);
+  margin-bottom: 0;
+  
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  /* 避免 border 被背景覆盖 */
+  background-clip: padding-box;
+  
+  transition: all 0.3s ease;
+
+  @media (max-width: 768px) {
+    min-width: 200px;
+    width: 80dvw;
+  }
 }
 
-.toast-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--text-secondary);
-  opacity: 0.7;
-  padding: 0;
-  width: 20px;
-  height: 20px;
+.toast-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: 0.2s ease;
+  flex-shrink: 0;
+  
+  svg {
+    width: 24px;
+    height: 24px;
+  }
 }
 
-.toast-close:hover {
-  opacity: 1;
-  color: var(--text-primary);
+.toast-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
 }
 
-.message { font-weight: 500; font-size: 0.9rem; }
+.title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
 
+.message {
+  font-weight: 500;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
 
+.toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+  }
+}
+
+// Variants with Gradients
+// border会造成左边一条竖白线，原因不明
+.toast.success {
+  // background: linear-gradient(to right, rgba(16, 185, 129, 0.1), var(--bg-surface) 50%);
+  // border: 1px solid rgba(16, 185, 129, 0.1);
+  .toast-icon { color: #10b981; }
+}
+
+.toast.error {
+  // background: linear-gradient(to right, rgba(239, 68, 68, 0.1), var(--bg-surface) 50%);
+  // border: 1px solid rgba(239, 68, 68, 0.1);
+  .toast-icon { color: #ef4444; }
+}
+
+.toast.warning {
+  // background: linear-gradient(to right, rgba(245, 158, 11, 0.1), var(--bg-surface) 50%);
+  // border: 1px solid rgba(245, 158, 11, 0.1);
+  .toast-icon { color: #f59e0b; }
+}
+
+.toast.info {
+  // background: linear-gradient(to right, rgba(59, 130, 246, 0.1), var(--bg-surface) 50%);
+  // border: 1px solid rgba(59, 130, 246, 0.1);
+  .toast-icon { color: #3b82f6; }
+}
 </style>

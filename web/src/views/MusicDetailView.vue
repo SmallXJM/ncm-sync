@@ -197,10 +197,10 @@ const fetchDetail = async () => {
     if (res.success && res.data.code === 200 && res.data.data) {
       detail.value = res.data.data
     } else {
-      toast.show('加载本地音乐详情失败', 'error')
+      toast.error('加载本地音乐详情失败')
     }
   } catch {
-    toast.show('加载本地音乐详情失败', 'error')
+    toast.error('加载本地音乐详情失败')
   } finally {
     isLoading.value = false
   }
@@ -220,12 +220,12 @@ const fetchDetail = async () => {
 //     if (res.success && res.data.code === 200 && res.data.data) {
 //       detail.value = res.data.data
 //       coverError.value = false
-//       toast.show('重命名成功', 'success')
+//       toast.success('重命名成功')
 //     } else {
-//       toast.show('重命名失败', 'error')
+//       toast.error('重命名失败')
 //     }
 //   } catch {
-//     toast.show('重命名失败', 'error')
+//     toast.error('重命名失败')
 //   } finally {
 //     isWorking.value = false
 //   }
@@ -242,7 +242,7 @@ const fetchDetail = async () => {
 //       task_id: detail.value.id,
 //     })
 //     if (res.success && res.data.code === 200) {
-//       toast.show('已删除本地文件', 'success')
+//       toast.success('已删除本地文件')
 //       const storedQuery = getStoredMusicQuery()
 //       if (storedQuery) {
 //         router.push({ name: 'music', query: storedQuery })
@@ -250,10 +250,10 @@ const fetchDetail = async () => {
 //         router.push({ name: 'music' })
 //       }
 //     } else {
-//       toast.show('删除失败', 'error')
+//       toast.error('删除失败')
 //     }
 //   } catch {
-//     toast.show('删除失败', 'error')
+//     toast.error('删除失败')
 //   } finally {
 //     isWorking.value = false
 //   }
