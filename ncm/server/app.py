@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
     Handles startup and shutdown logic.
     """
     logger.debug("Application startup: initializing resources...")
+    # logger.info("应用正在初始化资源")
     try:
         # Startup logic here (if needed)
         # 异步刷新 CookieManager 中的用户信息
@@ -47,8 +48,10 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         # Handle cancellation gracefully
         logger.debug("Application shutdown requested (Cancelled)...")
+        logger.info("应用收到关闭请求")
     finally:
         logger.debug("Application shutdown: cleaning up resources...")
+        logger.info("应用关闭触发")
         
         # Cleanup service instances with cleanup method
         instances = getattr(app.state, "service_instances", [])
@@ -128,12 +131,11 @@ async def lifespan(app: FastAPI):
         #     logger.error(f"Error during final cleanup: {e}")
             
         logger.debug("Application shutdown complete.")
+        logger.info("应用关闭流程结束")
 
 
-def show_version():
-    logger.info(f"欢迎使用 NCM Sync")
-    logger.info(f"当前版本: {__version__}")
-    logger.info(f"项目主页: {__url__}")
+
+
 
 
 def create_app(log_level: int = None) -> FastAPI:
@@ -146,8 +148,6 @@ def create_app(log_level: int = None) -> FastAPI:
     # 从环境变量读取 log_level
     log_level = int(os.environ.get("NCM_LOG_LEVEL", logging.INFO))
     setup_logging(log_level)
-    
-    show_version()
 
 
     app = FastAPI(

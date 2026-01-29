@@ -69,6 +69,7 @@ class DownloadController:
     async def cleanup(self):
         """统一销毁资源，确保所有组件被正确清理"""
         logger.debug("Starting DownloadController cleanup...")
+        logger.info("开始清理下载控制器...")
         
         # 1. 移除配置监听
         try:
@@ -104,6 +105,7 @@ class DownloadController:
             logger.error(f"DownloadOrchestrator cleanup failed: {e}")
             
         logger.debug("DownloadController cleanup completed")
+        logger.info("下载控制器清理完成")
 
     async def _on_config_update(self, config):
         """Handle dynamic config updates safely and efficiently."""

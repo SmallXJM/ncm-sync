@@ -39,7 +39,8 @@ class CustomFormatter(logging.Formatter):
 
         return self.full_fmt.format(record)
 
-
+def get_log_level() -> int:
+    return logging.getLogger().level
 
 def setup_logging(level: int = logging.INFO) -> None:
     global _LOGGING_INITIALIZED
@@ -68,6 +69,10 @@ def setup_logging(level: int = logging.INFO) -> None:
             "level": "INFO" if level == logging.DEBUG else "WARNING",
         },
         "loggers": {
+            "__main__": {
+                "level": level,
+                "propagate": True,
+            },
             # ncm 自定义 日志等级
             "ncm": {
                 "level": level,

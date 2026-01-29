@@ -52,11 +52,14 @@ class User(BaseModel):
 def generate_secret_key() -> str:
     return secrets.token_urlsafe(32)
 
+def generate_password() -> str:
+    return secrets.token_hex(3).lower()[:6]
+
 class AuthorizationSettings(BaseModel):
     enabled: bool = Field(default=True)
     secret_key: str = Field(default_factory=generate_secret_key)
     access_token_expire_minutes: int = Field(default=60 * 24 * 7)  # 7 days
-    user: User = Field(default_factory=lambda: User(username="admin", password="admin"))
+    user: User = Field(default_factory=lambda: User(username="admin", password="123456"))
 
 
 class NcmConfig(BaseModel):

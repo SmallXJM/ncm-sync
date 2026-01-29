@@ -1,5 +1,6 @@
 """Core download orchestrator implementation."""
 
+import logging
 import asyncio
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -483,7 +484,10 @@ class DownloadOrchestrator:
             await self.workflow_engine.execute(task_id)
 
         except Exception as e:
-            logger.exception(f"Download workflow failed for task {task_id}: {str(e)}")
+            if logger.level == logging.INFO:
+                logger.exception(f"Download workflow failed for task {task_id}: {str(e)}")
+            else:
+                logger.info(f"任务ID：{task_id} 下载失败，原因: {str(e)}")
             async with self.uow_factory() as uow:
                 await self.task_repo.update_status(uow.session, task_id, "failed", str(e))
         finally:
