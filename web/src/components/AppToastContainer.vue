@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onBeforeUnmount, onMounted, watch, type CSSProperties, type ComponentPublicInstance, type Component } from 'vue';
+import { ref, computed, reactive, onBeforeUnmount, watch, type CSSProperties, type ComponentPublicInstance, type Component } from 'vue';
 import Toast from './AppToast.vue';
 
 interface ToastItem {
