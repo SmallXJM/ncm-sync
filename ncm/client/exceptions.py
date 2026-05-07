@@ -33,6 +33,11 @@ class AuthenticationError(APIError):
     pass
 
 
+class MusicSessionUnavailableError(AuthenticationError):
+    """NetEase Cloud Music cookie session is unavailable or expired."""
+    pass
+
+
 class RateLimitError(APIError):
     """Rate limit exceeded."""
     pass

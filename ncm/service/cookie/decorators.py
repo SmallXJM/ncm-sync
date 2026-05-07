@@ -1,29 +1,26 @@
 """
-简化的 Service 装饰器系统（统一版）
+Cookie session decorators.
 
-专为单实例 NAS 服务设计的 Cookie 管理装饰器
+Provides a single `with_cookie` decorator for injecting the current NetEase
+Cloud Music session and handling retry/failure bookkeeping.
 """
 
 import functools
 import logging
 from typing import Callable, Optional
+
 from . import get_cookie_manager
-from ncm.client import APIResponse
-from ncm.client.exceptions import AuthenticationError
-from .manager import SimpleSession
+from ncm.client.exceptions import AuthenticationError, MusicSessionUnavailableError
 
 logger = logging.getLogger(__name__)
 
 
-# =========================
-# 核心执行逻辑（唯一入口）
-# =========================
 async def _execute_with_cookie(
     func: Callable,
     *args,
     retries: int = 0,
     manual: bool = False,
-    **kwargs
+    **kwargs,
 ):
     cookie_service = get_cookie_manager()
     last_exception: Optional[Exception] = None
@@ -36,24 +33,15 @@ async def _execute_with_cookie(
             # 自动注入 Cookie（若调用方未显式传入）
             if not kwargs.get("cookie"):
                 if not current_session:
-                    # 这里的“认证失败”指网易云音乐 Cookie 会话不可用/已过期，
-                    # 并非本系统的 Bearer Token 失效。避免返回 HTTP 401 触发前端误登出。
-                    resp = APIResponse(
-                        status=200,
-                        body={
-                            "code": 401,
-                            "message": "没有可用的网易云音乐登录会话，请先登录",
-                        },
+                    raise MusicSessionUnavailableError(
+                        "没有可用的网易云音乐登录会话，请先登录",
+                        code=401,
+                        details={"reason": "no_current_session"},
                     )
-                    if manual:
-                        return (resp, False)
-                    return resp
                 kwargs["cookie"] = current_session.cookie
                 kwargs["_session"] = current_session.to_dict()
-            
-            # 即使传入了Cookie，如果有当前会话，也注入_session以防止Controller报错
-            # 注意：这里假设前端传入的Cookie与后端当前会话是同一个用户的，或者是可兼容的
-            # 如果不一致，使用current_session的信息作为fallback可能不完全准确，但能防止KeyError
+            # 即使调用方显式传入了 cookie，也尽量补充当前会话信息，
+            # 避免依赖 _session 的下游 controller 出现 KeyError。
             elif current_session and "_session" not in kwargs:
                 kwargs["_session"] = current_session.to_dict()
 
@@ -88,17 +76,16 @@ async def _execute_with_cookie(
                     logger.info("准备重试，尝试使用新的 Cookie")
                     continue
 
-                # 认证类错误重试用尽：返回业务码 401，避免使用 HTTP 401 触发前端清 token。
-                resp = APIResponse(
-                    status=200,
-                    body={
-                        "code": 401,
-                        "message": str(e) or "网易云音乐登录会话已过期，请重新登录",
-                    },
-                )
-                if manual:
-                    return (resp, False)
-                return resp
+                # 认证类错误重试用尽：统一转换为领域异常，
+                # 由上层 HTTP 框架决定如何映射为接口响应。
+                if isinstance(e, MusicSessionUnavailableError):
+                    raise
+
+                raise MusicSessionUnavailableError(
+                    str(e) or "网易云音乐登录会话已过期，请重新登录",
+                    code=401,
+                    details={"reason": "auth_failed"},
+                ) from e
 
             # 非认证错误
             raise
@@ -107,28 +94,13 @@ async def _execute_with_cookie(
     raise last_exception
 
 
-# =========================
-# 统一装饰器：with_cookie
-# =========================
 def with_cookie(
     _func: Optional[Callable] = None,
     *,
     max_retries: int = 0,
     manual: bool = False,
 ):
-    """
-    统一的 Cookie 装饰器
-
-    使用方式：
-        @with_cookie
-        @with_cookie()
-        @with_cookie(max_retries=2)
-        @with_cookie(manual=True)
-
-    Args:
-        max_retries: 认证失败时最大重试次数，0 表示不重试
-        manual: 是否启用手动 Cookie 成功/失败管理
-    """
+    """Inject current cookie session and handle auth failure bookkeeping."""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -138,31 +110,34 @@ def with_cookie(
                 *args,
                 retries=max_retries,
                 manual=manual,
-                **kwargs
+                **kwargs,
             )
+
         return wrapper
 
-    # 支持 @with_cookie 直接使用
     if _func is not None:
         return decorator(_func)
 
     return decorator
 
 
-# =========================
-# 认证错误判断
-# =========================
 def _is_auth_error(exception: Exception) -> bool:
-    """
-    判断是否是认证相关错误
-    """
+    """Return True when the exception indicates music-session auth failure."""
+
     if isinstance(exception, AuthenticationError):
         return True
 
     error_msg = str(exception).lower()
     auth_keywords = [
-        "unauthorized", "401", "authentication", "login", "cookie",
-        "需要登录", "登录失效", "会话过期", "未登录"
+        "unauthorized",
+        "401",
+        "authentication",
+        "login",
+        "cookie",
+        "需要登录",
+        "登录失效",
+        "会话过期",
+        "未登录",
     ]
 
     return any(keyword in error_msg for keyword in auth_keywords)

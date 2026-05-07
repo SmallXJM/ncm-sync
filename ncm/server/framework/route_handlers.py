@@ -6,10 +6,28 @@ from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from .request_parser import parse_request_params
 from ncm.client import APIResponse
-from ncm.client.exceptions import NCMError, APIError, AuthenticationError, RateLimitError, NetworkError, ValidationError
+from ncm.client.exceptions import (
+    NCMError,
+    APIError,
+    AuthenticationError,
+    MusicSessionUnavailableError,
+    RateLimitError,
+    NetworkError,
+    ValidationError,
+)
 from ncm.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def _music_session_error_response(error: MusicSessionUnavailableError) -> JSONResponse:
+    return JSONResponse(
+        content={
+            "code": getattr(error, "code", 401),
+            "message": getattr(error, "message", str(error)),
+        },
+        status_code=200,
+    )
 
 
 def _convert_api_response_to_json(result: APIResponse) -> JSONResponse:
@@ -88,15 +106,12 @@ def create_module_handler(func: Callable) -> Callable:
             # Convert APIResponse to JSONResponse for FastAPI
             return _convert_api_response_to_json(result)
             
+        except MusicSessionUnavailableError as e:
+            logger.exception("MusicSessionUnavailableError")
+            return _music_session_error_response(e)
         except AuthenticationError as e:
-            # AuthenticationError here refers to NetEase Cloud Music cookie/session auth,
-            # not this project's Bearer token auth (handled by middleware). Avoid HTTP 401
-            # so the frontend doesn't clear its own token and force logout.
             logger.exception("AuthenticationError")
-            return JSONResponse(
-                content={"code": getattr(e, "code", 401), "message": getattr(e, "message", str(e))},
-                status_code=200,
-            )
+            raise HTTPException(status_code=401, detail={"code": e.code, "message": e.message})
         except RateLimitError as e:
             logger.exception("RateLimitError")
             raise HTTPException(status_code=429, detail={"code": e.code, "message": e.message})
@@ -153,13 +168,12 @@ def create_service_handler(service_method: Callable) -> Callable:
         except ValidationError as e:
             logger.exception("ValidationError")
             raise HTTPException(status_code=400, detail={"code": 400, "message": str(e)})
+        except MusicSessionUnavailableError as e:
+            logger.exception("MusicSessionUnavailableError")
+            return _music_session_error_response(e)
         except AuthenticationError as e:
-            # Same rationale as create_module_handler: avoid HTTP 401 for music-cookie auth.
             logger.exception("AuthenticationError")
-            return JSONResponse(
-                content={"code": getattr(e, "code", 401), "message": getattr(e, "message", str(e))},
-                status_code=200,
-            )
+            raise HTTPException(status_code=401, detail={"code": 401, "message": e.message})
         except RateLimitError as e:
             logger.exception("RateLimitError")
             raise HTTPException(status_code=429, detail={"code": 429, "message": e.message})
