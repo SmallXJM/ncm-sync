@@ -33,7 +33,7 @@ class SessionController:
                 )
             else:
                 return APIResponse(
-                    status=401,
+                    status=200,
                     body={
                         "code": 401,
                         "message": "没有可用的账户",
@@ -68,10 +68,10 @@ class SessionController:
                 )
             else:
                 return APIResponse(
-                    status=401,
+                    status=200,
                     body={
-                        "code": 401,
-                        "message": "切换会话失败"
+                        "code": 404,
+                        "message": "会话不存在或无法切换"
                     }
                 )
             
@@ -121,9 +121,9 @@ class SessionController:
             result = await self.cookie_service.invalidate_session(id)
             
             return APIResponse(
-                status=200 if result else 401,
+                status=200,
                 body={
-                    "code": 200 if result else 401,
+                    "code": 200 if result else 404,
                     "message": "会话失效成功" if result else "会话不存在",
                 }
             )

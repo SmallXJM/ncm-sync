@@ -3,6 +3,7 @@ from .exceptions import (
     APIError,
     NetworkError,
     AuthenticationError,
+    MusicSessionUnavailableError,
     RateLimitError,
     EncryptionError,
     ValidationError
@@ -18,6 +19,7 @@ __all__ = [
     "APIError",
     "NetworkError",
     "AuthenticationError",
+    "MusicSessionUnavailableError",
 
     "RateLimitError",
     "EncryptionError",

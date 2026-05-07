@@ -36,7 +36,7 @@ class ProfileController:
                 )
             else:
                 return APIResponse(
-                    status=401,
+                    status=200,
                     body={
                         "code": 401,
                         "message": "没有可用的账户",
@@ -74,7 +74,7 @@ class ProfileController:
                 )
             else:
                 return APIResponse(
-                    status=401,
+                    status=200,
                     body={
                         "code": 401,
                         "message": "没有可用的会话",
