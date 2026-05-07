@@ -89,8 +89,14 @@ def create_module_handler(func: Callable) -> Callable:
             return _convert_api_response_to_json(result)
             
         except AuthenticationError as e:
+            # AuthenticationError here refers to NetEase Cloud Music cookie/session auth,
+            # not this project's Bearer token auth (handled by middleware). Avoid HTTP 401
+            # so the frontend doesn't clear its own token and force logout.
             logger.exception("AuthenticationError")
-            raise HTTPException(status_code=401, detail={"code": e.code, "message": e.message})
+            return JSONResponse(
+                content={"code": getattr(e, "code", 401), "message": getattr(e, "message", str(e))},
+                status_code=200,
+            )
         except RateLimitError as e:
             logger.exception("RateLimitError")
             raise HTTPException(status_code=429, detail={"code": e.code, "message": e.message})
@@ -148,8 +154,12 @@ def create_service_handler(service_method: Callable) -> Callable:
             logger.exception("ValidationError")
             raise HTTPException(status_code=400, detail={"code": 400, "message": str(e)})
         except AuthenticationError as e:
+            # Same rationale as create_module_handler: avoid HTTP 401 for music-cookie auth.
             logger.exception("AuthenticationError")
-            raise HTTPException(status_code=401, detail={"code": 401, "message": e.message})
+            return JSONResponse(
+                content={"code": getattr(e, "code", 401), "message": getattr(e, "message", str(e))},
+                status_code=200,
+            )
         except RateLimitError as e:
             logger.exception("RateLimitError")
             raise HTTPException(status_code=429, detail={"code": 429, "message": e.message})

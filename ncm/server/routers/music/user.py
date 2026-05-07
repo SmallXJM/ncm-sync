@@ -32,11 +32,10 @@ class UserController:
         if uid is None or uid == "":  # 默认查找本cookie的歌单
             if not session:
                 return APIResponse(
-                    status=401,
+                    status=200,
                     body={
                         "code": 401,
                         "message": "无法获取用户信息，请指定用户ID或确保已登录",
-                        "success": False
                     }
                 )
             uid = session["user_id"]

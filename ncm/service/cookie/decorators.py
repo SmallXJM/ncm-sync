@@ -8,6 +8,7 @@ import functools
 import logging
 from typing import Callable, Optional
 from . import get_cookie_manager
+from ncm.client import APIResponse
 from ncm.client.exceptions import AuthenticationError
 from .manager import SimpleSession
 
@@ -35,7 +36,18 @@ async def _execute_with_cookie(
             # 自动注入 Cookie（若调用方未显式传入）
             if not kwargs.get("cookie"):
                 if not current_session:
-                    raise AuthenticationError("没有可用的登录会话，请先登录")
+                    # 这里的“认证失败”指网易云音乐 Cookie 会话不可用/已过期，
+                    # 并非本系统的 Bearer Token 失效。避免返回 HTTP 401 触发前端误登出。
+                    resp = APIResponse(
+                        status=200,
+                        body={
+                            "code": 401,
+                            "message": "没有可用的网易云音乐登录会话，请先登录",
+                        },
+                    )
+                    if manual:
+                        return (resp, False)
+                    return resp
                 kwargs["cookie"] = current_session.cookie
                 kwargs["_session"] = current_session.to_dict()
             
@@ -76,7 +88,19 @@ async def _execute_with_cookie(
                     logger.info("准备重试，尝试使用新的 Cookie")
                     continue
 
-            # 非认证错误或重试次数用尽
+                # 认证类错误重试用尽：返回业务码 401，避免使用 HTTP 401 触发前端清 token。
+                resp = APIResponse(
+                    status=200,
+                    body={
+                        "code": 401,
+                        "message": str(e) or "网易云音乐登录会话已过期，请重新登录",
+                    },
+                )
+                if manual:
+                    return (resp, False)
+                return resp
+
+            # 非认证错误
             raise
 
     # 理论上不会走到这里
