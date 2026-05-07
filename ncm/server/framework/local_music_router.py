@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+import hashlib
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response, JSONResponse
 
 from ncm.core.logging import get_logger
@@ -24,7 +26,11 @@ def register_local_music_routes(app: FastAPI) -> None:
         return JSONResponse(status_code=result["status"], content=result["body"])
 
     @app.get("/local/music/cover/{task_id}", include_in_schema=False)
-    async def local_music_cover(task_id: int):
+    async def local_music_cover(task_id: int, request: Request):
+        task = await task_service.get_task(task_id)
+        if not task or not task.file_path:
+            raise HTTPException(status_code=404, detail="not found")
+
         try:
             result = await service.get_cover(task_id)
         except LocalMusicNotFoundError:
@@ -32,7 +38,29 @@ def register_local_music_routes(app: FastAPI) -> None:
         except LocalMusicNoCoverError:
             raise HTTPException(status_code=404, detail="no cover")
 
-        return Response(content=result["content"], media_type=result["media_type"])
+        content = result["content"]
+        media_type = result["media_type"]
+        last_modified = task.updated_at.strftime("%a, %d %b %Y %H:%M:%S GMT") if task.updated_at else None
+        etag = f'"{hashlib.sha1(content).hexdigest()}"'
+
+        if request.headers.get("if-none-match") == etag:
+            headers = {
+                "Cache-Control": "public, max-age=604800",
+                "ETag": etag,
+            }
+            if last_modified:
+                headers["Last-Modified"] = last_modified
+            return Response(status_code=304, headers=headers)
+
+        headers = {
+            "Cache-Control": "public, max-age=604800",
+            "ETag": etag,
+            "X-Content-Type-Options": "nosniff",
+        }
+        if last_modified:
+            headers["Last-Modified"] = last_modified
+
+        return Response(content=content, media_type=media_type, headers=headers)
 
     @app.get("/local/music/stream/{task_id}", include_in_schema=False)
     async def local_music_stream(task_id: int):
