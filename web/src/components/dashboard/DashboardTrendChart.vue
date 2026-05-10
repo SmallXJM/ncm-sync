@@ -10,26 +10,23 @@
 
     <div v-if="!hasData" class="chart-empty">{{ emptyText }}</div>
 
-    <div
-      v-show="tooltip.visible"
-      class="chart-marker"
-      :style="{ transform: `translate(${marker.left}px, ${marker.top}px)` }"
-    ></div>
+    <DashboardChartMarker :visible="tooltip.visible" :left="marker.left" :top="marker.top" />
 
-    <div
-      v-show="tooltip.visible"
-      class="chart-tooltip"
-      :style="{ transform: `translate(${tooltip.left}px, ${tooltip.top}px)` }"
-    >
-      <span class="tooltip-time">{{ tooltip.time }}</span>
-      <span class="tooltip-value">{{ tooltip.value }}</span>
-    </div>
+    <DashboardChartTooltip
+      :visible="tooltip.visible"
+      :left="tooltip.left"
+      :top="tooltip.top"
+      :time="tooltip.time"
+      :value="tooltip.value"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import uPlot from 'uplot'
+import DashboardChartMarker from './DashboardChartMarker.vue'
+import DashboardChartTooltip from './DashboardChartTooltip.vue'
 import 'uplot/dist/uPlot.min.css'
 
 interface TrendPoint {
@@ -135,7 +132,6 @@ function getPointPosition(u: uPlot, timestamp: number, value: number) {
   }
 }
 
-// 修改 updateTooltip 函数，支持传入鼠标原生坐标
 function updateTooltip(index: number | null, mouseX?: number, mouseY?: number) {
   const u = chart.value
   const host = wrapperRef.value
@@ -151,48 +147,37 @@ function updateTooltip(index: number | null, mouseX?: number, mouseY?: number) {
     return
   }
 
-  // Marker 依然锁定在数据点上（吸附效果）
   const { left: markerLeft, top: markerTop } = getPointPosition(u, timestamp, speed)
-  marker.left = markerLeft
-  marker.top = markerTop
-
-  // Tooltip 使用鼠标坐标进行跟随（mouseX, mouseY 是相对于 wrapper 的）
   const tooltipWidth = 120
   const offsetX = 15
   const offsetY = 20
-
-  // 如果没有传入鼠标坐标（比如数据更新时），回退到 marker 坐标
   const baseLeft = mouseX ?? markerLeft
   const baseTop = mouseY ?? markerTop
 
-  // 边界计算：防止超出容器
-  const nextLeft = Math.min(Math.max(baseLeft + offsetX, 8), host.clientWidth - tooltipWidth - 8)
-  const nextTop = Math.min(Math.max(baseTop - offsetY - 40, 8), props.height - 50)
-
-  tooltip.left = nextLeft
-  tooltip.top = nextTop
+  marker.left = markerLeft
+  marker.top = markerTop
+  tooltip.left = Math.min(Math.max(baseLeft + offsetX, 8), host.clientWidth - tooltipWidth - 8)
+  tooltip.top = Math.min(Math.max(baseTop - offsetY - 40, 8), props.height - 50)
   tooltip.time = formatTimestamp(timestamp)
   tooltip.value = formatSpeed(speed)
   tooltip.visible = true
 }
 
-// 在模板中绑定 mousemove
-const handleMouseMove = (e: MouseEvent) => {
+function handleMouseMove(event: MouseEvent) {
   const u = chart.value
   const host = wrapperRef.value
   if (!u || !host) return
 
-  // 获取鼠标相对于 Canvas 绘图区的坐标
   const rect = host.getBoundingClientRect()
-  const mouseX = e.clientX - rect.left
-  const mouseY = e.clientY - rect.top
+  const mouseX = event.clientX - rect.left
+  const mouseY = event.clientY - rect.top
+  const plotLeft = u.bbox.left / uPlot.pxRatio
+  const index = u.posToIdx(mouseX - plotLeft)
 
-  // 找到最近的数据点索引
-  const index = u.posToIdx(mouseX - u.bbox.left / uPlot.pxRatio)
-  
-  if (index != null) {
-    updateTooltip(index, mouseX, mouseY)
-  }
+  if (index == null) return
+
+  anchoredTimestamp.value = u.data[0]?.[index] ?? null
+  updateTooltip(index, mouseX, mouseY)
 }
 
 function refreshTooltip() {
@@ -253,7 +238,7 @@ function createOptions(width: number): uPlot.Options {
         size: 0,
         ticks: { show: false },
         border: { show: false },
-        values: (u: uPlot, vals: number[]) => vals.map(() => ''), // 强制清空 Y 轴刻度文字，防止漏出
+        values: (_u, values) => values.map(() => ''),
         grid: {
           show: true,
           stroke: 'rgba(148, 163, 184, 0.18)',
@@ -286,20 +271,6 @@ function createOptions(width: number): uPlot.Options {
         },
       },
     ],
-    hooks: {
-      setCursor: [
-        (u) => {
-          const index = u.cursor.idx
-          if (index == null) {
-            tooltip.visible = false
-            return
-          }
-
-          anchoredTimestamp.value = u.data[0]?.[index] ?? null
-          // updateTooltip(index)
-        },
-      ],
-    },
   }
 }
 
@@ -339,9 +310,7 @@ watch(
     if (!chart.value) return
 
     chart.value.setData(toUplotData(points))
-    nextTick(() => {
-      refreshTooltip()
-    })
+    nextTick(refreshTooltip)
   },
   { deep: true },
 )
@@ -406,58 +375,5 @@ onBeforeUnmount(() => {
   color: var(--text-tertiary);
   font-size: 0.85rem;
   pointer-events: none;
-}
-
-.chart-marker {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 4;
-  width: 12px;
-  height: 12px;
-  border: 3px solid var(--bg-surface);
-  border-radius: 50%;
-  background: var(--accent-color);
-  box-shadow: var(--shadow-sm);
-  pointer-events: none;
-  transition: transform 0.2s ease-out;
-  translate: -50% -50%;
-}
-
-.chart-tooltip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;             /* 缩小行间距 */
-  min-width: 100px;     /* 减小最小宽度 */
-  padding: 6px 10px;    /* 更加紧凑的内边距 */
-  
-  /* 现代感背景：毛玻璃效果 */
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px); 
-  
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 6px;   /* 减小圆角，显得干练 */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 更柔和的阴影 */
-  
-  pointer-events: none;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  will-change: transform; /* 告诉浏览器这是一个高频变动属性 */
-}
-
-.tooltip-time {
-  color: #6b7280;       /* 更加柔和的灰色 */
-  font-size: 11px;      /* 缩小字体 */
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.tooltip-value {
-  color: #111827;
-  font-size: 13px;      /* 缩小字体 */
-  font-weight: 600;     /* 保持加粗以突出数据 */
 }
 </style>

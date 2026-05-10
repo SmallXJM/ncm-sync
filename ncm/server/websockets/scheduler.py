@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional, Callable, Awaitable
 
 import asyncio
+import random
 
 from ncm.core.logging import get_logger
 from .base import DownloadWsContext, WsModule, WsModuleRegistry, SnapshotDiffer, SnapshotDiffConfig
@@ -27,11 +28,14 @@ class SchedulerWsModule:
         self._subscribed = False
         self._event = asyncio.Event()
         self._interval = 0.5
+        # 临时演示数据：用平滑随机速度替代真实下载速度，便于观察仪表盘趋势图效果。
+        self._mock_speed = 0
+        self._mock_direction = 1
 
     async def get_payload(self) -> Optional[Dict[str, Any]]:
         process_status = self._context.process.get_status()
         scheduler_stats = self._context.scheduler.get_stats()
-        current_speed = self._context.orchestrator.get_current_speed()
+        current_speed = self._get_mock_speed()
         snapshot = {
             "is_running": process_status["running"],
             "started_at" : process_status["started_at"],
@@ -40,6 +44,26 @@ class SchedulerWsModule:
             "current_speed": current_speed,
         }
         return snapshot
+
+    def _get_mock_speed(self) -> int:
+        """Generate a smooth mock download speed for dashboard preview."""
+        if self._mock_speed <= 0:
+            self._mock_speed = random.randint(2 * 1024 * 1024, 6 * 1024 * 1024)
+
+        if random.random() < 0.18:
+            self._mock_direction *= -1
+
+        delta = random.randint(180 * 1024, 900 * 1024) * self._mock_direction
+        next_speed = self._mock_speed + delta
+
+        floor = 220 * 1024
+        ceiling = 14 * 1024 * 1024
+        if next_speed < floor or next_speed > ceiling:
+            self._mock_direction *= -1
+            next_speed = self._mock_speed + random.randint(120 * 1024, 640 * 1024) * self._mock_direction
+
+        self._mock_speed = max(floor, min(ceiling, next_speed))
+        return int(self._mock_speed)
 
     async def handle_message(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return None
