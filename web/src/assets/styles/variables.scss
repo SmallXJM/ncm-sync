@@ -188,6 +188,12 @@ $bg-cover-blur: blur(2px);
   --color-error: #ef4444;
   --color-info: #3b82f6;
 
+  /* 圆角变量 */
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-full: #{$radius-full};
+
   /* 导出间距变量 */
   --spacing-xs: #{$space-xs};
   --spacing-sm: #{$space-sm};

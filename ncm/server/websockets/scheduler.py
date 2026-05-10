@@ -35,7 +35,8 @@ class SchedulerWsModule:
     async def get_payload(self) -> Optional[Dict[str, Any]]:
         process_status = self._context.process.get_status()
         scheduler_stats = self._context.scheduler.get_stats()
-        current_speed = self._get_mock_speed()
+        # current_speed = self._get_mock_speed()
+        current_speed = self._context.orchestrator.get_current_speed()
         snapshot = {
             "is_running": process_status["running"],
             "started_at" : process_status["started_at"],

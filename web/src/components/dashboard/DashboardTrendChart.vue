@@ -13,11 +13,14 @@
     <DashboardChartMarker :visible="tooltip.visible" :left="marker.left" :top="marker.top" />
 
     <DashboardChartTooltip
+      ref="tooltipComponentRef"
       :visible="tooltip.visible"
       :left="tooltip.left"
       :top="tooltip.top"
       :time="tooltip.time"
       :value="tooltip.value"
+      :title="tooltip.title"
+      :color="color"
     />
   </div>
 </template>
@@ -52,6 +55,7 @@ const props = withDefaults(
 
 const wrapperRef = ref<HTMLElement | null>(null)
 const chartRef = ref<HTMLElement | null>(null)
+const tooltipComponentRef = ref<InstanceType<typeof DashboardChartTooltip> | null>(null)
 const chart = ref<uPlot | null>(null)
 const anchoredTimestamp = ref<number | null>(null)
 const tooltip = reactive({
@@ -60,6 +64,7 @@ const tooltip = reactive({
   top: 0,
   time: '',
   value: '',
+  title: '',
 })
 const marker = reactive({
   left: 0,
@@ -67,6 +72,8 @@ const marker = reactive({
 })
 
 let resizeObserver: ResizeObserver | null = null
+let themeObserver: MutationObserver | null = null
+let colorSchemeMq: MediaQueryList | null = null
 
 const hasData = computed(() => props.data.length > 0)
 
@@ -132,7 +139,21 @@ function getPointPosition(u: uPlot, timestamp: number, value: number) {
   }
 }
 
-function updateTooltip(index: number | null, mouseX?: number, mouseY?: number) {
+function getTooltipSize() {
+  const element = tooltipComponentRef.value?.tooltipRef
+
+  return {
+    width: element?.offsetWidth || 120,
+    height: element?.offsetHeight || 48,
+  }
+}
+
+function updateTooltip(
+  index: number | null,
+  mouseX?: number,
+  mouseY?: number,
+  shouldUpdateTooltipPosition = true,
+) {
   const u = chart.value
   const host = wrapperRef.value
   if (!u || !host || index == null) {
@@ -148,16 +169,26 @@ function updateTooltip(index: number | null, mouseX?: number, mouseY?: number) {
   }
 
   const { left: markerLeft, top: markerTop } = getPointPosition(u, timestamp, speed)
-  const tooltipWidth = 120
-  const offsetX = 15
-  const offsetY = 20
+  const tooltipSize = getTooltipSize()
+  const gap = 12
   const baseLeft = mouseX ?? markerLeft
   const baseTop = mouseY ?? markerTop
 
   marker.left = markerLeft
   marker.top = markerTop
-  tooltip.left = Math.min(Math.max(baseLeft + offsetX, 8), host.clientWidth - tooltipWidth - 8)
-  tooltip.top = Math.min(Math.max(baseTop - offsetY - 40, 8), props.height - 50)
+  if (shouldUpdateTooltipPosition) {
+    const rightLeft = baseLeft + gap
+    const leftLeft = baseLeft - tooltipSize.width - gap
+    const upperTop = baseTop - tooltipSize.height - gap
+    const lowerTop = baseTop + gap
+    const nextLeft = rightLeft + tooltipSize.width <= host.clientWidth - 8 ? rightLeft : leftLeft
+    const nextTop = upperTop >= 8 ? upperTop : lowerTop
+
+    tooltip.left = Math.min(Math.max(nextLeft, 8), host.clientWidth - tooltipSize.width - 8)
+    tooltip.top = Math.min(Math.max(nextTop, 8), props.height - tooltipSize.height - 8)
+  }
+
+  tooltip.title = '下载速度'
   tooltip.time = formatTimestamp(timestamp)
   tooltip.value = formatSpeed(speed)
   tooltip.visible = true
@@ -199,7 +230,7 @@ function refreshTooltip() {
   }
 
   anchoredTimestamp.value = nextTimestamp
-  updateTooltip(index)
+  updateTooltip(index, undefined, undefined, false)
 }
 
 function hideTooltip() {
@@ -213,7 +244,7 @@ function createOptions(width: number): uPlot.Options {
   return {
     width,
     height: props.height,
-    padding: [8, 8, 8, 8],
+    padding: [8, 0, 8, 0],
     cursor: {
       x: false,
       y: false,
@@ -252,7 +283,7 @@ function createOptions(width: number): uPlot.Options {
       {
         label: '下载速度',
         stroke: lineColor,
-        width: 2.5,
+        width: 2,
         paths: uPlot.paths.spline?.(),
         points: {
           show: false,
@@ -265,8 +296,7 @@ function createOptions(width: number): uPlot.Options {
           if (seriesIndex !== 1) return 'rgba(17, 24, 39, 0.08)'
 
           const gradient = u.ctx.createLinearGradient(0, 0, 0, props.height)
-          gradient.addColorStop(0, colorMix(lineColor, 0.24))
-          gradient.addColorStop(1, colorMix(lineColor, 0.02))
+          gradient.addColorStop(1, colorMix(lineColor, 0.2))
           return gradient
         },
       },
@@ -302,6 +332,11 @@ function mountChart() {
 
   chart.value?.destroy()
   chart.value = new uPlot(createOptions(wrapper.clientWidth), toUplotData(props.data), host)
+  refreshTooltip()
+}
+
+function handleThemeChange() {
+  nextTick(mountChart)
 }
 
 watch(
@@ -337,11 +372,22 @@ onMounted(() => {
       refreshTooltip()
     })
     resizeObserver.observe(wrapperRef.value)
+
+    themeObserver = new MutationObserver(handleThemeChange)
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
+    colorSchemeMq.addEventListener('change', handleThemeChange)
   })
 })
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
+  themeObserver?.disconnect()
+  colorSchemeMq?.removeEventListener('change', handleThemeChange)
   chart.value?.destroy()
 })
 </script>
