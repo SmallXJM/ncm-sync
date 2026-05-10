@@ -41,7 +41,8 @@
           <DashboardTrendChart
             :data="speedTimeline"
             :height="240"
-            color="var(--accent-color)"
+            color= "var(--text-secondary)"
+            systemColor= "var(--accent-color)"
             empty-text="等待速度采样"
           />
 
@@ -86,11 +87,13 @@ interface SchedulerSnapshot {
   finished_at: string | null
   next_run_at: string | null
   current_speed: number
+  system_download_speed: number
 }
 
 interface TrendPoint {
   x: number
   y: number
+  systemY: number
 }
 
 const historyWindowSeconds = 30
@@ -103,6 +106,7 @@ const lastRunTime = ref<string | null>(null)
 const endTime = ref<string | null>(null)
 const nextRunTime = ref<string | null>(null)
 const latestSpeed = ref(0)
+const latestSystemSpeed = ref(0)
 const speedTimeline = ref<TrendPoint[]>([])
 
 let debounceTimer: number | null = null
@@ -118,6 +122,7 @@ const schedulerSnapshot = computed<SchedulerSnapshot | null>(() => {
     finished_at: raw.finished_at ?? null,
     next_run_at: raw.next_run_at ?? null,
     current_speed: Number(raw.current_speed ?? 0),
+    system_download_speed: Number(raw.system_download_speed ?? 0),
   }
 })
 
@@ -142,6 +147,7 @@ watch(
     endTime.value = snapshot.finished_at
     nextRunTime.value = snapshot.next_run_at
     latestSpeed.value = snapshot.current_speed
+    latestSystemSpeed.value = snapshot.system_download_speed
     currentSpeed.value = formatSpeed(snapshot.current_speed)
   },
   { immediate: true },
@@ -165,10 +171,11 @@ function formatSpeed(bytesPerSecond: number) {
   }
 }
 
-function pushSpeedSample(speed: number) {
+function pushSpeedSample(speed: number, systemSpeed: number) {
   const point = {
     x: Date.now(),
     y: Math.max(0, Math.round(speed)),
+    systemY: Math.max(0, Math.round(systemSpeed)),
   }
 
   const cutoff = point.x - historyWindowSeconds * 1000
@@ -220,9 +227,9 @@ const handleRunNow = () => {
 
 onMounted(() => {
   wsClient.enterPage('dashboard', 'scheduler')
-  pushSpeedSample(0)
+  pushSpeedSample(0, 0)
   samplingTimer = window.setInterval(() => {
-    pushSpeedSample(latestSpeed.value)
+    pushSpeedSample(latestSpeed.value, latestSystemSpeed.value)
   }, 1000)
 })
 

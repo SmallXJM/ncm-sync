@@ -26,3 +26,6 @@ alembic>=1.13.0
 
 # Audio metadata processing
 mutagen>=1.47.0
+
+# System network counters for dashboard comparison metrics
+psutil>=5.9.0

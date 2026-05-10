@@ -2,7 +2,7 @@
   <div
     v-show="visible"
     class="chart-marker"
-    :style="{ transform: `translate(${left}px, ${top}px)` }"
+    :style="{ transform: `translate(${left}px, ${top}px)`, background: color }"
   ></div>
 </template>
 
@@ -11,6 +11,7 @@ defineProps<{
   visible: boolean
   left: number
   top: number
+  color?: string
 }>()
 </script>
 

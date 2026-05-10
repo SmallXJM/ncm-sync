@@ -6,10 +6,10 @@
     :style="{ transform: `translate(${left}px, ${top}px)` }"
   >
     <span class="tooltip-time">{{ time }}</span>
-    <span class="tooltip-row">
-      <span class="tooltip-indicator"></span>
-      <span class="tooltip-title">{{ title }}</span>
-      <span class="tooltip-value">{{ value }}</span>
+    <span v-for="item in items" :key="item.title" class="tooltip-row">
+      <span class="tooltip-indicator" :style="{ background: item.color }"></span>
+      <span class="tooltip-title">{{ item.title }}</span>
+      <span class="tooltip-value">{{ item.value }}</span>
     </span>
   </div>
 </template>
@@ -17,14 +17,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+interface TooltipItem {
+  title: string
+  value: string
+  color: string
+}
+
 defineProps<{
   visible: boolean
   left: number
   top: number
   time: string
-  value: string
-  title: string
-  color?: string
+  items: TooltipItem[]
 }>()
 
 const tooltipRef = ref<HTMLElement | null>(null)
@@ -75,7 +79,6 @@ defineExpose({
   width: 4px;
   height: 0.72rem;
   border-radius: var(--radius-full);
-  background: v-bind('color || "var(--accent-color)"');
 }
 
 .tooltip-title {

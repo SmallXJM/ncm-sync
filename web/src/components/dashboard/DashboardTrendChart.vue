@@ -1,27 +1,15 @@
 <template>
-  <div
-    ref="wrapperRef"
-    class="trend-chart"
-    :style="{ height: `${height}px` }"
-    @mousemove="handleMouseMove"
-    @mouseleave="hideTooltip"
-  >
+  <div ref="wrapperRef" class="trend-chart" :style="{ height: `${height}px` }" @mousemove="handleMouseMove"
+    @mouseleave="hideTooltip">
     <div ref="chartRef" class="trend-chart-canvas"></div>
 
     <div v-if="!hasData" class="chart-empty">{{ emptyText }}</div>
 
-    <DashboardChartMarker :visible="tooltip.visible" :left="marker.left" :top="marker.top" />
+    <DashboardChartMarker v-for="item in markers" :key="item.key" :visible="tooltip.visible" :left="item.left"
+      :top="item.top" :color="item.color" />
 
-    <DashboardChartTooltip
-      ref="tooltipComponentRef"
-      :visible="tooltip.visible"
-      :left="tooltip.left"
-      :top="tooltip.top"
-      :time="tooltip.time"
-      :value="tooltip.value"
-      :title="tooltip.title"
-      :color="color"
-    />
+    <DashboardChartTooltip ref="tooltipComponentRef" :visible="tooltip.visible" :left="tooltip.left" :top="tooltip.top"
+      :time="tooltip.time" :items="tooltip.items" />
   </div>
 </template>
 
@@ -35,6 +23,20 @@ import 'uplot/dist/uPlot.min.css'
 interface TrendPoint {
   x: number
   y: number
+  systemY: number
+}
+
+interface MarkerState {
+  key: string
+  left: number
+  top: number
+  color: string
+}
+
+interface TooltipItem {
+  title: string
+  value: string
+  color: string
 }
 
 const props = withDefaults(
@@ -42,12 +44,14 @@ const props = withDefaults(
     data: TrendPoint[]
     height?: number
     color?: string
+    systemColor?: string
     unit?: string
     emptyText?: string
   }>(),
   {
     height: 220,
-    color: '#111827',
+    color: 'var(--text-secondary)',
+    systemColor: 'var(--accent-color)',
     unit: 'B/s',
     emptyText: '暂无数据',
   },
@@ -63,13 +67,12 @@ const tooltip = reactive({
   left: 0,
   top: 0,
   time: '',
-  value: '',
-  title: '',
+  items: [] as TooltipItem[],
 })
-const marker = reactive({
-  left: 0,
-  top: 0,
-})
+const markers = reactive<MarkerState[]>([
+  { key: 'app', left: 0, top: 0, color: props.color },
+  { key: 'system', left: 0, top: 0, color: props.systemColor },
+])
 
 let resizeObserver: ResizeObserver | null = null
 let themeObserver: MutationObserver | null = null
@@ -86,7 +89,11 @@ function resolveCssColor(value: string): string {
 }
 
 function toUplotData(points: TrendPoint[]): uPlot.AlignedData {
-  return [points.map((point) => point.x / 1000), points.map((point) => point.y)]
+  return [
+    points.map((point) => point.x / 1000),
+    points.map((point) => point.y),
+    points.map((point) => point.systemY),
+  ]
 }
 
 function formatSpeed(bytesPerSecond: number): string {
@@ -162,20 +169,26 @@ function updateTooltip(
   }
 
   const timestamp = u.data[0]?.[index]
-  const speed = u.data[1]?.[index]
-  if (timestamp == null || speed == null) {
+  const appSpeed = u.data[1]?.[index]
+  const systemSpeed = u.data[2]?.[index]
+  if (timestamp == null || appSpeed == null || systemSpeed == null) {
     tooltip.visible = false
     return
   }
 
-  const { left: markerLeft, top: markerTop } = getPointPosition(u, timestamp, speed)
+  const appPoint = getPointPosition(u, timestamp, appSpeed)
+  const systemPoint = getPointPosition(u, timestamp, systemSpeed)
   const tooltipSize = getTooltipSize()
   const gap = 12
-  const baseLeft = mouseX ?? markerLeft
-  const baseTop = mouseY ?? markerTop
+  const baseLeft = mouseX ?? appPoint.left
+  const baseTop = mouseY ?? appPoint.top
 
-  marker.left = markerLeft
-  marker.top = markerTop
+  markers[0].left = appPoint.left
+  markers[0].top = appPoint.top
+  markers[0].color = props.color
+  markers[1].left = systemPoint.left
+  markers[1].top = systemPoint.top
+  markers[1].color = props.systemColor
   if (shouldUpdateTooltipPosition) {
     const rightLeft = baseLeft + gap
     const leftLeft = baseLeft - tooltipSize.width - gap
@@ -188,9 +201,19 @@ function updateTooltip(
     tooltip.top = Math.min(Math.max(nextTop, 8), props.height - tooltipSize.height - 8)
   }
 
-  tooltip.title = '下载速度'
   tooltip.time = formatTimestamp(timestamp)
-  tooltip.value = formatSpeed(speed)
+  tooltip.items = [
+    {
+      title: '整体下载',
+      value: formatSpeed(systemSpeed),
+      color: props.systemColor,
+    }, 
+    {
+      title: '程序下载',
+      value: formatSpeed(appSpeed),
+      color: props.color,
+    },
+  ]
   tooltip.visible = true
 }
 
@@ -223,8 +246,9 @@ function refreshTooltip() {
   }
 
   const nextTimestamp = u.data[0]?.[index]
-  const speed = u.data[1]?.[index]
-  if (nextTimestamp == null || speed == null) {
+  const appSpeed = u.data[1]?.[index]
+  const systemSpeed = u.data[2]?.[index]
+  if (nextTimestamp == null || appSpeed == null || systemSpeed == null) {
     hideTooltip()
     return
   }
@@ -240,6 +264,7 @@ function hideTooltip() {
 
 function createOptions(width: number): uPlot.Options {
   const lineColor = resolveCssColor(props.color)
+  const systemLineColor = resolveCssColor(props.systemColor)
 
   return {
     width,
@@ -300,6 +325,24 @@ function createOptions(width: number): uPlot.Options {
           return gradient
         },
       },
+      {
+        label: '系统总下载',
+        stroke: systemLineColor,
+        width: 1.8,
+        paths: uPlot.paths.spline?.(),
+        points: {
+          show: false,
+          size: 5,
+          width: 1.5,
+          stroke: systemLineColor,
+          fill: resolveCssColor('var(--bg-surface)'),
+        },
+        fill: (u, seriesIndex) => {
+          const gradient = u.ctx.createLinearGradient(0, 0, 0, props.height)
+          gradient.addColorStop(1, colorMix(systemLineColor, 0.2))
+          return gradient
+        },
+      },
     ],
   }
 }
@@ -310,9 +353,9 @@ function colorMix(color: string, alpha: number): string {
     const normalized =
       hex.length === 3
         ? hex
-            .split('')
-            .map((item) => item + item)
-            .join('')
+          .split('')
+          .map((item) => item + item)
+          .join('')
         : hex
 
     const value = Number.parseInt(normalized, 16)
@@ -351,7 +394,7 @@ watch(
 )
 
 watch(
-  () => [props.height, props.color],
+  () => [props.height, props.color, props.systemColor],
   () => {
     nextTick(mountChart)
   },
