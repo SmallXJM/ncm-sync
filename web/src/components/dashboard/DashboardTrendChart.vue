@@ -183,12 +183,14 @@ function updateTooltip(
   const baseLeft = mouseX ?? appPoint.left
   const baseTop = mouseY ?? appPoint.top
 
-  markers[0].left = appPoint.left
-  markers[0].top = appPoint.top
-  markers[0].color = props.color
-  markers[1].left = systemPoint.left
-  markers[1].top = systemPoint.top
-  markers[1].color = props.systemColor
+  if (markers.length >= 2) {
+    markers[0]!.left = appPoint.left
+    markers[0]!.top = appPoint.top
+    markers[0]!.color = props.color
+    markers[1]!.left = systemPoint.left
+    markers[1]!.top = systemPoint.top
+    markers[1]!.color = props.systemColor
+  }
   if (shouldUpdateTooltipPosition) {
     const rightLeft = baseLeft + gap
     const leftLeft = baseLeft - tooltipSize.width - gap
