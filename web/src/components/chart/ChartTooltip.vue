@@ -49,14 +49,14 @@ defineExpose({
   min-width: 140px;
   padding: 0 var(--spacing-sm);
 
-  background: color-mix(in srgb, var(--bg-body) 88%, transparent);
+  background: color-mix(in srgb, var(--bg-body) 68%, transparent);
   backdrop-filter: blur(6px);
   border: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   
   pointer-events: none;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: transform;
 }
 

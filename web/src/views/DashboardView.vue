@@ -38,7 +38,7 @@
             </div>
           </div>
 
-          <DashboardTrendChart
+          <TrendChart
             :data="speedTimeline"
             :height="240"
             color= "var(--text-secondary)"
@@ -76,7 +76,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '@/api'
-import DashboardTrendChart from '@/components/dashboard/DashboardTrendChart.vue'
+import TrendChart from '@/components/chart/TrendChart.vue'
 import wsClient from '@/stores/wsClient'
 import { formatTime } from '@/utils/time'
 import { toast } from '@/utils/toast'

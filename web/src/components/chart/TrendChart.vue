@@ -5,10 +5,10 @@
 
     <div v-if="!hasData" class="chart-empty">{{ emptyText }}</div>
 
-    <DashboardChartMarker v-for="item in markers" :key="item.key" :visible="tooltip.visible" :left="item.left"
+    <ChartMarker v-for="item in markers" :key="item.key" :visible="tooltip.visible" :left="item.left"
       :top="item.top" :color="item.color" />
 
-    <DashboardChartTooltip ref="tooltipComponentRef" :visible="tooltip.visible" :left="tooltip.left" :top="tooltip.top"
+    <ChartTooltip ref="tooltipComponentRef" :visible="tooltip.visible" :left="tooltip.left" :top="tooltip.top"
       :time="tooltip.time" :items="tooltip.items" />
   </div>
 </template>
@@ -16,8 +16,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import uPlot from 'uplot'
-import DashboardChartMarker from './DashboardChartMarker.vue'
-import DashboardChartTooltip from './DashboardChartTooltip.vue'
+import ChartMarker from './ChartMarker.vue'
+import ChartTooltip from './ChartTooltip.vue'
 import 'uplot/dist/uPlot.min.css'
 
 interface TrendPoint {
@@ -299,8 +299,8 @@ function createOptions(width: number): uPlot.Options {
         values: (_u, values) => values.map(() => ''),
         grid: {
           show: true,
-          stroke: 'rgba(148, 163, 184, 0.18)',
-          dash: [4, 4],
+          stroke: 'rgba(240, 243, 247, 0.5)',
+          // dash: [4, 4],
           width: 1,
         },
       },
