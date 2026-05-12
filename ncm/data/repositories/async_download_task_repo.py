@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional, List
+from zoneinfo import ZoneInfo
 from sqlalchemy import select, delete, func, or_
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -219,3 +221,32 @@ class AsyncDownloadTaskRepository:
         stmt = stmt.order_by(DownloadTask.created_at.desc()).limit(limit).offset(offset)
         result = await session.execute(stmt)
         return list(result.scalars()), total
+
+    async def count_completed_by_day(
+        self,
+        session: AsyncSession,
+        start: datetime,
+        end: datetime,
+        timezone_info: ZoneInfo,
+    ) -> dict[str, int]:
+        stmt = (
+            select(DownloadTask.completed_at)
+            .where(
+                DownloadTask.status == "completed",
+                DownloadTask.completed_at.is_not(None),
+                DownloadTask.completed_at >= start,
+                DownloadTask.completed_at < end,
+            )
+        )
+        result = await session.execute(stmt)
+        counts: dict[str, int] = {}
+
+        for completed_at in result.scalars():
+            if completed_at is None:
+                continue
+            if completed_at.tzinfo is None:
+                completed_at = completed_at.replace(tzinfo=timezone.utc)
+            day = completed_at.astimezone(timezone_info).date().isoformat()
+            counts[day] = counts.get(day, 0) + 1
+
+        return counts

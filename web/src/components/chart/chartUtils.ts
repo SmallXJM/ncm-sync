@@ -18,6 +18,18 @@ export interface ChartTooltipItem {
   color: string
 }
 
+export interface BarChartPoint {
+  x: string
+  y: number
+}
+
+export interface BarChartSeries {
+  key: string
+  title: string
+  color: string
+  data: BarChartPoint[]
+}
+
 export function resolveCssColor(value: string, host: HTMLElement | null): string {
   if (!host || !value.startsWith('var(')) return value
 

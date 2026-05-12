@@ -53,7 +53,7 @@ def register_vue_routes(app: FastAPI):
             """
             # Allow API routes to pass through (should be handled by previous routes, 
             # but this is a safety check if they fall through)
-            if full_path.startswith(("api/", "docs", "redoc", "openapi.json", "health")):
+            if full_path.startswith(("api/", "ncm/", "local/", "ws/", "docs", "redoc", "openapi.json", "health")):
                 raise HTTPException(status_code=404, detail="Not Found")
 
             if full_path.startswith(("favicon-dark.svg", "favicon-light.svg", "favicon.svg")):

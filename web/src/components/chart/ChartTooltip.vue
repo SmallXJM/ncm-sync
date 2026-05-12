@@ -41,7 +41,7 @@ defineExpose({
   z-index: 5;
   display: flex;
   flex-direction: column;
-  min-width: 140px;
+  min-width: 120px;
   padding: 0 var(--spacing-sm);
 
   background: color-mix(in srgb, var(--bg-body) 68%, transparent);

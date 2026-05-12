@@ -67,6 +67,23 @@
             </button>
           </div>
         </div>
+
+        <div class="glass-card recent-card">
+          <div class="card-header">
+            <div>
+              <h2 class="section-title">最近入库</h2>
+              <p class="section-subtitle">近 7 日新增音乐</p>
+            </div>
+          </div>
+
+          <BarChart
+            :series="recentAddedSeries"
+            :height="220"
+            :value-formatter="formatMusicCount"
+            :x-formatter="formatRecentAddedDate"
+            empty-text="暂无入库记录"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -75,8 +92,10 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '@/api'
+import BarChart from '@/components/chart/BarChart.vue'
 import TrendChart from '@/components/chart/TrendChart.vue'
-import type { TrendChartSeries } from '@/components/chart/chartUtils'
+import type { BarChartSeries, TrendChartSeries } from '@/components/chart/chartUtils'
+import type { RecentAddedMusicDay } from '@/api/ncm/dashboard'
 import wsClient from '@/stores/wsClient'
 import { formatTime } from '@/utils/time'
 import { toast } from '@/utils/toast'
@@ -108,6 +127,7 @@ const nextRunTime = ref<string | null>(null)
 const latestSpeed = ref(0)
 const latestSystemSpeed = ref(0)
 const speedTimeline = ref<TrendPoint[]>([])
+const recentAddedDays = ref<RecentAddedMusicDay[]>([])
 
 let debounceTimer: number | null = null
 let samplingTimer: number | null = null
@@ -158,6 +178,18 @@ const speedChartSeries = computed<TrendChartSeries[]>(() => [
   },
 ])
 
+const recentAddedSeries = computed<BarChartSeries[]>(() => [
+  {
+    key: 'recent-added',
+    title: '新增音乐',
+    color: 'var(--accent-color)',
+    data: recentAddedDays.value.map((day) => ({
+      x: day.date,
+      y: day.count,
+    })),
+  },
+])
+
 watch(
   schedulerSnapshot,
   (snapshot) => {
@@ -195,6 +227,14 @@ function formatSpeed(bytesPerSecond: number) {
 function formatChartSpeed(bytesPerSecond: number) {
   const speed = formatSpeed(bytesPerSecond)
   return `${speed.value} ${speed.unit}`
+}
+
+function formatMusicCount(count: number) {
+  return `${Math.max(0, Math.round(count))} 首`
+}
+
+function formatRecentAddedDate(date: string) {
+  return date
 }
 
 function pushSpeedSample(speed: number, systemSpeed: number) {
@@ -241,6 +281,19 @@ const triggerNow = async () => {
   }
 }
 
+const loadDashboardAggregate = async () => {
+  try {
+    const res = await api.dashboard.getAggregate()
+    if (res.success && res.data.code === 200 && res.data.data) {
+      recentAddedDays.value = res.data.data.recent_added_music?.days ?? []
+    } else if (!res.success) {
+      console.warn('Failed to load dashboard aggregate:', res.error)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const handleRunNow = () => {
   if (debounceTimer) {
     window.clearTimeout(debounceTimer)
@@ -253,6 +306,7 @@ const handleRunNow = () => {
 
 onMounted(() => {
   wsClient.enterPage('dashboard', 'scheduler')
+  loadDashboardAggregate()
   pushSpeedSample(0, 0)
   samplingTimer = window.setInterval(() => {
     pushSpeedSample(latestSpeed.value, latestSystemSpeed.value)
@@ -279,7 +333,8 @@ onUnmounted(() => {
   gap: var(--spacing-lg);
 }
 
-.status-card {
+.status-card,
+.recent-card {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
