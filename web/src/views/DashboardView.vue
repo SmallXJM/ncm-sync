@@ -39,10 +39,9 @@
           </div>
 
           <TrendChart
-            :data="speedTimeline"
+            :series="speedChartSeries"
             :height="240"
-            color= "var(--text-secondary)"
-            systemColor= "var(--accent-color)"
+            :value-formatter="formatChartSpeed"
             empty-text="等待速度采样"
           />
 
@@ -77,6 +76,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '@/api'
 import TrendChart from '@/components/chart/TrendChart.vue'
+import type { TrendChartSeries } from '@/components/chart/chartUtils'
 import wsClient from '@/stores/wsClient'
 import { formatTime } from '@/utils/time'
 import { toast } from '@/utils/toast'
@@ -137,6 +137,27 @@ const averageSpeed = computed(() => {
   return formatSpeed(total / speedTimeline.value.length)
 })
 
+const speedChartSeries = computed<TrendChartSeries[]>(() => [
+  {
+    key: 'system',
+    title: '整体下载',
+    color: 'var(--accent-color)',
+    data: speedTimeline.value.map((point) => ({
+      x: point.x,
+      y: point.systemY,
+    })),
+  },
+  {
+    key: 'app',
+    title: '程序下载',
+    color: 'var(--text-secondary)',
+    data: speedTimeline.value.map((point) => ({
+      x: point.x,
+      y: point.y,
+    })),
+  },
+])
+
 watch(
   schedulerSnapshot,
   (snapshot) => {
@@ -169,6 +190,11 @@ function formatSpeed(bytesPerSecond: number) {
     value: value.toFixed(index === 0 ? 0 : 2),
     unit,
   }
+}
+
+function formatChartSpeed(bytesPerSecond: number) {
+  const speed = formatSpeed(bytesPerSecond)
+  return `${speed.value} ${speed.unit}`
 }
 
 function pushSpeedSample(speed: number, systemSpeed: number) {

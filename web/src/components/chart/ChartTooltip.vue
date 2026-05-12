@@ -16,19 +16,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-
-interface TooltipItem {
-  title: string
-  value: string
-  color: string
-}
+import type { ChartTooltipItem } from './chartUtils'
 
 defineProps<{
   visible: boolean
   left: number
   top: number
   time: string
-  items: TooltipItem[]
+  items: ChartTooltipItem[]
 }>()
 
 const tooltipRef = ref<HTMLElement | null>(null)

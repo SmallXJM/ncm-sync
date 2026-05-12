@@ -1,15 +1,32 @@
 <template>
-  <div ref="wrapperRef" class="trend-chart" :style="{ height: `${height}px` }" @mousemove="handleMouseMove"
-    @mouseleave="hideTooltip">
+  <div
+    ref="wrapperRef"
+    class="trend-chart"
+    :style="{ height: `${height}px` }"
+    @mousemove="handleMouseMove"
+    @mouseleave="hideTooltip"
+  >
     <div ref="chartRef" class="trend-chart-canvas"></div>
 
     <div v-if="!hasData" class="chart-empty">{{ emptyText }}</div>
 
-    <ChartMarker v-for="item in markers" :key="item.key" :visible="tooltip.visible" :left="item.left"
-      :top="item.top" :color="item.color" />
+    <ChartMarker
+      v-for="item in markers"
+      :key="item.key"
+      :visible="tooltip.visible"
+      :left="item.left"
+      :top="item.top"
+      :color="item.color"
+    />
 
-    <ChartTooltip ref="tooltipComponentRef" :visible="tooltip.visible" :left="tooltip.left" :top="tooltip.top"
-      :time="tooltip.time" :items="tooltip.items" />
+    <ChartTooltip
+      ref="tooltipComponentRef"
+      :visible="tooltip.visible"
+      :left="tooltip.left"
+      :top="tooltip.top"
+      :time="tooltip.time"
+      :items="tooltip.items"
+    />
   </div>
 </template>
 
@@ -18,13 +35,16 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import uPlot from 'uplot'
 import ChartMarker from './ChartMarker.vue'
 import ChartTooltip from './ChartTooltip.vue'
+import {
+  colorMix,
+  findIndexByTimestamp,
+  formatTimestamp,
+  getPointPosition,
+  resolveCssColor,
+  type ChartTooltipItem,
+  type TrendChartSeries,
+} from './chartUtils'
 import 'uplot/dist/uPlot.min.css'
-
-interface TrendPoint {
-  x: number
-  y: number
-  systemY: number
-}
 
 interface MarkerState {
   key: string
@@ -33,33 +53,25 @@ interface MarkerState {
   color: string
 }
 
-interface TooltipItem {
-  title: string
-  value: string
-  color: string
-}
-
 const props = withDefaults(
   defineProps<{
-    data: TrendPoint[]
+    series: TrendChartSeries[]
     height?: number
-    color?: string
-    systemColor?: string
-    unit?: string
     emptyText?: string
+    valueFormatter?: (value: number, series: TrendChartSeries) => string
+    timeFormatter?: (timestampSeconds: number) => string
   }>(),
   {
     height: 220,
-    color: 'var(--text-secondary)',
-    systemColor: 'var(--accent-color)',
-    unit: 'B/s',
     emptyText: '暂无数据',
+    valueFormatter: (value: number) => String(value),
+    timeFormatter: formatTimestamp,
   },
 )
 
 const wrapperRef = ref<HTMLElement | null>(null)
 const chartRef = ref<HTMLElement | null>(null)
-const tooltipComponentRef = ref<InstanceType<typeof DashboardChartTooltip> | null>(null)
+const tooltipComponentRef = ref<InstanceType<typeof ChartTooltip> | null>(null)
 const chart = ref<uPlot | null>(null)
 const anchoredTimestamp = ref<number | null>(null)
 const tooltip = reactive({
@@ -67,83 +79,42 @@ const tooltip = reactive({
   left: 0,
   top: 0,
   time: '',
-  items: [] as TooltipItem[],
+  items: [] as ChartTooltipItem[],
 })
-const markers = reactive<MarkerState[]>([
-  { key: 'app', left: 0, top: 0, color: props.color },
-  { key: 'system', left: 0, top: 0, color: props.systemColor },
-])
+const markers = reactive<MarkerState[]>([])
 
 let resizeObserver: ResizeObserver | null = null
 let themeObserver: MutationObserver | null = null
 let colorSchemeMq: MediaQueryList | null = null
 
-const hasData = computed(() => props.data.length > 0)
+const hasData = computed(() => props.series.some((item) => item.data.length > 0))
 
-function resolveCssColor(value: string): string {
-  const host = wrapperRef.value
-  if (!host || !value.startsWith('var(')) return value
-
-  const name = value.slice(4, -1).trim()
-  return getComputedStyle(host).getPropertyValue(name).trim() || value
+function getResolvedColor(color: string): string {
+  return resolveCssColor(color, wrapperRef.value)
 }
 
-function toUplotData(points: TrendPoint[]): uPlot.AlignedData {
+function getXAxis(): number[] {
+  return props.series[0]?.data.map((point) => point.x / 1000) ?? []
+}
+
+function toUplotData(): uPlot.AlignedData {
   return [
-    points.map((point) => point.x / 1000),
-    points.map((point) => point.y),
-    points.map((point) => point.systemY),
+    getXAxis(),
+    ...props.series.map((item) => item.data.map((point) => point.y)),
   ]
 }
 
-function formatSpeed(bytesPerSecond: number): string {
-  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return `0 ${props.unit}`
-
-  const units = ['B/s', 'KB/s', 'MB/s', 'GB/s']
-  const base = 1024
-  const index = Math.min(Math.floor(Math.log(bytesPerSecond) / Math.log(base)), units.length - 1)
-  const value = bytesPerSecond / Math.pow(base, index)
-  return `${value.toFixed(index === 0 ? 0 : 2)} ${units[index]}`
-}
-
-function formatTimestamp(seconds: number): string {
-  if (!Number.isFinite(seconds)) return '--'
-  return new Intl.DateTimeFormat('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(new Date(seconds * 1000))
-}
-
-function findIndexByTimestamp(u: uPlot, timestamp: number): number | null {
-  const timestamps = u.data[0] ?? []
-  if (timestamps.length === 0) return null
-
-  let closestIndex: number | null = null
-  let closestDistance = Number.POSITIVE_INFINITY
-
-  for (let index = 0; index < timestamps.length; index += 1) {
-    const item = timestamps[index]
-    if (item == null) continue
-
-    const distance = Math.abs(item - timestamp)
-    if (distance < closestDistance) {
-      closestDistance = distance
-      closestIndex = index
-    }
-  }
-
-  return closestIndex
-}
-
-function getPointPosition(u: uPlot, timestamp: number, value: number) {
-  const plotLeft = u.bbox.left / uPlot.pxRatio
-  const plotTop = u.bbox.top / uPlot.pxRatio
-
-  return {
-    left: plotLeft + u.valToPos(timestamp, 'x'),
-    top: plotTop + u.valToPos(value, 'y'),
-  }
+function syncMarkers() {
+  markers.splice(
+    0,
+    markers.length,
+    ...props.series.map((item) => ({
+      key: item.key,
+      left: 0,
+      top: 0,
+      color: item.color,
+    })),
+  )
 }
 
 function getTooltipSize() {
@@ -169,28 +140,43 @@ function updateTooltip(
   }
 
   const timestamp = u.data[0]?.[index]
-  const appSpeed = u.data[1]?.[index]
-  const systemSpeed = u.data[2]?.[index]
-  if (timestamp == null || appSpeed == null || systemSpeed == null) {
+  if (timestamp == null) {
     tooltip.visible = false
     return
   }
 
-  const appPoint = getPointPosition(u, timestamp, appSpeed)
-  const systemPoint = getPointPosition(u, timestamp, systemSpeed)
+  const pointStates = props.series
+    .map((item, seriesIndex) => {
+      const value = u.data[seriesIndex + 1]?.[index]
+      if (value == null) return null
+
+      return {
+        series: item,
+        value,
+        position: getPointPosition(u, timestamp, value),
+      }
+    })
+    .filter((item): item is NonNullable<typeof item> => item != null)
+
+  if (pointStates.length === 0) {
+    tooltip.visible = false
+    return
+  }
+
+  const primaryPoint = pointStates[0].position
   const tooltipSize = getTooltipSize()
   const gap = 12
-  const baseLeft = mouseX ?? appPoint.left
-  const baseTop = mouseY ?? appPoint.top
+  const baseLeft = mouseX ?? primaryPoint.left
+  const baseTop = mouseY ?? primaryPoint.top
 
-  if (markers.length >= 2) {
-    markers[0]!.left = appPoint.left
-    markers[0]!.top = appPoint.top
-    markers[0]!.color = props.color
-    markers[1]!.left = systemPoint.left
-    markers[1]!.top = systemPoint.top
-    markers[1]!.color = props.systemColor
-  }
+  pointStates.forEach((item, index) => {
+    if (!markers[index]) return
+
+    markers[index].left = item.position.left
+    markers[index].top = item.position.top
+    markers[index].color = item.series.color
+  })
+
   if (shouldUpdateTooltipPosition) {
     const rightLeft = baseLeft + gap
     const leftLeft = baseLeft - tooltipSize.width - gap
@@ -203,19 +189,12 @@ function updateTooltip(
     tooltip.top = Math.min(Math.max(nextTop, 8), props.height - tooltipSize.height - 8)
   }
 
-  tooltip.time = formatTimestamp(timestamp)
-  tooltip.items = [
-    {
-      title: '整体下载',
-      value: formatSpeed(systemSpeed),
-      color: props.systemColor,
-    }, 
-    {
-      title: '程序下载',
-      value: formatSpeed(appSpeed),
-      color: props.color,
-    },
-  ]
+  tooltip.time = props.timeFormatter(timestamp)
+  tooltip.items = pointStates.map((item) => ({
+    title: item.series.title,
+    value: props.valueFormatter(item.value, item.series),
+    color: item.series.color,
+  }))
   tooltip.visible = true
 }
 
@@ -248,9 +227,7 @@ function refreshTooltip() {
   }
 
   const nextTimestamp = u.data[0]?.[index]
-  const appSpeed = u.data[1]?.[index]
-  const systemSpeed = u.data[2]?.[index]
-  if (nextTimestamp == null || appSpeed == null || systemSpeed == null) {
+  if (nextTimestamp == null) {
     hideTooltip()
     return
   }
@@ -265,9 +242,6 @@ function hideTooltip() {
 }
 
 function createOptions(width: number): uPlot.Options {
-  const lineColor = resolveCssColor(props.color)
-  const systemLineColor = resolveCssColor(props.systemColor)
-
   return {
     width,
     height: props.height,
@@ -300,74 +274,39 @@ function createOptions(width: number): uPlot.Options {
         grid: {
           show: true,
           stroke: 'rgba(240, 243, 247, 0.5)',
-          // dash: [4, 4],
           width: 1,
         },
       },
     ],
     series: [
       {},
-      {
-        label: '下载速度',
-        stroke: lineColor,
-        width: 2,
-        paths: uPlot.paths.spline?.(),
-        points: {
-          show: false,
-          size: 5,
-          width: 1.5,
-          stroke: lineColor,
-          fill: resolveCssColor('var(--bg-surface)'),
-        },
-        fill: (u, seriesIndex) => {
-          if (seriesIndex !== 1) return 'rgba(17, 24, 39, 0.08)'
+      ...props.series.map((item, index) => {
+        const lineColor = getResolvedColor(item.color)
 
-          const gradient = u.ctx.createLinearGradient(0, 0, 0, props.height)
-          gradient.addColorStop(1, colorMix(lineColor, 0.2))
-          return gradient
-        },
-      },
-      {
-        label: '系统总下载',
-        stroke: systemLineColor,
-        width: 1.8,
-        paths: uPlot.paths.spline?.(),
-        points: {
-          show: false,
-          size: 5,
-          width: 1.5,
-          stroke: systemLineColor,
-          fill: resolveCssColor('var(--bg-surface)'),
-        },
-        fill: (u, seriesIndex) => {
-          const gradient = u.ctx.createLinearGradient(0, 0, 0, props.height)
-          gradient.addColorStop(1, colorMix(systemLineColor, 0.2))
-          return gradient
-        },
-      },
+        return {
+          label: item.title,
+          stroke: lineColor,
+          width: index === 0 ? 2 : 1.8,
+          paths: uPlot.paths.spline?.(),
+          points: {
+            show: false,
+            size: 5,
+            width: 1.5,
+            stroke: lineColor,
+            fill: getResolvedColor('var(--bg-surface)'),
+          },
+          fill:
+            index === 0
+              ? (u: uPlot) => {
+                  const gradient = u.ctx.createLinearGradient(0, 0, 0, props.height)
+                  gradient.addColorStop(1, colorMix(lineColor, 0.2))
+                  return gradient
+                }
+              : undefined,
+        }
+      }),
     ],
   }
-}
-
-function colorMix(color: string, alpha: number): string {
-  if (color.startsWith('#')) {
-    const hex = color.slice(1)
-    const normalized =
-      hex.length === 3
-        ? hex
-          .split('')
-          .map((item) => item + item)
-          .join('')
-        : hex
-
-    const value = Number.parseInt(normalized, 16)
-    const red = (value >> 16) & 255
-    const green = (value >> 8) & 255
-    const blue = value & 255
-    return `rgba(${red}, ${green}, ${blue}, ${alpha})`
-  }
-
-  return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`
 }
 
 function mountChart() {
@@ -375,8 +314,9 @@ function mountChart() {
   const wrapper = wrapperRef.value
   if (!host || !wrapper) return
 
+  syncMarkers()
   chart.value?.destroy()
-  chart.value = new uPlot(createOptions(wrapper.clientWidth), toUplotData(props.data), host)
+  chart.value = new uPlot(createOptions(wrapper.clientWidth), toUplotData(), host)
   refreshTooltip()
 }
 
@@ -385,18 +325,19 @@ function handleThemeChange() {
 }
 
 watch(
-  () => props.data,
-  (points) => {
+  () => props.series,
+  () => {
     if (!chart.value) return
 
-    chart.value.setData(toUplotData(points))
+    syncMarkers()
+    chart.value.setData(toUplotData())
     nextTick(refreshTooltip)
   },
   { deep: true },
 )
 
 watch(
-  () => [props.height, props.color, props.systemColor],
+  () => [props.height, props.emptyText],
   () => {
     nextTick(mountChart)
   },
