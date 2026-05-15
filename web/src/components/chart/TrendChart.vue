@@ -273,7 +273,7 @@ function createOptions(width: number): uPlot.Options {
         values: (_u, values) => values.map(() => ''),
         grid: {
           show: true,
-          stroke: 'rgba(240, 243, 247, 0.5)',
+          stroke: colorMix(getResolvedColor('var(--border-color)'), 0.5),
           width: 1,
         },
       },

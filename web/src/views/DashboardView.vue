@@ -4,43 +4,28 @@
       <div class="dashboard-grid">
         <div class="glass-card status-card">
           <div class="card-header">
-            <div>
+            <div class="header-line">
               <h2 class="section-title">下载服务</h2>
-              <p class="section-subtitle">最近 {{ historyWindowSeconds }} 秒速度趋势</p>
-            </div>
-            <div class="status-indicator" :class="isRunning ? 'status-online' : 'status-pending'">
-              <span class="status-dot"></span>
-              {{ isRunning ? '运行中' : '未运行' }}
-            </div>
-          </div>
-
-          <div class="hero-row">
-            <div class="metric-group">
-              <div class="metric-label">当前下载速度</div>
-              <div class="metric-value">
-                {{ currentSpeed.value }}<span class="unit">{{ currentSpeed.unit }}</span>
+              <div class="header-right">
+                <div class="status-indicator" :class="isRunning ? 'status-online' : 'status-pending'">
+                  <span class="status-dot"></span>
+                  {{ isRunning ? '运行中' : '未运行' }}
+                </div>
               </div>
             </div>
-
-            <div class="summary-grid">
-              <div class="summary-item">
-                <span class="summary-label">平均速度</span>
-                <span class="summary-value">{{ averageSpeed.value }} {{ averageSpeed.unit }}</span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">峰值速度</span>
-                <span class="summary-value">{{ peakSpeed.value }} {{ peakSpeed.unit }}</span>
-              </div>
-              <div class="summary-item">
-                <span class="summary-label">采样点数</span>
-                <span class="summary-value">{{ speedTimeline.length }}</span>
+            <div class="header-line">
+              <span class="section-subtitle">当前下载速度</span>
+              <div class="header-right">
+                <div class="section-figure">
+                  {{ currentSystemSpeed.value }}{{ currentSystemSpeed.unit }}
+                </div>
               </div>
             </div>
           </div>
 
           <TrendChart
             :series="speedChartSeries"
-            :height="240"
+            :height="200"
             :value-formatter="formatChartSpeed"
             empty-text="等待速度采样"
           />
@@ -70,12 +55,18 @@
 
         <div class="glass-card recent-card">
           <div class="card-header">
-            <div>
+            <div class="header-line">
               <h2 class="section-title">最近入库</h2>
-              <p class="section-subtitle">近 7 日新增音乐</p>
+              <div class="header-right"></div>
+            </div>
+            <div class="header-line">
+              <span class="section-subtitle">近 7 日新增音乐</span>
+              <div class="header-right">
+                <div class="section-figure">{{ recentAddedTotalCount }} 首</div>
+              </div>
             </div>
           </div>
-
+          
           <BarChart
             :series="recentAddedSeries"
             :height="220"
@@ -121,6 +112,7 @@ const maxHistoryPoints = historyWindowSeconds
 const isRunning = ref(false)
 const isStarting = ref(false)
 const currentSpeed = ref({ value: '0.00', unit: 'B/s' })
+const currentSystemSpeed = ref({ value: '0.00', unit: 'B/s' })
 const lastRunTime = ref<string | null>(null)
 const endTime = ref<string | null>(null)
 const nextRunTime = ref<string | null>(null)
@@ -144,17 +136,6 @@ const schedulerSnapshot = computed<SchedulerSnapshot | null>(() => {
     current_speed: Number(raw.current_speed ?? 0),
     system_download_speed: Number(raw.system_download_speed ?? 0),
   }
-})
-
-const peakSpeed = computed(() => {
-  const max = speedTimeline.value.reduce((peak, point) => Math.max(peak, point.y), 0)
-  return formatSpeed(max)
-})
-
-const averageSpeed = computed(() => {
-  if (speedTimeline.value.length === 0) return formatSpeed(0)
-  const total = speedTimeline.value.reduce((sum, point) => sum + point.y, 0)
-  return formatSpeed(total / speedTimeline.value.length)
 })
 
 const speedChartSeries = computed<TrendChartSeries[]>(() => [
@@ -190,6 +171,10 @@ const recentAddedSeries = computed<BarChartSeries[]>(() => [
   },
 ])
 
+const recentAddedTotalCount = computed(() =>
+  recentAddedDays.value.reduce((sum, day) => sum + day.count, 0),
+)
+
 watch(
   schedulerSnapshot,
   (snapshot) => {
@@ -202,6 +187,7 @@ watch(
     latestSpeed.value = snapshot.current_speed
     latestSystemSpeed.value = snapshot.system_download_speed
     currentSpeed.value = formatSpeed(snapshot.current_speed)
+    currentSystemSpeed.value = formatSpeed(snapshot.system_download_speed)
   },
   { immediate: true },
 )
@@ -342,74 +328,41 @@ onUnmounted(() => {
 
 .card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--spacing-md);
-}
-
-.section-subtitle {
-  margin: var(--spacing-xs) 0 0;
-  color: var(--text-tertiary);
-  font-size: 0.9rem;
-}
-
-.hero-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
-  gap: var(--spacing-lg);
-  align-items: center;
-}
-
-.metric-group {
-  min-width: 0;
-
-  .metric-label {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-xs);
-  }
-
-  .metric-value {
-    font-size: clamp(2.3rem, 4vw, 3.25rem);
-    line-height: 1;
-    font-weight: 700;
-    color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
-
-    .unit {
-      font-size: 1rem;
-      color: var(--text-tertiary);
-      font-weight: 500;
-      margin-left: 6px;
-    }
-  }
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.summary-item {
-  background: color-mix(in srgb, var(--bg-surface) 84%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  border-radius: 14px;
-  padding: 0.85rem 0.9rem;
+.header-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  min-width: 0;
 }
 
-.summary-label {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.82rem;
+.section-subtitle {
   color: var(--text-tertiary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.summary-value {
-  display: block;
+.header-right {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--spacing-xs);
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.section-figure {
   color: var(--text-primary);
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .info-list {
@@ -449,11 +402,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 900px) {
-  .hero-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .summary-grid,
   .info-list {
     grid-template-columns: minmax(0, 1fr);
   }

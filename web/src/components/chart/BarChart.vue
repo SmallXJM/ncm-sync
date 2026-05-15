@@ -192,7 +192,10 @@ function createOptions(width: number): uPlot.Options {
       show: false,
     },
     scales: {
-      x: { time: false },
+      x: {
+        time: false,
+        range: (_u, min, max) => [min - 0.5, max + 0.5],
+      },
       y: { auto: true, range: (_u, min, max) => [0, Math.max(max, min + 1)] },
     },
     axes: [
@@ -207,6 +210,8 @@ function createOptions(width: number): uPlot.Options {
         values: (_u, values) =>
           values.map((value) => {
             const index = Math.round(value)
+            if (Math.abs(value - index) > 0.001) return ''
+
             const label = primary?.data[index]?.x
             return label ? label.slice(5) : ''
           }),
