@@ -751,8 +751,6 @@ function formatTime(timeString?: string): string {
   padding: 0.5rem;
   margin: -0.5rem;
 
-  padding-bottom: 1.1rem;
-
   /* 使用负外边距抵消 padding，保持视觉上的对齐 */
   padding-right: 8px;
   /* 为滚动条预留空间 */

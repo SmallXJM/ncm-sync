@@ -721,7 +721,6 @@ async function save(): Promise<void> {
   background: var(--bg-surface);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .btn-icon:hover:not(:disabled) {

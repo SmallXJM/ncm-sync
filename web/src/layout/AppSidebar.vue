@@ -353,7 +353,7 @@ onUnmounted(() => {
     // z-index: 140;
     /* Lowered from 1000 to allow Content shadow to be visible */
     transform: translateX(0);
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s 0.3s, width 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s 0.3s, width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 
     &.sidebar--narrow {
         width: $nav-width-sidebar-narrow;
@@ -413,14 +413,13 @@ onUnmounted(() => {
     .sidebar.sidebar--open {
         transform: translateX(0);
         z-index: 600; // 弹窗600
-        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s, background-color 0.3s ease; // 进入时立即调高
+        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), z-index 0s; // 进入时立即调高
     }
 }
 
 .sidebar__brand {
     padding-bottom: $space-sm;
     // border-bottom: 1px solid var(--border-color);
-    transition: border-color 0.3s ease;
     width: 100%;
     display: flex;
 }
@@ -471,7 +470,6 @@ onUnmounted(() => {
     font-weight: 700;
     line-height: 1.2;
     color: var(--text-primary);
-    transition: color 0.3s ease;
 }
 
 .brand-subtitle {
@@ -479,7 +477,6 @@ onUnmounted(() => {
     font-weight: 500;
     line-height: 1.2;
     color: var(--text-secondary);
-    transition: color 0.3s ease;
 }
 
 .sidebar__menu {
@@ -517,7 +514,7 @@ onUnmounted(() => {
     color: var(--text-primary);
     text-decoration: none;
     font-size: 0.95rem;
-    transition: all $ts-quick;
+    // transition: all $ts-quick;
     display: flex;
     align-items: center;
     gap: $space-md;
@@ -562,7 +559,7 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    transition: border-color 0.3s ease, gap 0.3s ease, padding 0.3s ease;
+    transition: gap 0.3s ease, padding 0.3s ease;
     width: 100%;
 
 }

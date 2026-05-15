@@ -113,7 +113,6 @@ defineEmits(['close']);
   padding: 4px;
   color: var(--text-secondary);
   border-radius: 50%;
-  transition: all 0.2s ease;
   flex-shrink: 0;
   
   &:hover {

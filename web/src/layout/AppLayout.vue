@@ -36,7 +36,6 @@ onMounted(() => {
     min-height: 100dvh;
     width: 100%;
     background: var(--bg-base);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
 
 }
 
@@ -80,7 +79,7 @@ onMounted(() => {
     display: flex; // 让内部的 content 能够继承高度
     flex-direction: column;
 
-    transition: box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, margin 0.3s ease, border-radius 0.3s ease;
+    transition: box-shadow 0.3s ease, margin 0.3s ease, border-radius 0.3s ease;
 
 }
 
@@ -102,7 +101,6 @@ onMounted(() => {
     overflow-y: auto;
     /* Internal scroll */
     background: var(--bg-body);
-    transition: background-color 0.3s ease;
 
     /* 可选，让内容内部圆角跟随父元素 */
     // box-shadow: -8px -8px 56px rgba(0, 0, 0, 0.6);
@@ -125,7 +123,6 @@ onMounted(() => {
         border-radius: $radius-full;
         border: 2px solid transparent;
         background-clip: content-box;
-        transition: background-color 0.3s ease;
     }
 
     &::-webkit-scrollbar-thumb:hover {

@@ -182,7 +182,6 @@ watch(isWsDisconnected, (newVal) => {
     /* 3. 防止点击时出现系统默认的灰色高亮方块 */
     -webkit-tap-highlight-color: transparent;
 
-    transition: background-color 0.3s ease, border-color 0.3s ease;
 
 }
 
@@ -199,7 +198,6 @@ watch(isWsDisconnected, (newVal) => {
     font-size: 1.1rem;
     font-weight: 600;
     color: $text-strong;
-    transition: color 0.3s ease;
 }
 
 .breadcrumb {
@@ -285,7 +283,6 @@ watch(isWsDisconnected, (newVal) => {
     cursor: pointer;
     color: $text-strong;
     border-radius: $radius-sm;
-    transition: all 0.2s ease;
 
     &:hover {
         background: rgba($primary, 0.08);
@@ -305,7 +302,7 @@ watch(isWsDisconnected, (newVal) => {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all $ts-quick, border-color 0.3s ease;
+    // transition: all $ts-quick;
 
     touch-action: manipulation;
 
@@ -342,7 +339,6 @@ watch(isWsDisconnected, (newVal) => {
 
 .status-action {
     cursor: pointer;
-    transition: all 0.2s ease;
 
     &:hover {
         background-color: var(--bg-surface-hover);
