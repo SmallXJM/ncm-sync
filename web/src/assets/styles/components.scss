@@ -56,7 +56,7 @@
   background: var(--bg-cover-bg);
   z-index: -1;
 
-  transition: all 0.3s ease;
+  
 }
 
 .account-header {
@@ -91,7 +91,7 @@
 .account-name {
   font-size: 1.8rem;
   font-weight: 700;
-  transition: all 0.3s ease;
+  
   line-height: 1.2;
 }
 
@@ -113,7 +113,7 @@
   font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
-  transition: all 0.3s ease;
+  
   box-shadow: var(--shadow-sm);
 }
 
@@ -133,12 +133,12 @@
 .account-id {
   font-size: 0.8rem;
   white-space: nowrap;
-  transition: all 0.3s ease;
+  
 }
 
 .login-type {
   font-size: 0.85rem;
-  transition: all 0.3s ease;
+  
 }
 
 .account-actions {
@@ -269,7 +269,7 @@
   border-radius: 0.5rem;
   padding: var(--spacing-md);
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  
 
 }
 
@@ -277,7 +277,7 @@
   font-weight: 600;
   cursor: pointer;
   color: var(--accent-color);
-  transition: all 0.3s ease;
+  
 }
 
 .help-content {
@@ -552,7 +552,7 @@
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
+  
   text-align: left;
 }
 
@@ -581,7 +581,7 @@
   min-width: 0;
   width: 100%;
   padding-bottom: 0;
-  transition: all 0.3s ease;
+  
 
   &.has-unsaved-changes {
     /* 动态计算底部间距：bottom(2rem) + 高度 + 缓冲(1rem) */

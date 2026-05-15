@@ -238,7 +238,7 @@ watch(isWsDisconnected, (newVal) => {
     border-radius: $radius-sm;
     cursor: pointer;
     color: var(--text-secondary);
-    transition: all 0.3s ease;
+    
     // border: 0px;
 
     &:hover {
@@ -252,7 +252,7 @@ watch(isWsDisconnected, (newVal) => {
     /* 移除之前的 margin-top 和 margin-left */
     color: var(--text-primary);
     cursor: default;
-    transition: all 0.3s ease;
+    
 
 }
 

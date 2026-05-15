@@ -34,7 +34,6 @@ div[onclick],
   background: var(--bg-body);
   padding: var(--spacing-lg);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
   width: 100%;
   box-sizing: border-box;
 }
@@ -80,7 +79,7 @@ div[onclick],
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-  transition: all 0.3s ease;
+  
 }
 
 .section-header {
@@ -138,17 +137,17 @@ div[onclick],
 /* 文字颜色工具类 */
 .text-primary {
   color: var(--text-primary);
-  transition: all 0.3s ease;
+  
 }
 
 .text-secondary {
   color: var(--text-secondary);
-  transition: all 0.3s ease;
+  
 }
 
 .text-tertiary {
   color: var(--text-tertiary);
-  transition: all 0.3s ease;
+  
 }
 
 /* 按钮组件 */
@@ -358,7 +357,7 @@ div[onclick],
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 1rem;
-  transition: all 0.3s ease;
+  
 }
 
 .input::placeholder {
