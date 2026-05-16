@@ -26,8 +26,21 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import uPlot from 'uplot'
 import ChartTooltip from './ChartTooltip.vue'
 import {
-  colorMix,
+  COMPACT_CHART_PADDING,
+  createHiddenChartCursor,
+  createHiddenChartLegend,
+  createHiddenXAxis,
+  createHorizontalGridYAxis,
+  getFloatingTooltipPosition,
+  getPlotBounds,
+  getRelativeMousePosition,
+  getTooltipElementSize,
+  getZeroBasedYRange,
+  hasChartData,
+  isPointInPlot,
   resolveCssColor,
+  toAlignedChartData,
+  watchChartTheme,
   type BarChartSeries,
   type ChartTooltipItem,
 } from './chartUtils'
@@ -62,10 +75,9 @@ const tooltip = reactive({
 })
 
 let resizeObserver: ResizeObserver | null = null
-let themeObserver: MutationObserver | null = null
-let colorSchemeMq: MediaQueryList | null = null
+let stopThemeWatch: (() => void) | null = null
 
-const hasData = computed(() => props.series.some((item) => item.data.length > 0))
+const hasData = computed(() => hasChartData(props.series))
 
 function getPrimarySeries(): BarChartSeries | null {
   return props.series[0] ?? null
@@ -75,42 +87,24 @@ function getResolvedColor(color: string): string {
   return resolveCssColor(color, wrapperRef.value)
 }
 
-function getXAxis(): number[] {
-  const primary = getPrimarySeries()
-  return primary?.data.map((_, index) => index) ?? []
-}
-
 function toUplotData(): uPlot.AlignedData {
-  return [
-    getXAxis(),
-    ...props.series.map((item) => item.data.map((point) => point.y)),
-  ]
+  return toAlignedChartData(props.series, (_point, index) => index)
 }
 
-function getTooltipSize() {
-  const element = tooltipComponentRef.value?.tooltipRef
-
-  return {
-    width: element?.offsetWidth || 120,
-    height: element?.offsetHeight || 48,
-  }
-}
-
-function positionTooltip(mouseX: number, mouseY: number) {
+function updateTooltipPosition(mouseX: number, mouseY: number) {
   const host = wrapperRef.value
   if (!host) return
 
-  const tooltipSize = getTooltipSize()
-  const gap = 12
-  const rightLeft = mouseX + gap
-  const leftLeft = mouseX - tooltipSize.width - gap
-  const upperTop = mouseY - tooltipSize.height - gap
-  const lowerTop = mouseY + gap
-  const nextLeft = rightLeft + tooltipSize.width <= host.clientWidth - 8 ? rightLeft : leftLeft
-  const nextTop = upperTop >= 8 ? upperTop : lowerTop
+  const position = getFloatingTooltipPosition({
+    host,
+    mouseX,
+    mouseY,
+    tooltipSize: getTooltipElementSize(tooltipComponentRef.value?.tooltipRef ?? null),
+    chartHeight: props.height,
+  })
 
-  tooltip.left = Math.min(Math.max(nextLeft, 8), host.clientWidth - tooltipSize.width - 8)
-  tooltip.top = Math.min(Math.max(nextTop, 8), props.height - tooltipSize.height - 8)
+  tooltip.left = position.left
+  tooltip.top = position.top
 }
 
 function updateTooltip(index: number | null, mouseX: number, mouseY: number) {
@@ -126,7 +120,7 @@ function updateTooltip(index: number | null, mouseX: number, mouseY: number) {
     return
   }
 
-  positionTooltip(mouseX, mouseY)
+  updateTooltipPosition(mouseX, mouseY)
   tooltip.time = props.xFormatter(point.x)
   tooltip.items = props.series
     .map((item) => {
@@ -148,27 +142,17 @@ function handleMouseMove(event: MouseEvent) {
   const host = wrapperRef.value
   if (!u || !host) return
 
-  const rect = host.getBoundingClientRect()
-  const mouseX = event.clientX - rect.left
-  const mouseY = event.clientY - rect.top
-  const plotLeft = u.bbox.left / uPlot.pxRatio
-  const plotTop = u.bbox.top / uPlot.pxRatio
-  const plotWidth = u.bbox.width / uPlot.pxRatio
-  const plotHeight = u.bbox.height / uPlot.pxRatio
+  const mousePosition = getRelativeMousePosition(event, host)
+  const plotBounds = getPlotBounds(u)
 
-  if (
-    mouseX < plotLeft ||
-    mouseX > plotLeft + plotWidth ||
-    mouseY < plotTop ||
-    mouseY > plotTop + plotHeight
-  ) {
+  if (!isPointInPlot(mousePosition, plotBounds)) {
     hideTooltip()
     return
   }
 
-  const index = u.posToIdx(mouseX - plotLeft)
+  const index = u.posToIdx(mousePosition.left - plotBounds.left)
 
-  updateTooltip(index, mouseX, mouseY)
+  updateTooltip(index, mousePosition.left, mousePosition.top)
 }
 
 function hideTooltip() {
@@ -179,41 +163,19 @@ function createOptions(width: number): uPlot.Options {
   return {
     width,
     height: props.height,
-    padding: [8, 0, 8, 0],
-    cursor: {
-      x: false,
-      y: false,
-      drag: { x: false, y: false },
-      points: { show: false },
-    },
-    legend: {
-      show: false,
-    },
+    padding: COMPACT_CHART_PADDING,
+    cursor: createHiddenChartCursor(),
+    legend: createHiddenChartLegend(),
     scales: {
       x: {
         time: false,
         range: (_u, min, max) => [min - 0.5, max + 0.5],
       },
-      y: { auto: true, range: (_u, min, max) => [0, Math.max(max, min + 1)] },
+      y: { auto: true, range: getZeroBasedYRange },
     },
     axes: [
-      {
-        show: false,
-        scale: 'x',
-      },
-      {
-        show: true,
-        scale: 'y',
-        size: 0,
-        ticks: { show: false },
-        border: { show: false },
-        values: (_u, values) => values.map(() => ''),
-        grid: {
-          show: true,
-          stroke: colorMix(getResolvedColor('var(--border-color)'), 0.5),
-          width: 1,
-        },
-      },
+      createHiddenXAxis(),
+      createHorizontalGridYAxis(getResolvedColor('var(--border-color)')),
     ],
     series: [
       {},
@@ -281,21 +243,13 @@ onMounted(() => {
     })
     resizeObserver.observe(wrapperRef.value)
 
-    themeObserver = new MutationObserver(handleThemeChange)
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
-
-    colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
-    colorSchemeMq.addEventListener('change', handleThemeChange)
+    stopThemeWatch = watchChartTheme(handleThemeChange)
   })
 })
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
-  themeObserver?.disconnect()
-  colorSchemeMq?.removeEventListener('change', handleThemeChange)
+  stopThemeWatch?.()
   chart.value?.destroy()
 })
 </script>

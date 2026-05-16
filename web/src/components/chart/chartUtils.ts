@@ -30,6 +30,91 @@ export interface BarChartSeries {
   data: BarChartPoint[]
 }
 
+export interface ChartTooltipSize {
+  width: number
+  height: number
+}
+
+export interface ChartTooltipPositionOptions {
+  host: HTMLElement
+  mouseX: number
+  mouseY: number
+  tooltipSize: ChartTooltipSize
+  chartHeight: number
+  gap?: number
+  padding?: number
+}
+
+export interface ChartPoint {
+  left: number
+  top: number
+}
+
+export interface ChartPlotBounds {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export const COMPACT_CHART_PADDING = [8, 0, 8, 0] as uPlot.Padding
+
+export function hasChartData(series: ReadonlyArray<{ data: ReadonlyArray<unknown> }>): boolean {
+  return series.some((item) => item.data.length > 0)
+}
+
+export function toAlignedChartData<TPoint extends { y: number }>(
+  series: ReadonlyArray<{ data: ReadonlyArray<TPoint> }>,
+  getXValue: (point: TPoint, index: number) => number,
+): uPlot.AlignedData {
+  const xValues = series[0]?.data.map(getXValue) ?? []
+  const yValues = series.map((item) => item.data.map((point) => point.y))
+
+  return [xValues, ...yValues] as uPlot.AlignedData
+}
+
+export function createHiddenChartCursor(): uPlot.Cursor {
+  return {
+    x: false,
+    y: false,
+    drag: { x: false, y: false },
+    points: { show: false },
+  }
+}
+
+export function createHiddenChartLegend(): uPlot.Legend {
+  return {
+    show: false,
+  }
+}
+
+export function createHiddenXAxis(): uPlot.Axis {
+  return {
+    show: false,
+    scale: 'x',
+  }
+}
+
+export function createHorizontalGridYAxis(borderColor: string): uPlot.Axis {
+  return {
+    show: true,
+    scale: 'y',
+    size: 0,
+    ticks: { show: false },
+    border: { show: false },
+    values: (_u, values) => values.map(() => ''),
+    grid: {
+      show: true,
+      stroke: colorMix(borderColor, 0.5),
+      width: 1,
+    },
+  }
+}
+
+export function getZeroBasedYRange(_u: uPlot, min: number, max: number): [number, number] {
+  return [0, Math.max(max, min + 1)]
+}
+
 export function resolveCssColor(value: string, host: HTMLElement | null): string {
   if (!host || !value.startsWith('var(')) return value
 
@@ -56,6 +141,85 @@ export function colorMix(color: string, alpha: number): string {
   }
 
   return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`
+}
+
+export function getTooltipElementSize(
+  element: HTMLElement | null,
+  fallback: ChartTooltipSize = { width: 120, height: 48 },
+): ChartTooltipSize {
+  return {
+    width: element?.offsetWidth || fallback.width,
+    height: element?.offsetHeight || fallback.height,
+  }
+}
+
+export function getFloatingTooltipPosition({
+  host,
+  mouseX,
+  mouseY,
+  tooltipSize,
+  chartHeight,
+  gap = 12,
+  padding = 8,
+}: ChartTooltipPositionOptions): ChartPoint {
+  const rightLeft = mouseX + gap
+  const leftLeft = mouseX - tooltipSize.width - gap
+  const upperTop = mouseY - tooltipSize.height - gap
+  const lowerTop = mouseY + gap
+  const nextLeft =
+    rightLeft + tooltipSize.width <= host.clientWidth - padding ? rightLeft : leftLeft
+  const nextTop =
+    lowerTop + tooltipSize.height <= chartHeight - padding ? lowerTop : upperTop
+  const maxLeft = Math.max(padding, host.clientWidth - tooltipSize.width - padding)
+  const maxTop = Math.max(padding, chartHeight - tooltipSize.height - padding)
+
+  return {
+    left: Math.min(Math.max(nextLeft, padding), maxLeft),
+    top: Math.min(Math.max(nextTop, padding), maxTop),
+  }
+}
+
+export function getRelativeMousePosition(event: MouseEvent, host: HTMLElement): ChartPoint {
+  const rect = host.getBoundingClientRect()
+
+  return {
+    left: event.clientX - rect.left,
+    top: event.clientY - rect.top,
+  }
+}
+
+export function getPlotBounds(u: uPlot): ChartPlotBounds {
+  return {
+    left: u.bbox.left / uPlot.pxRatio,
+    top: u.bbox.top / uPlot.pxRatio,
+    width: u.bbox.width / uPlot.pxRatio,
+    height: u.bbox.height / uPlot.pxRatio,
+  }
+}
+
+export function isPointInPlot(point: ChartPoint, bounds: ChartPlotBounds): boolean {
+  return (
+    point.left >= bounds.left &&
+    point.left <= bounds.left + bounds.width &&
+    point.top >= bounds.top &&
+    point.top <= bounds.top + bounds.height
+  )
+}
+
+export function watchChartTheme(onChange: () => void): () => void {
+  const themeObserver = new MutationObserver(onChange)
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  })
+
+  const colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
+  colorSchemeMq.addEventListener('change', onChange)
+
+  return () => {
+    themeObserver.disconnect()
+    colorSchemeMq.removeEventListener('change', onChange)
+  }
 }
 
 export function formatTimestamp(seconds: number): string {
@@ -90,11 +254,10 @@ export function findIndexByTimestamp(u: uPlot, timestamp: number): number | null
 }
 
 export function getPointPosition(u: uPlot, timestamp: number, value: number) {
-  const plotLeft = u.bbox.left / uPlot.pxRatio
-  const plotTop = u.bbox.top / uPlot.pxRatio
+  const plotBounds = getPlotBounds(u)
 
   return {
-    left: plotLeft + u.valToPos(timestamp, 'x'),
-    top: plotTop + u.valToPos(value, 'y'),
+    left: plotBounds.left + u.valToPos(timestamp, 'x'),
+    top: plotBounds.top + u.valToPos(value, 'y'),
   }
 }

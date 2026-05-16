@@ -36,11 +36,24 @@ import uPlot from 'uplot'
 import ChartMarker from './ChartMarker.vue'
 import ChartTooltip from './ChartTooltip.vue'
 import {
+  COMPACT_CHART_PADDING,
   colorMix,
+  createHiddenChartCursor,
+  createHiddenChartLegend,
+  createHiddenXAxis,
+  createHorizontalGridYAxis,
   findIndexByTimestamp,
   formatTimestamp,
+  getFloatingTooltipPosition,
+  getPlotBounds,
   getPointPosition,
+  getRelativeMousePosition,
+  getTooltipElementSize,
+  getZeroBasedYRange,
+  hasChartData,
   resolveCssColor,
+  toAlignedChartData,
+  watchChartTheme,
   type ChartTooltipItem,
   type TrendChartSeries,
 } from './chartUtils'
@@ -84,24 +97,16 @@ const tooltip = reactive({
 const markers = reactive<MarkerState[]>([])
 
 let resizeObserver: ResizeObserver | null = null
-let themeObserver: MutationObserver | null = null
-let colorSchemeMq: MediaQueryList | null = null
+let stopThemeWatch: (() => void) | null = null
 
-const hasData = computed(() => props.series.some((item) => item.data.length > 0))
+const hasData = computed(() => hasChartData(props.series))
 
 function getResolvedColor(color: string): string {
   return resolveCssColor(color, wrapperRef.value)
 }
 
-function getXAxis(): number[] {
-  return props.series[0]?.data.map((point) => point.x / 1000) ?? []
-}
-
 function toUplotData(): uPlot.AlignedData {
-  return [
-    getXAxis(),
-    ...props.series.map((item) => item.data.map((point) => point.y)),
-  ]
+  return toAlignedChartData(props.series, (point) => point.x / 1000)
 }
 
 function syncMarkers() {
@@ -115,15 +120,6 @@ function syncMarkers() {
       color: item.color,
     })),
   )
-}
-
-function getTooltipSize() {
-  const element = tooltipComponentRef.value?.tooltipRef
-
-  return {
-    width: element?.offsetWidth || 120,
-    height: element?.offsetHeight || 48,
-  }
 }
 
 function updateTooltip(
@@ -164,8 +160,6 @@ function updateTooltip(
   }
 
   const primaryPoint = pointStates[0].position
-  const tooltipSize = getTooltipSize()
-  const gap = 12
   const baseLeft = mouseX ?? primaryPoint.left
   const baseTop = mouseY ?? primaryPoint.top
 
@@ -178,15 +172,16 @@ function updateTooltip(
   })
 
   if (shouldUpdateTooltipPosition) {
-    const rightLeft = baseLeft + gap
-    const leftLeft = baseLeft - tooltipSize.width - gap
-    const upperTop = baseTop - tooltipSize.height - gap
-    const lowerTop = baseTop + gap
-    const nextLeft = rightLeft + tooltipSize.width <= host.clientWidth - 8 ? rightLeft : leftLeft
-    const nextTop = upperTop >= 8 ? upperTop : lowerTop
+    const position = getFloatingTooltipPosition({
+      host,
+      mouseX: baseLeft,
+      mouseY: baseTop,
+      tooltipSize: getTooltipElementSize(tooltipComponentRef.value?.tooltipRef ?? null),
+      chartHeight: props.height,
+    })
 
-    tooltip.left = Math.min(Math.max(nextLeft, 8), host.clientWidth - tooltipSize.width - 8)
-    tooltip.top = Math.min(Math.max(nextTop, 8), props.height - tooltipSize.height - 8)
+    tooltip.left = position.left
+    tooltip.top = position.top
   }
 
   tooltip.time = props.timeFormatter(timestamp)
@@ -203,16 +198,14 @@ function handleMouseMove(event: MouseEvent) {
   const host = wrapperRef.value
   if (!u || !host) return
 
-  const rect = host.getBoundingClientRect()
-  const mouseX = event.clientX - rect.left
-  const mouseY = event.clientY - rect.top
-  const plotLeft = u.bbox.left / uPlot.pxRatio
-  const index = u.posToIdx(mouseX - plotLeft)
+  const mousePosition = getRelativeMousePosition(event, host)
+  const plotBounds = getPlotBounds(u)
+  const index = u.posToIdx(mousePosition.left - plotBounds.left)
 
   if (index == null) return
 
   anchoredTimestamp.value = u.data[0]?.[index] ?? null
-  updateTooltip(index, mouseX, mouseY)
+  updateTooltip(index, mousePosition.left, mousePosition.top)
 }
 
 function refreshTooltip() {
@@ -245,38 +238,16 @@ function createOptions(width: number): uPlot.Options {
   return {
     width,
     height: props.height,
-    padding: [8, 0, 8, 0],
-    cursor: {
-      x: false,
-      y: false,
-      drag: { x: false, y: false },
-      points: { show: false },
-    },
-    legend: {
-      show: false,
-    },
+    padding: COMPACT_CHART_PADDING,
+    cursor: createHiddenChartCursor(),
+    legend: createHiddenChartLegend(),
     scales: {
       x: { time: true },
-      y: { auto: true, range: (_u, min, max) => [0, Math.max(max, min + 1)] },
+      y: { auto: true, range: getZeroBasedYRange },
     },
     axes: [
-      {
-        show: false,
-        scale: 'x',
-      },
-      {
-        show: true,
-        scale: 'y',
-        size: 0,
-        ticks: { show: false },
-        border: { show: false },
-        values: (_u, values) => values.map(() => ''),
-        grid: {
-          show: true,
-          stroke: colorMix(getResolvedColor('var(--border-color)'), 0.5),
-          width: 1,
-        },
-      },
+      createHiddenXAxis(),
+      createHorizontalGridYAxis(getResolvedColor('var(--border-color)')),
     ],
     series: [
       {},
@@ -359,21 +330,13 @@ onMounted(() => {
     })
     resizeObserver.observe(wrapperRef.value)
 
-    themeObserver = new MutationObserver(handleThemeChange)
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
-
-    colorSchemeMq = window.matchMedia('(prefers-color-scheme: dark)')
-    colorSchemeMq.addEventListener('change', handleThemeChange)
+    stopThemeWatch = watchChartTheme(handleThemeChange)
   })
 })
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
-  themeObserver?.disconnect()
-  colorSchemeMq?.removeEventListener('change', handleThemeChange)
+  stopThemeWatch?.()
   chart.value?.destroy()
 })
 </script>
