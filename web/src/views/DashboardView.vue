@@ -14,21 +14,10 @@
               </div>
             </div>
             <div class="header-line">
-              <span class="section-subtitle">当前下载速度</span>
-              <div class="header-right">
-                <div class="section-figure">
-                  {{ currentSystemSpeed.value }}{{ currentSystemSpeed.unit }}
-                </div>
-              </div>
+              <span class="section-subtitle">下载任务调度</span>
+              <div class="header-right"></div>
             </div>
           </div>
-
-          <TrendChart
-            :series="speedChartSeries"
-            :height="200"
-            :value-formatter="formatChartSpeed"
-            empty-text="等待速度采样"
-          />
 
           <div class="info-list">
             <div class="info-item">
@@ -53,6 +42,34 @@
           </div>
         </div>
 
+        <div class="glass-card subscription-card">
+          <div class="card-header">
+            <div class="header-line">
+              <h2 class="section-title">当前监听</h2>
+              <div class="header-right">
+              </div>
+            </div>
+            <div class="header-line">
+              <span class="section-subtitle">已开启订阅</span>
+              <div class="header-right">
+                <span class="section-figure">{{ enabledSubscriptionTotal }} 个</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="subscriptionTypeStats.length > 0" class="subscription-grid">
+            <div v-for="item in subscriptionTypeStats" :key="item.type" class="subscription-item">
+              <span class="subscription-icon" aria-hidden="true">
+                <component v-if="item.iconComponent" :is="item.iconComponent" />
+                <span v-else>{{ item.iconText }}</span>
+              </span>
+              <span class="subscription-label">{{ item.label }}</span>
+              <span class="subscription-count">{{ item.count }}</span>
+            </div>
+          </div>
+          <div v-else class="subscription-empty">暂无开启的订阅</div>
+        </div>
+
         <div class="glass-card recent-card">
           <div class="card-header">
             <div class="header-line">
@@ -66,14 +83,31 @@
               </div>
             </div>
           </div>
-          
-          <BarChart
-            :series="recentAddedSeries"
-            :height="220"
-            :value-formatter="formatMusicCount"
-            :x-formatter="formatRecentAddedDate"
-            empty-text="暂无入库记录"
-          />
+
+          <BarChart :series="recentAddedSeries" :height="220" :value-formatter="formatMusicCount"
+            :x-formatter="formatRecentAddedDate" empty-text="暂无入库记录" />
+        </div>
+
+        <div class="glass-card speed-card">
+          <div class="card-header">
+            <div class="header-line">
+              <h2 class="section-title">下载速度</h2>
+              <div class="header-right">
+
+              </div>
+            </div>
+            <div class="header-line">
+              <span class="section-subtitle">当前下载速度</span>
+              <div class="header-right">
+                <div class="section-figure">
+                  {{ currentSystemSpeed.value }}{{ currentSystemSpeed.unit }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <TrendChart :series="speedChartSeries" :height="200" :value-formatter="formatChartSpeed"
+            empty-text="等待速度采样" />
         </div>
       </div>
     </div>
@@ -87,6 +121,8 @@ import BarChart from '@/components/chart/BarChart.vue'
 import TrendChart from '@/components/chart/TrendChart.vue'
 import type { BarChartSeries, TrendChartSeries } from '@/components/chart/chartUtils'
 import type { RecentAddedMusicDay } from '@/api/ncm/dashboard'
+import type { DownloadJobItem } from '@/api/ncm/download'
+import { sidebarIcons } from '@/layout/AppSidebar.vue'
 import wsClient from '@/stores/wsClient'
 import { formatTime } from '@/utils/time'
 import { toast } from '@/utils/toast'
@@ -111,7 +147,6 @@ const maxHistoryPoints = historyWindowSeconds
 
 const isRunning = ref(false)
 const isStarting = ref(false)
-const currentSpeed = ref({ value: '0.00', unit: 'B/s' })
 const currentSystemSpeed = ref({ value: '0.00', unit: 'B/s' })
 const lastRunTime = ref<string | null>(null)
 const endTime = ref<string | null>(null)
@@ -120,6 +155,7 @@ const latestSpeed = ref(0)
 const latestSystemSpeed = ref(0)
 const speedTimeline = ref<TrendPoint[]>([])
 const recentAddedDays = ref<RecentAddedMusicDay[]>([])
+const subscriptionJobs = ref<DownloadJobItem[]>([])
 
 let debounceTimer: number | null = null
 let samplingTimer: number | null = null
@@ -175,6 +211,29 @@ const recentAddedTotalCount = computed(() =>
   recentAddedDays.value.reduce((sum, day) => sum + day.count, 0),
 )
 
+const enabledSubscriptionJobs = computed(() => subscriptionJobs.value.filter((job) => job.enabled))
+
+const enabledSubscriptionTotal = computed(() => enabledSubscriptionJobs.value.length)
+
+const subscriptionTypeStats = computed(() => {
+  const counts = new Map<string, number>()
+
+  enabledSubscriptionJobs.value.forEach((job) => {
+    const type = job.source_type || job.job_type || 'unknown'
+    counts.set(type, (counts.get(type) ?? 0) + 1)
+  })
+
+  return Array.from(counts.entries())
+    .map(([type, count]) => ({
+      type,
+      count,
+      label: formatSourceType(type),
+      iconComponent: getSourceTypeIconComponent(type),
+      iconText: getSourceTypeIconText(type),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'zh-CN'))
+})
+
 watch(
   schedulerSnapshot,
   (snapshot) => {
@@ -186,7 +245,6 @@ watch(
     nextRunTime.value = snapshot.next_run_at
     latestSpeed.value = snapshot.current_speed
     latestSystemSpeed.value = snapshot.system_download_speed
-    currentSpeed.value = formatSpeed(snapshot.current_speed)
     currentSystemSpeed.value = formatSpeed(snapshot.system_download_speed)
   },
   { immediate: true },
@@ -221,6 +279,28 @@ function formatMusicCount(count: number) {
 
 function formatRecentAddedDate(date: string) {
   return date
+}
+
+function formatSourceType(value: string) {
+  const map: Record<string, string> = {
+    playlist: '歌单',
+    album: '专辑',
+    artist: '艺术家',
+  }
+  return map[value] || value || '未知'
+}
+
+function getSourceTypeIconComponent(value: string) {
+  if (value === 'playlist') return sidebarIcons.playlist
+  return null
+}
+
+function getSourceTypeIconText(value: string) {
+  const map: Record<string, string> = {
+    album: '□',
+    artist: '○',
+  }
+  return map[value] || '•'
 }
 
 function pushSpeedSample(speed: number, systemSpeed: number) {
@@ -280,6 +360,19 @@ const loadDashboardAggregate = async () => {
   }
 }
 
+const loadSubscriptionJobs = async () => {
+  try {
+    const res = await api.download.getJobList()
+    if (res.success && res.data.code === 200 && res.data.data) {
+      subscriptionJobs.value = res.data.data.jobs || []
+    } else if (!res.success) {
+      console.warn('Failed to load subscription jobs:', res.error)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const handleRunNow = () => {
   if (debounceTimer) {
     window.clearTimeout(debounceTimer)
@@ -293,6 +386,7 @@ const handleRunNow = () => {
 onMounted(() => {
   wsClient.enterPage('dashboard', 'scheduler')
   loadDashboardAggregate()
+  loadSubscriptionJobs()
   pushSpeedSample(0, 0)
   samplingTimer = window.setInterval(() => {
     pushSpeedSample(latestSpeed.value, latestSystemSpeed.value)
@@ -320,10 +414,28 @@ onUnmounted(() => {
 }
 
 .status-card,
+.subscription-card,
+.speed-card,
 .recent-card {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+}
+
+.subscription-card {
+  order: 0;
+}
+
+.recent-card {
+  order: 1;
+}
+
+.status-card {
+  order: 2;
+}
+
+.speed-card {
+  order: 3;
 }
 
 .card-header {
@@ -334,7 +446,7 @@ onUnmounted(() => {
 
 .header-line {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--spacing-md);
   min-width: 0;
@@ -363,6 +475,69 @@ onUnmounted(() => {
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.subscription-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md) var(--spacing-lg);
+}
+
+.subscription-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.subscription-item:only-child,
+.subscription-item:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.subscription-icon {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1;
+
+  :deep(svg) {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+.subscription-label {
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subscription-count {
+  min-width: 2rem;
+  padding: 0.18rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.subscription-empty {
+  display: grid;
+  place-items: center;
+  min-height: 88px;
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
 }
 
 .info-list {
@@ -402,7 +577,36 @@ onUnmounted(() => {
 }
 
 @media (max-width: 900px) {
-  .info-list {
+
+  .info-list,
+  .subscription-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 901px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .subscription-card {
+    grid-column: 1 / -1;
+  }
+
+  .recent-card {
+    grid-column: span 8;
+  }
+
+  .status-card {
+    grid-column: span 4;
+  }
+
+  .speed-card {
+    grid-column: 1 / -1;
+  }
+
+  .status-card .info-list {
     grid-template-columns: minmax(0, 1fr);
   }
 }
