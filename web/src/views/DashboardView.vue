@@ -576,7 +576,7 @@ onUnmounted(() => {
   width: 100%;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
 
   .info-list,
   .subscription-grid {
@@ -584,7 +584,7 @@ onUnmounted(() => {
   }
 }
 
-@media (min-width: 901px) {
+@media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     align-items: stretch;

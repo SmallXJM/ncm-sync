@@ -46,7 +46,7 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     /* overflow: hidden; Removed to allow shadow to cast outside */
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 
     &.layout__main--narrow {
         margin-left: $nav-width-sidebar-narrow;

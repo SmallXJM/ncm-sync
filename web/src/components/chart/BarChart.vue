@@ -176,8 +176,6 @@ function hideTooltip() {
 }
 
 function createOptions(width: number): uPlot.Options {
-  const primary = getPrimarySeries()
-
   return {
     width,
     height: props.height,
@@ -200,21 +198,8 @@ function createOptions(width: number): uPlot.Options {
     },
     axes: [
       {
-        show: true,
+        show: false,
         scale: 'x',
-        size: 24,
-        gap: 4,
-        ticks: { show: false },
-        border: { show: false },
-        grid: { show: false },
-        values: (_u, values) =>
-          values.map((value) => {
-            const index = Math.round(value)
-            if (Math.abs(value - index) > 0.001) return ''
-
-            const label = primary?.data[index]?.x
-            return label ? label.slice(5) : ''
-          }),
       },
       {
         show: true,
