@@ -2,8 +2,14 @@
 NCM Sync - 音乐同步工具
 """
 
-__version__ = "v1.0.1"
+__version__ = "v1.0.2"
 __author__ = "smallxjm"
 __license__ = "MIT"
 __copyright__ = "Copyright 2025, smallxjm"
 __url__ = "https://github.com/smallxjm/ncm-sync"
+
+__LICENSES__ = [
+    "Binaryify/NeteaseCloudMusicApi",
+    "NeteaseCloudMusicApiEnhanced/api-enhanced",
+    "amtoaer/bili-sync",
+]
