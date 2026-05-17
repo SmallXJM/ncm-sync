@@ -273,13 +273,12 @@ function createOptions(width: number): uPlot.Options {
             fill: getResolvedColor('var(--bg-surface)'),
           },
           fill:
-            index === 0
-              ? (u: uPlot) => {
+            (u: uPlot) => {
                   const gradient = u.ctx.createLinearGradient(0, 0, 0, props.height)
                   gradient.addColorStop(1, colorMix(lineColor, 0.2))
                   return gradient
                 }
-              : undefined,
+              ,
         }
       }),
     ],
