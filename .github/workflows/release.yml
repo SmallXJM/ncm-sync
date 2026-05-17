@@ -72,7 +72,7 @@ jobs:
         if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
         with:
           tag_name: ${{ env.TAG_NAME }}
-          name: Release ${{ env.TAG_NAME }}
+          name: ${{ env.TAG_NAME }}
           # 确保手动触发时指向当前 commit，防止 tag 还没 push 导致报错
           target_commitish: ${{ github.sha }}
           files: |
