@@ -159,7 +159,13 @@ function updateTooltip(
     return
   }
 
-  const primaryPoint = pointStates[0].position
+  const primaryPointState = pointStates[0]
+  if (!primaryPointState) {
+    tooltip.visible = false
+    return
+  }
+
+  const primaryPoint = primaryPointState.position
   const baseLeft = mouseX ?? primaryPoint.left
   const baseTop = mouseY ?? primaryPoint.top
 
