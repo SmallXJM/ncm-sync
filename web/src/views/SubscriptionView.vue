@@ -574,7 +574,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
     font-size: 0.875rem;
     font-weight: 500;
 
-    transition: transform 0.2s, color 0.3s;
+    transition: transform 0.2s;
 
     gap: var(--spacing-sm);
 
@@ -598,7 +598,7 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
 .job-row {
   /* 基础样式 */
   padding: var(--spacing-md);
-  transition: transform 0.2s, background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+  transition: transform 0.2s, box-shadow 0.3s;
 
 
 
@@ -817,7 +817,6 @@ $grid-config: minmax(150px, auto) max-content max-content max-content max-conten
   color: var(--text-secondary);
   padding: 4px;
   margin-top: -4px;
-  transition: color 0.2s;
 
   &:hover {
     color: var(--text-primary);

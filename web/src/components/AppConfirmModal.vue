@@ -151,7 +151,6 @@ function handleConfirm() {
   color: var(--text-secondary);
   padding: 4px;
   margin-top: -4px;
-  transition: color 0.2s;
 
   &:hover {
     color: var(--text-primary);

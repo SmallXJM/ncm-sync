@@ -586,7 +586,6 @@ onUnmounted(() => {
         /* 使用你现有的次级文本颜色 */
         pointer-events: none;
         /* 重要：点击图标时事件会穿透到 input 上 */
-        transition: color 0.2s ease;
       }
 
       .search-input {
@@ -595,7 +594,6 @@ onUnmounted(() => {
         /* 如果有清除按钮，input 右侧也要加 padding */
         padding-right: 30px;
         /* 重要：留出图标的空间 (图标宽度 + 间距) */
-        transition: background-color 0.3s ease, border-color 0.3s ease;
       }
 
       .search-input:focus {
@@ -624,7 +622,6 @@ onUnmounted(() => {
         font-size: 18px;
         padding: 4px;
         line-height: 1;
-        transition: color 0.3s ease;
 
         &:hover {
           color: var(--text-primary);
@@ -719,7 +716,7 @@ onUnmounted(() => {
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+  transition: box-shadow 0.3s ease;
 }
 
 .filter-trigger:hover,
@@ -733,7 +730,6 @@ onUnmounted(() => {
 
 .filter-label {
   color: var(--text-secondary);
-  transition: color 0.3s ease;
 
   white-space: nowrap;
   /* 强制文本不换行 */
@@ -752,7 +748,6 @@ onUnmounted(() => {
   font-size: 0.85rem;
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
   flex: 0 1 auto;
   /* 允许收缩 */
   min-width: 0;
@@ -794,7 +789,6 @@ onUnmounted(() => {
   color: var(--text-tertiary);
   padding: 0;
   margin-left: 4px;
-  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .filter-clear:hover,
@@ -968,7 +962,6 @@ onUnmounted(() => {
   justify-content: center;
   background: var(--bg-surface-hover);
   color: var(--text-tertiary);
-  transition: color 0.3s ease, background-color 0.3s ease;
 
   &.large {
     width: 120px;

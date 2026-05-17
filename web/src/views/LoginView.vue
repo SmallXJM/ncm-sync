@@ -144,7 +144,7 @@ const handleLogin = async () => {
     /* 让 img 或 svg 可以居中对齐 */
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    
 }
 
   .brand-icon img {

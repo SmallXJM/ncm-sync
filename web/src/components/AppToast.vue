@@ -64,7 +64,7 @@ defineEmits(['close']);
   /* 避免 border 被背景覆盖 */
   background-clip: padding-box;
   
-  transition: all 0.3s ease;
+  
 
   @media (max-width: 768px) {
     min-width: 200px;
@@ -113,7 +113,6 @@ defineEmits(['close']);
   padding: 4px;
   color: var(--text-secondary);
   border-radius: 50%;
-  transition: all 0.2s ease;
   flex-shrink: 0;
   
   &:hover {

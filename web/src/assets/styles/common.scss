@@ -34,7 +34,6 @@ div[onclick],
   background: var(--bg-body);
   padding: var(--spacing-lg);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
   width: 100%;
   box-sizing: border-box;
 }
@@ -71,7 +70,7 @@ div[onclick],
   border-radius: 1rem;
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+  transition: box-shadow 0.3s ease;
 }
 
 /* 标题与排版 */
@@ -80,7 +79,7 @@ div[onclick],
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-  transition: all 0.3s ease;
+  
 }
 
 .section-header {
@@ -138,17 +137,17 @@ div[onclick],
 /* 文字颜色工具类 */
 .text-primary {
   color: var(--text-primary);
-  transition: all 0.3s ease;
+  
 }
 
 .text-secondary {
   color: var(--text-secondary);
-  transition: all 0.3s ease;
+  
 }
 
 .text-tertiary {
   color: var(--text-tertiary);
-  transition: all 0.3s ease;
+  
 }
 
 /* 按钮组件 */
@@ -158,7 +157,6 @@ div[onclick],
   border-radius: 0.5rem;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -166,7 +164,7 @@ div[onclick],
   text-decoration: none;
   font-size: 1rem;
   box-shadow: var(--shadow-sm);
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .btn-sm {
@@ -272,7 +270,7 @@ div[onclick],
   align-items: center;
   justify-content: center;
   filter: var(--img-filter-brightness);
-  transition: background-color 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
+  transition: filter 0.3s ease;
 }
 
 .avatar-sm {
@@ -316,7 +314,6 @@ div[onclick],
   height: 8px;
   border-radius: 50%;
   background: currentColor;
-  transition: background-color 0.3s ease;
 }
 
 .status-online {
@@ -346,7 +343,6 @@ div[onclick],
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
-  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Input Fields */
@@ -358,7 +354,7 @@ div[onclick],
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 1rem;
-  transition: all 0.3s ease;
+  
 }
 
 .input::placeholder {

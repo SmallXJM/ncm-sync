@@ -4,6 +4,29 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 // import vueDevTools from 'vite-plugin-vue-devtools'
 
+const backendProxy = {
+  '/api': {
+    target: 'http://localhost:17666',
+    changeOrigin: true,
+    secure: false,
+  },
+  '/ncm': {
+    target: 'http://localhost:17666',
+    changeOrigin: true,
+    secure: false,
+  },
+  '/local': {
+    target: 'http://localhost:17666',
+    changeOrigin: true,
+    secure: false,
+  },
+  '/ws': {
+    target: 'ws://localhost:17666',
+    changeOrigin: true,
+    ws: true,
+  },
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
@@ -17,27 +40,9 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:17666',
-        changeOrigin: true,
-        secure: false
-      },
-      '/ncm': {
-        target: 'http://localhost:17666',
-        changeOrigin: true,
-        secure: false
-      },
-      '/local': {
-        target: 'http://localhost:17666',
-        changeOrigin: true,
-        secure: false
-      },
-      '/ws': {
-        target: 'ws://localhost:17666',
-        changeOrigin: true,
-        ws: true
-      }
-    }
-  }
+    proxy: backendProxy,
+  },
+  preview: {
+    proxy: backendProxy,
+  },
 })

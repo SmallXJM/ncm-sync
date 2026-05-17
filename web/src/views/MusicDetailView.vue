@@ -489,7 +489,7 @@ function getRangeStyle(min: number, max: number, value: number): Record<string, 
   overflow: hidden;
   background: var(--bg-surface-hover);
   flex-shrink: 0;
-  transition: all 0.3s ease;
+  
   box-shadow: var(--shadow-lg);
 
   img {
@@ -506,7 +506,7 @@ function getRangeStyle(min: number, max: number, value: number): Record<string, 
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
-  transition: all 0.3s ease;
+  
 }
 
 .detail-meta {
@@ -557,7 +557,7 @@ function getRangeStyle(min: number, max: number, value: number): Record<string, 
   height: 1px;
   background: var(--border-color);
   margin: var(--spacing-lg) 0;
-  transition: all 0.3s ease;
+  
 }
 
 .detail-section {
@@ -616,7 +616,7 @@ function getRangeStyle(min: number, max: number, value: number): Record<string, 
   padding: var(--spacing-md);
   max-height: 320px;
   overflow: auto;
-  transition: all 0.3s ease;
+  
 
   pre {
     margin: 0;
@@ -738,7 +738,7 @@ function getRangeStyle(min: number, max: number, value: number): Record<string, 
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  
   box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
 
   &:hover {
