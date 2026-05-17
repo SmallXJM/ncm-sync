@@ -23,7 +23,7 @@
           <div v-for="playlist in displayPlaylists" :key="playlist.id" class="playlist-card">
             <div class="card-main">
               <div class="card-cover">
-                <img :src="playlist.coverImgUrl" alt="cover" loading="lazy" />
+                <img :src="playlist.coverImgUrl+'?param=200y200'" alt="cover" loading="lazy" />
                 <div class="play-count">
                   <span>▶ {{ formatPlayCount(playlist.playCount) }}</span>
                 </div>
@@ -31,7 +31,7 @@
               <div class="card-info">
                 <h3 class="card-title" :title="playlist.name">{{ playlist.name }}</h3>
                 <div class="creator-info">
-                  <img v-if="playlist.creator.avatarUrl" :src="playlist.creator.avatarUrl" class="creator-avatar"
+                  <img v-if="playlist.creator.avatarUrl" :src="playlist.creator.avatarUrl+'?param=40y40'" class="creator-avatar"
                     alt="creator" />
                   <span>{{ playlist.creator.nickname }}</span>
                 </div>
