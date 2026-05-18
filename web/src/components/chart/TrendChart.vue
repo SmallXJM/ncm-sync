@@ -257,7 +257,7 @@ function createOptions(width: number): uPlot.Options {
     ],
     series: [
       {},
-      ...props.series.map((item, index) => {
+      ...props.series.map((item) => {
         const lineColor = getResolvedColor(item.color)
 
         return {
