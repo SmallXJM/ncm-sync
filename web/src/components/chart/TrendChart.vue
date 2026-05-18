@@ -257,7 +257,7 @@ function createOptions(width: number): uPlot.Options {
     ],
     series: [
       {},
-      ...props.series.map((item, index) => {
+      ...props.series.map((item) => {
         const lineColor = getResolvedColor(item.color)
 
         return {
@@ -273,13 +273,12 @@ function createOptions(width: number): uPlot.Options {
             fill: getResolvedColor('var(--bg-surface)'),
           },
           fill:
-            index === 0
-              ? (u: uPlot) => {
+            (u: uPlot) => {
                   const gradient = u.ctx.createLinearGradient(0, 0, 0, props.height)
                   gradient.addColorStop(1, colorMix(lineColor, 0.2))
                   return gradient
                 }
-              : undefined,
+              ,
         }
       }),
     ],
